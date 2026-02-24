@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: banco-service
+  datasource:
+    url: ${DB_URL}
+    password: ${DB_PASSWORD}
+    username: ${DB_USERNAME}
+
+# =============================================
+# Jasypt - Encriptación
+# =============================================
+jasypt:
+  encryptor:
+    password: ${JASYPT_ENCRYPTOR_PASSWORD}
+    algorithm: PBEWithMD5AndDES
+    iv-generator-classname: org.jasypt.iv.NoIvGenerator
+
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
+    issuer: ${ISSUER_GENERATOR}
+    access-token:
+      expiration-minutes: 15  # Access token corto
+    refresh-token:
+      expiration-days: 30     # Refresh token largo
