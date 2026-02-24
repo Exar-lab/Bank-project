@@ -1,6 +1,5 @@
 package com.banco.co.account.model;
 
-import com.banco.co.Bank.model.Bank;
 import com.banco.co.account.exception.account.AccountInsufficientFundsException;
 import com.banco.co.account.exception.account.AccountMaxWithdrawExceededException;
 import com.banco.co.Transaction.exception.transaction.TransactionInvalidAmountException;
@@ -42,7 +41,7 @@ public class Account {
 
     @Convert(converter = JasyptEncryptor.class)
     @Column(nullable = false, unique = true, length = 255)
-    private String accountNumber;
+    private String accountNumber; // Se muestra al usuario, pero solo al propietario
 
     // Relaciones
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -52,9 +51,6 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL,orphanRemoval = true,fetch = FetchType.LAZY)
     private List<Card> cards;  // Una cuenta puede tener VARIAS tarjetas
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bank_id")
-    private Bank bank;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
