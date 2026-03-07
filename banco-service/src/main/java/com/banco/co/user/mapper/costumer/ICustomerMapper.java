@@ -25,6 +25,7 @@ public interface ICustomerMapper {
     @Mapping(target = "updatedDate", ignore = true)
     @Mapping(target = "auditLogs", ignore = true)
     @Mapping(target = "accounts", ignore = true)
+    @Mapping(target = "email", expression = "java(dto.getEmail().toLowerCase())")
     User toEntity(CustomerRequestDto dto);
 
     CustomerResponseDto toDto(User user);
@@ -36,7 +37,6 @@ public interface ICustomerMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "userCode", ignore = true)
-    @Mapping(target = "username", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "documentNumber", ignore = true)
     @Mapping(target = "documentType", ignore = true)

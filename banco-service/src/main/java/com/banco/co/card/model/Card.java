@@ -1,6 +1,6 @@
 package com.banco.co.card.model;
 
-import com.banco.co.Transaction.enums.TransactionType;
+import com.banco.co.transaction.enums.TransactionType;
 import com.banco.co.account.model.Account;
 import com.banco.co.card.enums.CardBrand;
 import com.banco.co.card.enums.CardStatus;

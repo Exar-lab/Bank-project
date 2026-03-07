@@ -5,5 +5,6 @@ public enum AccountStatus {
     SUSPENDED,
     BLOCKED,
     INACTIVE,
-    IN_REVIEW
+    IN_REVIEW,
+    CLOSED,
 }

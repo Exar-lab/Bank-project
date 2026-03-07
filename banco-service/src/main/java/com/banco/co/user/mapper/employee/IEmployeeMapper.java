@@ -6,7 +6,6 @@ import com.banco.co.user.dto.employee.EmployeeUpdateDto;
 import com.banco.co.user.model.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
@@ -26,6 +25,7 @@ public interface IEmployeeMapper {
     @Mapping(target = "updatedDate", ignore = true)
     @Mapping(target = "auditLogs", ignore = true)
     @Mapping(target = "accounts", ignore = true)
+    @Mapping(target = "email", expression = "java(dto.getEmail().toLowerCase())")
     User toEntity(EmployeeRequestDto dto);
 
     EmployeeResponseDto toDto(User user);
@@ -55,13 +55,5 @@ public interface IEmployeeMapper {
     // JSON Serialization (for Audit Logs)
     // ══════════════════════════════════════════════════════════
 
-    default String toJsonString(User user) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-            return objectMapper.writeValueAsString(toDto(user));
-        } catch (JsonProcessingException e) {
-            return "{}";
-        }
-    }
+     String toJsonString(User user);
 }

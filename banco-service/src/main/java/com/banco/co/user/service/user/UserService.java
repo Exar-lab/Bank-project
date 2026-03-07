@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -60,8 +61,7 @@ public class UserService implements IUserService {
         public CustomerResponseDto createUser(CustomerRequestDto dto) {
 
                 // Validar email
-                if (userRepository.existsByEmail(dto.email())) {
-
+                if (userRepository.existsByEmail(dto.email())){
                         // ⚠️ AUDITAR: Intento de registro con email existente
                         auditLogService.logAnonymous(
                                         AuditAction.CREATE_PROFILE_FAILED,
@@ -93,7 +93,6 @@ public class UserService implements IUserService {
                 // Crear User
                 User user = customerMapper.toEntity(dto);
                 user.setStatus(UserStatus.ACTIVE);
-
                 // Crear Credential
                 UserCredential credential = new UserCredential();
                 credential.setEmail(dto.email());

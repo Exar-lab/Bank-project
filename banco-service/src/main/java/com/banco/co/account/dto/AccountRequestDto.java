@@ -4,7 +4,6 @@ import com.banco.co.account.enums.AccountType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public record AccountRequestDto(
 

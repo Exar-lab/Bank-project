@@ -27,4 +27,9 @@ public record EmployeeRequestDto(
         @NotBlank(message = "Address is required") @Size(max = 200, message = "Address must not exceed 200 characters") @Pattern(regexp = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s,\\.#\\-]+$", message = "Address contains invalid characters") String address,
 
         @NotNull(message = "Role is required") SystemRole role) {
+        // Constructor compacto
+    public EmployeeRequestDto {
+        // Normalizamos los valores antes de que se guarden
+        email = (email != null) ? email.toLowerCase().trim() : null;
+    }
 }

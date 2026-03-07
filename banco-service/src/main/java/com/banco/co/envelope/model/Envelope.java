@@ -1,13 +1,13 @@
 package com.banco.co.envelope.model;
 
-import com.banco.co.Transaction.enums.TransactionType;
+import com.banco.co.transaction.enums.TransactionType;
 import com.banco.co.account.model.Account;
-import com.banco.co.envelope.enums.ContributionFrequency;
+import com.banco.co.envelope.enums.AutoContributeFrequency;
 import com.banco.co.envelope.enums.EnvelopeStatus;
 import com.banco.co.envelope.enums.EnvelopeType;
 import com.banco.co.envelope.exception.EnvelopeInsufficientFundsException;
 import com.banco.co.envelope.exception.EnvelopeLockedException;
-import com.banco.co.Transaction.exception.transaction.TransactionInvalidAmountException;
+import com.banco.co.transaction.exception.transaction.TransactionInvalidAmountException;
 import com.banco.co.security.codeGenerator.CodeGenerator;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -22,6 +22,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.UUID;
 @Table(name = "envelopes", indexes = {
         @Index(name = "idx_account_id", columnList = "account_id"),
@@ -45,7 +46,7 @@ public class Envelope {
     @Column(nullable = false, length = 100)
     private String name;  // "Vacaciones 2026", "Fondo de emergencia"
 
-    @Column(length = 500)
+    @Column(length = 500,nullable = false)
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -86,7 +87,7 @@ public class Envelope {
     private BigDecimal autoContributeAmount;
 
     @Enumerated(EnumType.STRING)
-    private ContributionFrequency autoContributeFrequency;  // DAILY, WEEKLY, MONTHLY
+    private AutoContributeFrequency autoContributeFrequency;  // DAILY, WEEKLY, MONTHLY
 
     @Column
     private LocalDate nextContributionDate;
@@ -168,12 +169,22 @@ public class Envelope {
         if (this.color == null) {
             this.color = getDefaultColor();
         }
+        if (targetAmount != null && targetAmount.compareTo(BigDecimal.ZERO) > 0) {
+            updateProgress();
+        }
+
+
     }
+    public boolean getAutoContribute() {
+        return autoContribute;
+    }
+
+
 
     // Métodos de negocio
     public void deposit(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TransactionInvalidAmountException(amount);
+            throw new TransactionInvalidAmountException(amount,"Amount must be greater than zero");
         }
 
         this.balance = this.balance.add(amount);
@@ -188,13 +199,13 @@ public class Envelope {
     }
 
     public void withdraw(BigDecimal amount) {
+        if (this.locked) {
+            throw new EnvelopeLockedException(this.envelopeCode,this.getLockedUntil(),this.lockReason);
+        }
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TransactionInvalidAmountException(amount);
+            throw new TransactionInvalidAmountException(amount,"Amount must be greater than zero");
         }
 
-        if (this.locked) {
-            throw new EnvelopeLockedException(this.envelopeCode);
-        }
 
         BigDecimal newBalance = this.balance.subtract(amount);
         if (newBalance.compareTo(this.minimumBalance) < 0) {
@@ -215,10 +226,10 @@ public class Envelope {
     }
 
     public void updateProgress() {
-        if (this.targetAmount != null && this.targetAmount.compareTo(BigDecimal.ZERO) > 0) {
+        if (this.targetAmount != null && this.targetAmount.compareTo(BigDecimal.ZERO) > 0 && this.balance != null) {
             this.progressPercentage = this.balance
                     .divide(this.targetAmount, 4, RoundingMode.HALF_UP)
-                    .multiply(new BigDecimal("100"))
+                    .multiply(BigDecimal.valueOf(100))
                     .setScale(2, RoundingMode.HALF_UP);
         }
     }
@@ -244,7 +255,7 @@ public class Envelope {
 
     public void lock(LocalDate until, String reason) {
         if (isLocked()) {
-            throw new EnvelopeLockedException(this.envelopeCode);
+            throw new EnvelopeLockedException(this.envelopeCode,this.lockedUntil,this.lockReason);
         }
         this.locked = true;
         this.lockedUntil = until;
@@ -290,6 +301,9 @@ public class Envelope {
                 2,
                 RoundingMode.UP
         );
+    }
+    public boolean hasReachedGoal() {
+        return Objects.equals(this.progressPercentage, BigDecimal.valueOf(100));
     }
 
     private String getDefaultIcon() {

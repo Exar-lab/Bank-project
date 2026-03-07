@@ -32,4 +32,12 @@ public record CustomerRequestDto(
         )
         String username
 ) {
+        // Constructor compacto
+        public CustomerRequestDto {
+                // Normalizamos los valores antes de que se guarden
+                email = (email != null) ? email.toLowerCase().trim() : null;
+                username = (username != null) ? username.toLowerCase().trim() : null;
+
+                // El resto de los campos se asignan automáticamente
+        }
 }

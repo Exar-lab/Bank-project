@@ -6,5 +6,6 @@ public enum AuditEntityType {
     CARD,
     TRANSACTION,
     SECURITY,
+    ENVELOPE,
     SYSTEM
 }
