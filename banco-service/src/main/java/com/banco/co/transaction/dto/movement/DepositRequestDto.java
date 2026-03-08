@@ -1,4 +1,4 @@
-package com.banco.co.transaction.dto;
+package com.banco.co.transaction.dto.movement;
 
 import jakarta.validation.constraints.*;
 

@@ -112,18 +112,7 @@ public class AuditLogProcessor {
 
     private String getClientIP(HttpServletRequest request) {
         // Verificar si viene de un proxy o load balancer
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            // Tomar la primera IP (la del cliente original)
-            return xForwardedFor.split(",")[0].trim();
-        }
-
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-
-        return request.getRemoteAddr();
+        return getString(request);
     }
 
     private String extractDeviceType(String userAgent) {
