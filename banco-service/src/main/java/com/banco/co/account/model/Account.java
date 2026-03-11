@@ -124,9 +124,41 @@ public class Account {
         this.availableBalance = this.availableBalance.add(amount);
         this.lastTransactionAt = LocalDateTime.now();
     }
+
+    /**
+     * Balance total (disponible + bloqueado)
+     */
+    public BigDecimal getTotalBalance() {
+        return balance.add(blockedBalance);
+    }
+
     public BigDecimal getAvailableBalance() {
         // Saldo Total - Fondos Bloqueados - Fondos en Sobres (opcional según tu lógica)
-        return this.balance.subtract(this.blockedBalance);
+        return this.balance;
+    }
+    /**
+     * Bloquear fondos para una transacción pendiente
+     */
+    public void blockFunds(BigDecimal amount) {
+        BigDecimal maxWithdraw = this.getAvailableBalance().add(this.overdraftLimit);
+        if (balance.compareTo(amount) < 0) {
+            throw new AccountInsufficientFundsException(this.accountCode,amount,maxWithdraw);
+        }
+
+        balance = balance.subtract(amount);
+        blockedBalance = blockedBalance.add(amount);
+    }
+
+    /**
+     * Desbloquear fondos (si transacción falla o se cancela)
+     */
+    public void unblockFunds(BigDecimal amount) {
+        if (blockedBalance.compareTo(amount) < 0) {
+            throw new IllegalStateException("Cannot unblock more than blocked amount");
+        }
+
+        blockedBalance = blockedBalance.subtract(amount);
+        balance = balance.add(amount);
     }
 
     public void withdraw(BigDecimal amount) {

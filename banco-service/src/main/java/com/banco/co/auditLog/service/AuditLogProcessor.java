@@ -18,6 +18,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import com.banco.co.auditLog.model.AuditLogDetail;
 
 /**
  * Clase para anotar procesos del auditLog, para que pueda crear los auditLogs en un hilo distinto
@@ -48,9 +50,7 @@ public class AuditLogProcessor {
             String entityId,
             AuditStatus status,
             AuditSeverity severity,
-            String details,
-            String oldValues,
-            String newValues
+            List<AuditLogDetail> details
     ) {
         try {
             AuditLog auditLog = new AuditLog();
@@ -66,9 +66,12 @@ public class AuditLogProcessor {
             auditLog.setEntityId(entityId);
             auditLog.setStatus(status);
             auditLog.setSeverity(severity);
-            auditLog.setDetails(details);
-            auditLog.setOldValue(oldValues);
-            auditLog.setNewValue(newValues);
+            
+            // Vincular los detalles y la entidad AuditLog
+            if (details != null) {
+                auditLog.setDetails(details);
+            }
+            
             auditLog.setTimestamp(LocalDateTime.now());
 
             // Información del request (IP, User-Agent, etc.)
@@ -112,7 +115,11 @@ public class AuditLogProcessor {
 
     private String getClientIP(HttpServletRequest request) {
         // Verificar si viene de un proxy o load balancer
-        return getString(request);
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip;
     }
 
     private String extractDeviceType(String userAgent) {

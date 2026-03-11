@@ -23,13 +23,11 @@ public interface IAccountMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "lastTransactionAt", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "bank", ignore = true)
     @Mapping(target = "cards", ignore = true)
     @Mapping(target = "envelopes", ignore = true)
     Account toEntity(AccountRequestDto dto);
 
-    @Mapping(source = "user.id", target = "userId")
-    @Mapping(source = "bank.id", target = "bankId")
+    @Mapping(source = "user.email", target = "userEmail")
     AccountResponseDto toDto(Account account);
 
     // ══════════════════════════════════════════════════════════
@@ -47,7 +45,6 @@ public interface IAccountMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "lastTransactionAt", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "bank", ignore = true)
     @Mapping(target = "cards", ignore = true)
     @Mapping(target = "envelopes", ignore = true)
     void updateEntityFromDto(AccountUpdateDto dto, @MappingTarget Account account);

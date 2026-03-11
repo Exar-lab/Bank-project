@@ -10,6 +10,7 @@ import com.banco.co.account.model.Account;
 import com.banco.co.account.repository.IAccountRepository;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.envelope.enums.EnvelopeStatus;
 import com.banco.co.envelope.model.Envelope;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -47,20 +49,18 @@ public class AccountService implements IAccountService {
         // Validar que no tenga ya una cuenta de este tipo
         if (accountRepository.existsByUser_EmailAndAccountType(userEmail, dto.accountType())) {
 
-            String details = String.format(
-                    "Account creation failed: User %s already has an active %s account. " +
-                            "Duplicate types are not allowed.",
-                    userEmail, dto.accountType()
-            );
-
             auditLogService.logFailure(
                     user,
                     AuditAction.ACCOUNT_CREATED_FAILED,
                     AuditEntityType.ACCOUNT,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Account creation failed: Duplicate types are not allowed"),
+                            new AuditLogDetail("userEmail", userEmail),
+                            new AuditLogDetail("accountType", dto.accountType())
+                    )
             );
 
-            log.error("Account creation failed: {}", details);
+            log.error("Account creation failed for user {} due to duplicate account type {}", userEmail, dto.accountType());
 
             throw new AccountDuplicatedTypeException(userEmail, dto.accountType());
         }
@@ -73,11 +73,6 @@ public class AccountService implements IAccountService {
 
         Account savedAccount = accountRepository.save(account);
 
-        String details = String.format(
-                "Account created successfully. Type: %s, Code: %s",
-                account.getAccountType(), account.getAccountCode()
-        );
-
         String newValues = mapper.toJsonString(savedAccount);
 
         auditLogService.logSuccess(
@@ -85,9 +80,12 @@ public class AccountService implements IAccountService {
                 AuditAction.ACCOUNT_CREATED,
                 AuditEntityType.ACCOUNT,
                 savedAccount.getId().toString(),
-                details,
-                null,
-                newValues
+                List.of(
+                        new AuditLogDetail("message", "Account created successfully"),
+                        new AuditLogDetail("accountType", account.getAccountType()),
+                        new AuditLogDetail("accountCode", account.getAccountCode()),
+                        new AuditLogDetail("newValues", newValues)
+                )
         );
 
         log.info("Account {} created for user {}", savedAccount.getAccountCode(), userEmail);
@@ -162,19 +160,17 @@ public class AccountService implements IAccountService {
 
         String newValues = mapper.toJsonString(savedAccount);
 
-        String details = String.format(
-                "Account %s updated successfully",
-                account.getAccountCode()
-        );
-
         auditLogService.logSuccess(
                 user,
                 AuditAction.ACCOUNT_UPDATED,
                 AuditEntityType.ACCOUNT,
                 account.getId().toString(),
-                details,
-                oldValues,
-                newValues
+                List.of(
+                        new AuditLogDetail("message", "Account updated successfully"),
+                        new AuditLogDetail("accountCode", account.getAccountCode()),
+                        new AuditLogDetail("oldValues", oldValues),
+                        new AuditLogDetail("newValues", newValues)
+                )
         );
 
         log.info("Account {} updated by user {}", accountCode, userEmail);
@@ -200,16 +196,15 @@ public class AccountService implements IAccountService {
         // Validar balance = 0
         if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
 
-            String details = String.format(
-                    "Cannot close account %s. Balance must be 0.00. Current: %s",
-                    account.getAccountCode(), account.getBalance()
-            );
-
             auditLogService.logFailure(
                     user,
                     AuditAction.ACCOUNT_CLOSED,
                     AuditEntityType.ACCOUNT,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Cannot close account. Balance must be 0.00"),
+                            new AuditLogDetail("accountCode", account.getAccountCode()),
+                            new AuditLogDetail("currentBalance", account.getBalance())
+                    )
             );
 
             throw new AccountNotEmptyException(
@@ -222,16 +217,15 @@ public class AccountService implements IAccountService {
 
         if (envelopeTotal.compareTo(BigDecimal.ZERO) > 0) {
 
-            String details = String.format(
-                    "Cannot close account %s. Envelopes have balance: %s",
-                    account.getAccountCode(), envelopeTotal
-            );
-
             auditLogService.logFailure(
                     user,
                     AuditAction.ACCOUNT_CLOSED,
                     AuditEntityType.ACCOUNT,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Cannot close account. Envelopes have balance."),
+                            new AuditLogDetail("accountCode", account.getAccountCode()),
+                            new AuditLogDetail("envelopeTotal", envelopeTotal)
+                    )
             );
 
             throw new AccountHasActiveEnvelopesException(
@@ -248,9 +242,10 @@ public class AccountService implements IAccountService {
                 AuditAction.ACCOUNT_CLOSED,
                 AuditEntityType.ACCOUNT,
                 accountId.toString(),
-                String.format("Account %s closed", account.getAccountCode()),
-                null,
-                null
+                List.of(
+                        new AuditLogDetail("message", "Account closed"),
+                        new AuditLogDetail("accountCode", account.getAccountCode())
+                )
         );
 
         log.info("Account {} closed by user {}", account.getAccountCode(), userEmail);
@@ -282,10 +277,15 @@ public class AccountService implements IAccountService {
                 AuditAction.ACCOUNT_STATUS_CHANGED,
                 AuditEntityType.ACCOUNT,
                 accountId.toString(),
-                String.format("Admin %s changed account %s status from %s to %s",
-                        adminEmail, account.getAccountCode(), oldStatus, status),
-                oldStatus.toString(),
-                status.toString()
+                List.of(
+                        new AuditLogDetail("message", "Admin changed account status"),
+                        new AuditLogDetail("adminEmail", adminEmail),
+                        new AuditLogDetail("accountCode", account.getAccountCode()),
+                        new AuditLogDetail("oldStatus", oldStatus),
+                        new AuditLogDetail("newStatus", status),
+                        new AuditLogDetail("oldValues", oldStatus.toString()),
+                        new AuditLogDetail("newValues", status.toString())
+                )
         );
 
         log.warn("Account {} status changed to {} by admin {}",
@@ -318,10 +318,12 @@ public class AccountService implements IAccountService {
                 AuditAction.ACCOUNT_CLOSED_BY_ADMIN,
                 AuditEntityType.ACCOUNT,
                 accountId.toString(),
-                String.format("Admin %s closed account %s (Balance: %s)",
-                        adminEmail, account.getAccountCode(), account.getBalance()),
-                null,
-                null
+                List.of(
+                        new AuditLogDetail("message", "Admin closed account"),
+                        new AuditLogDetail("adminEmail", adminEmail),
+                        new AuditLogDetail("accountCode", account.getAccountCode()),
+                        new AuditLogDetail("balance", account.getBalance())
+                )
         );
 
         log.warn("Account {} closed by admin {}", account.getAccountCode(), adminEmail);
@@ -391,19 +393,18 @@ public class AccountService implements IAccountService {
 
         if (!account.getUser().getId().equals(user.getId())) {
 
-            String details = String.format(
-                    "Security Violation: User [ID: %s, Email: %s] attempted to access Account [Code: %s] " +
-                            "belonging to User [ID: %s, Email: %s]",
-                    user.getId(), user.getEmail(),
-                    account.getAccountCode(),
-                    account.getUser().getId(), account.getUser().getEmail()
-            );
-
             auditLogService.logFailure(
                     user,
                     auditAction,
                     AuditEntityType.ACCOUNT,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Security Violation: User attempted to access Account belonging to other User"),
+                            new AuditLogDetail("userId", user.getId()),
+                            new AuditLogDetail("userEmail", user.getEmail()),
+                            new AuditLogDetail("accountCode", account.getAccountCode()),
+                            new AuditLogDetail("ownerId", account.getUser().getId()),
+                            new AuditLogDetail("ownerEmail", account.getUser().getEmail())
+                    )
             );
 
             throw new UnauthorizedException("You don't own this account");

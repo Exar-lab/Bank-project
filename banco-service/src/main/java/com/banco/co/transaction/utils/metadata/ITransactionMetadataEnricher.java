@@ -1,4 +1,4 @@
-package com.banco.co.transaction.metadata;
+package com.banco.co.transaction.utils.metadata;
 
 import com.banco.co.transaction.enums.TransactionChannel;
 import com.banco.co.transaction.model.Transaction;

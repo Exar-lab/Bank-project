@@ -166,13 +166,12 @@ public class Card {
         }
     }
 
-    // Métodos de negocio
     public void activate(String pin) {
         if (this.status != CardStatus.INACTIVE) throw new CardNotActiveException(this.cardCode,this.status.toString().toLowerCase());
 
         if(isExpired()) throw new CardExpiredException(this.cardCode,this.status.toString().toLowerCase());
 
-        this.pinHash = HashUtils.hash(pin);
+        this.pinHash = HashUtils.hashBcrypt(pin);
         this.status = CardStatus.ACTIVE;
         this.activatedAt = LocalDateTime.now();
     }

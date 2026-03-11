@@ -4,6 +4,7 @@ import com.banco.co.account.model.Account;
 import com.banco.co.account.service.IAccountService;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.exception.authentication.UnauthorizedException;
 import com.banco.co.transaction.dto.CategorySummaryDto;
@@ -22,7 +23,7 @@ import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.enums.TransactionType;
 import com.banco.co.transaction.exception.transaction.TransactionInvalidException;
 import com.banco.co.transaction.mapper.ITransactionMapper;
-import com.banco.co.transaction.metadata.ITransactionMetadataEnricher;
+import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.transaction.model.Transaction;
 import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.user.model.User;
@@ -37,6 +38,7 @@ import java.awt.print.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
@@ -64,7 +66,9 @@ public class TransactionService implements ITransactionService{
                     user,
                     AuditAction.TRANSACTION_FAILED,
                     AuditEntityType.TRANSACTION,
-                    "Attempted transfer from account not owned"
+                    List.of(
+                            new AuditLogDetail("message", "Attempted transfer from account not owned")
+                    )
             );
 
             throw new UnauthorizedException("You don't own the source account");
@@ -106,8 +110,8 @@ public class TransactionService implements ITransactionService{
         transaction.process();
 
         // 11. Ejecutar transferencia
-        fromAccount.withdraw(dto.amount());
-        toAccount.deposit(dto.amount());
+        fromAccount.blockFunds(dto.amount());
+        toAccount.blockFunds(dto.amount());
 
         // 12. Guardar balances después
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
@@ -127,10 +131,12 @@ public class TransactionService implements ITransactionService{
                 AuditAction.TRANSACTION_CREATED,
                 AuditEntityType.TRANSACTION,
                 savedTransaction.getId().toString(),
-                String.format("Transfer of %s from %s to %s",
-                        dto.amount(), fromAccount.getAccountCode(), toAccount.getAccountCode()),
-                null,
-                null
+                List.of(
+                        new AuditLogDetail("message", "Transfer created"),
+                        new AuditLogDetail("amount", dto.amount()),
+                        new AuditLogDetail("fromAccount", fromAccount.getAccountCode()),
+                        new AuditLogDetail("toAccount", toAccount.getAccountCode())
+                )
         );
 
         log.info("Transfer completed: {} from {} to {}",

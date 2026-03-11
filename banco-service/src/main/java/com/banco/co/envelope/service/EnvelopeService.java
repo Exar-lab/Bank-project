@@ -4,6 +4,7 @@ import com.banco.co.account.model.Account;
 import com.banco.co.account.service.IAccountService;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.envelope.dto.*;
 import com.banco.co.envelope.enums.EnvelopeStatus;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -78,10 +80,11 @@ public class EnvelopeService implements IEnvelopeService {
                 AuditAction.ENVELOPE_CREATED,
                 AuditEntityType.ENVELOPE,
                 savedEnvelope.getId().toString(),
-                String.format("Envelope %s created for account: %s",
-                        savedEnvelope.getName(), account.getAccountCode()),
-                null,
-                null
+                List.of(
+                        new AuditLogDetail("message", "Envelope created"),
+                        new AuditLogDetail("envelopeName", savedEnvelope.getName()),
+                        new AuditLogDetail("accountCode", account.getAccountCode())
+                )
         );
 
         log.info("Envelope {} created for account: {}",
@@ -233,9 +236,12 @@ public class EnvelopeService implements IEnvelopeService {
                 AuditAction.ENVELOPE_UPDATED,
                 AuditEntityType.ENVELOPE,
                 savedEnvelope.getId().toString(),
-                String.format("Envelope %s updated", savedEnvelope.getName()),
-                oldValues,
-                newValues
+                List.of(
+                        new AuditLogDetail("message", "Envelope updated"),
+                        new AuditLogDetail("envelopeName", savedEnvelope.getName()),
+                        new AuditLogDetail("oldValues", oldValues),
+                        new AuditLogDetail("newValues", newValues)
+                )
         );
 
         log.info("Envelope {} updated for account: {}",
@@ -262,10 +268,14 @@ public class EnvelopeService implements IEnvelopeService {
                 AuditAction.ENVELOPE_STATUS_CHANGED,
                 AuditEntityType.ENVELOPE,
                 savedEnvelope.getId().toString(),
-                String.format("Envelope %s status changed from %s to %s",
-                        savedEnvelope.getName(), oldStatus, status),
-                oldStatus.toString(),
-                status.toString()
+                List.of(
+                        new AuditLogDetail("message", "Envelope status changed"),
+                        new AuditLogDetail("envelopeName", savedEnvelope.getName()),
+                        new AuditLogDetail("oldStatus", oldStatus),
+                        new AuditLogDetail("newStatus", status),
+                        new AuditLogDetail("oldValues", oldStatus.toString()),
+                        new AuditLogDetail("newValues", status.toString())
+                )
         );
 
         return mapper.toDto(savedEnvelope);
@@ -310,22 +320,30 @@ public class EnvelopeService implements IEnvelopeService {
                     AuditAction.ENVELOPE_DEPOSIT,
                     AuditEntityType.ENVELOPE,
                     savedEnvelope.getId().toString(),
-                    String.format("Deposited %s to envelope %s \n Deposit Description: %s", dto.amount(), savedEnvelope.getName(),dto.description()),
-                    oldValues,
-                    newValues
+                    List.of(
+                            new AuditLogDetail("message", "Deposited to envelope"),
+                            new AuditLogDetail("amount", dto.amount()),
+                            new AuditLogDetail("envelopeName", savedEnvelope.getName()),
+                            new AuditLogDetail("description", dto.description()),
+                            new AuditLogDetail("oldValues", oldValues),
+                            new AuditLogDetail("newValues", newValues)
+                    )
             );
 
             log.info("Deposited {} to envelope {}", dto.amount(), envelope.getEnvelopeCode());
 
             return mapper.toDto(savedEnvelope);
         }catch (EnvelopeLockedException e) {
-            String details = String.format("Transaction failed: Envelope %s is locked until %s. Reason: %s",
-                    envelope.getEnvelopeCode(), envelope.getLockedUntil(), envelope.getLockReason());
             auditLogService.logFailure(
                     user,
                     AuditAction.ENVELOPE_WITHDRAWAL,
                     AuditEntityType.ENVELOPE,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Transaction failed: Envelope is locked"),
+                            new AuditLogDetail("envelopeCode", envelope.getEnvelopeCode()),
+                            new AuditLogDetail("lockedUntil", envelope.getLockedUntil()),
+                            new AuditLogDetail("lockReason", envelope.getLockReason())
+                    )
             );
             throw e;
         }
@@ -343,13 +361,15 @@ public class EnvelopeService implements IEnvelopeService {
 
             // Validar fondos
             if (envelope.getBalance().compareTo(dto.amount()) < 0) {
-                String details = String.format("Insufficient funds. Available: %s, Requested: %s",
-                        envelope.getBalance(), dto.amount());
                 auditLogService.logFailure(
                         user,
                         AuditAction.ENVELOPE_WITHDRAWAL,
                         AuditEntityType.ENVELOPE,
-                        details
+                        List.of(
+                                new AuditLogDetail("message", "Insufficient funds"),
+                                new AuditLogDetail("available", envelope.getBalance()),
+                                new AuditLogDetail("requested", dto.amount())
+                        )
                 );
                 throw new EnvelopeInsufficientFundsException(
                         envelope.getBalance(), dto.amount(), envelope.getEnvelopeCode()
@@ -367,22 +387,30 @@ public class EnvelopeService implements IEnvelopeService {
                     AuditAction.ENVELOPE_WITHDRAWAL,
                     AuditEntityType.ENVELOPE,
                     savedEnvelope.getId().toString(),
-                    String.format("Withdrew %s from envelope %s \n Withdraw description: %s", dto.amount(), savedEnvelope.getName(),dto.description()),
-                    oldValues,
-                    newValues
+                    List.of(
+                            new AuditLogDetail("message", "Withdrew from envelope"),
+                            new AuditLogDetail("amount", dto.amount()),
+                            new AuditLogDetail("envelopeName", savedEnvelope.getName()),
+                            new AuditLogDetail("description", dto.description()),
+                            new AuditLogDetail("oldValues", oldValues),
+                            new AuditLogDetail("newValues", newValues)
+                    )
             );
 
             log.info("Withdrew {} from envelope {}", dto.amount(), envelope.getEnvelopeCode());
 
             return mapper.toDto(savedEnvelope);
         }catch (EnvelopeLockedException e) {
-            String details = String.format("Transaction failed: Envelope %s is locked until %s. Reason: %s",
-                    envelope.getEnvelopeCode(), envelope.getLockedUntil(), envelope.getLockReason());
             auditLogService.logFailure(
                     user,
                     AuditAction.ENVELOPE_WITHDRAWAL,
                     AuditEntityType.ENVELOPE,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Transaction failed: Envelope is locked"),
+                            new AuditLogDetail("envelopeCode", envelope.getEnvelopeCode()),
+                            new AuditLogDetail("lockedUntil", envelope.getLockedUntil()),
+                            new AuditLogDetail("lockReason", envelope.getLockReason())
+                    )
             );
             throw e;
         }
@@ -404,18 +432,16 @@ public class EnvelopeService implements IEnvelopeService {
 
         // Validar que el balance sea 0
         if (envelope.getBalance().compareTo(BigDecimal.ZERO) != 0) {
-            // Detalle específico para el log de auditoría
-            String details = String.format(
-                    "Deletion failed: Envelope '%s' (%s) still has a remaining balance of %s. The balance must be 0.00 before deletion.",
-                    envelope.getName(),
-                    envelope.getEnvelopeCode(),
-                    envelope.getBalance()
-            );
             auditLogService.logFailure(
                     user,
                     AuditAction.ENVELOPE_DELETED,
                     AuditEntityType.ENVELOPE,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Deletion failed: Envelope still has a remaining balance"),
+                            new AuditLogDetail("envelopeName", envelope.getName()),
+                            new AuditLogDetail("envelopeCode", envelope.getEnvelopeCode()),
+                            new AuditLogDetail("balance", envelope.getBalance())
+                    )
             );
             throw new EnvelopeNotEmptyException(
                     envelope.getEnvelopeCode()
@@ -431,9 +457,11 @@ public class EnvelopeService implements IEnvelopeService {
                 AuditAction.ENVELOPE_DELETED,
                 AuditEntityType.ENVELOPE,
                 envelope.getId().toString(),
-                String.format("Envelope %s deleted", envelope.getName()),
-                oldValues,
-                null
+                List.of(
+                        new AuditLogDetail("message", "Envelope deleted"),
+                        new AuditLogDetail("envelopeName", envelope.getName()),
+                        new AuditLogDetail("oldValues", oldValues)
+                )
         );
 
         log.info("Envelope {} deleted by user {}", envelope.getEnvelopeCode(), userEmail);
@@ -457,20 +485,17 @@ public class EnvelopeService implements IEnvelopeService {
 
     private void validateOwnership(Envelope envelope, User user,AuditAction auditAction) {
         if (!envelope.getAccount().getUser().getId().equals(user.getId())) {
-            // Construimos un detalle que identifique el conflicto de identidad
-            String details = String.format(
-                    "Security Violation: User [ID: %s, Email: %s] attempted to access Envelope [Code: %s] " +
-                            "belonging to a different Account [Code: %s]",
-                    user.getId(),
-                    user.getEmail(),
-                    envelope.getEnvelopeCode(),
-                    envelope.getAccount().getAccountCode()
-            );
             auditLogService.logFailure(
                     user,
                     auditAction,
                     AuditEntityType.ENVELOPE,
-                    details
+                    List.of(
+                            new AuditLogDetail("message", "Security Violation: User attempted to access Envelope belonging to a different Account"),
+                            new AuditLogDetail("userId", user.getId()),
+                            new AuditLogDetail("userEmail", user.getEmail()),
+                            new AuditLogDetail("envelopeCode", envelope.getEnvelopeCode()),
+                            new AuditLogDetail("accountCode", envelope.getAccount().getAccountCode())
+                    )
             );
             throw new UnauthorizedException("You don't own this envelope");
         }

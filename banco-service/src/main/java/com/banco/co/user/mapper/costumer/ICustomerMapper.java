@@ -25,7 +25,7 @@ public interface ICustomerMapper {
     @Mapping(target = "updatedDate", ignore = true)
     @Mapping(target = "auditLogs", ignore = true)
     @Mapping(target = "accounts", ignore = true)
-    @Mapping(target = "email", expression = "java(dto.getEmail().toLowerCase())")
+    @Mapping(target = "email", expression = "java(dto.email().toLowerCase())")
     User toEntity(CustomerRequestDto dto);
 
     CustomerResponseDto toDto(User user);

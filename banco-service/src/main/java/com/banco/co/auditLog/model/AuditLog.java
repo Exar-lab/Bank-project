@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 @Entity
 @Table(name = "audit_logs", indexes = {
@@ -96,12 +98,7 @@ public class AuditLog {
     private AuditSeverity severity;
 
     // ── DETALLES ──────────────────────────────────────────────
-    @Column(columnDefinition = "TEXT")
-    private String details;
-
-    @Column(columnDefinition = "TEXT")
-    private String oldValue;  // Estado anterior (JSON)
-
-    @Column(columnDefinition = "TEXT")
-    private String newValue;  // Estado nuevo (JSON)
+    @ElementCollection
+    @CollectionTable(name = "audit_log_details", joinColumns = @JoinColumn(name = "audit_log_id"))
+    private List<AuditLogDetail> details = new ArrayList<>();
 }

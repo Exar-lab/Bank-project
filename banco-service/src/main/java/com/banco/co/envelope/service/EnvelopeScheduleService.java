@@ -3,6 +3,7 @@ package com.banco.co.envelope.service;
 import com.banco.co.account.model.Account;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.envelope.enums.AutoContributeFrequency;
 import com.banco.co.envelope.enums.EnvelopeStatus;
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -58,13 +60,15 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
                 log.error("Failed to process auto-contribution for envelope {}: {}",
                         envelope.getEnvelopeCode(), e.getMessage(), e);
 
-                // Auditar el fallo
                 auditLogService.logFailure(
                         envelope.getAccount().getUser(),
                         AuditAction.ENVELOPE_AUTO_CONTRIBUTION_FAILED,
                         AuditEntityType.ENVELOPE,
-                        String.format("Auto-contribution failed for envelope %s. Error: %s",
-                                envelope.getEnvelopeCode(), e.getMessage())
+                        List.of(
+                                new AuditLogDetail("message", "Auto-contribution failed"),
+                                new AuditLogDetail("envelopeCode", envelope.getEnvelopeCode()),
+                                new AuditLogDetail("error", e.getMessage())
+                        )
                 );
             }
         }
@@ -104,15 +108,16 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
                     account.getAccountCode(), envelope.getEnvelopeCode(),
                     contributionAmount, account.getAvailableBalance());
 
-            // Auditar falta de fondos
             auditLogService.logFailure(
                     account.getUser(),
                     AuditAction.ENVELOPE_AUTO_CONTRIBUTION_FAILED,
                     AuditEntityType.ENVELOPE,
-                    String.format("Insufficient funds for auto-contribution. " +
-                                    "Envelope: %s, Required: %s, Available: %s",
-                            envelope.getEnvelopeCode(), contributionAmount,
-                            account.getAvailableBalance())
+                    List.of(
+                            new AuditLogDetail("message", "Insufficient funds for auto-contribution"),
+                            new AuditLogDetail("envelopeCode", envelope.getEnvelopeCode()),
+                            new AuditLogDetail("required", contributionAmount),
+                            new AuditLogDetail("available", account.getAvailableBalance())
+                    )
             );
             return;  // No procesar, pero tampoco fallar
         }
@@ -140,18 +145,18 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
         // 7. Guardar cambios
         envelopeRepository.save(envelope);
 
-        // 8. Auditar el éxito
         auditLogService.logSuccess(
                 account.getUser(),
                 AuditAction.ENVELOPE_AUTO_CONTRIBUTION_PROCESSED,
                 AuditEntityType.ENVELOPE,
                 envelope.getId().toString(),
-                String.format("Auto-contribution of %s processed for envelope %s. " +
-                                "New balance: %s, Next contribution: %s",
-                        contributionAmount, envelope.getName(),
-                        envelope.getBalance(), nextDate),
-                null,
-                null
+                List.of(
+                        new AuditLogDetail("message", "Auto-contribution processed"),
+                        new AuditLogDetail("amount", contributionAmount),
+                        new AuditLogDetail("envelopeName", envelope.getName()),
+                        new AuditLogDetail("newBalance", envelope.getBalance()),
+                        new AuditLogDetail("nextContribution", nextDate)
+                )
         );
 
         log.info("Auto-contribution processed successfully. Envelope: {}, Amount: {}, " +

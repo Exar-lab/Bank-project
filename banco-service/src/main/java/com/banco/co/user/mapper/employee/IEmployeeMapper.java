@@ -25,7 +25,7 @@ public interface IEmployeeMapper {
     @Mapping(target = "updatedDate", ignore = true)
     @Mapping(target = "auditLogs", ignore = true)
     @Mapping(target = "accounts", ignore = true)
-    @Mapping(target = "email", expression = "java(dto.getEmail().toLowerCase())")
+    @Mapping(target = "email", expression = "java(dto.email().toLowerCase())")
     User toEntity(EmployeeRequestDto dto);
 
     EmployeeResponseDto toDto(User user);
