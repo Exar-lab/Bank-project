@@ -11,5 +11,14 @@ public record CustomerUpdateDto(
 
         @Size(max = 20, message = "Phone number must not exceed 20 characters") @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Phone number must contain only numbers, optionally starting with +") String phoneNumber,
 
-        @Size(max = 200, message = "Address must not exceed 200 characters") @Pattern(regexp = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s,\\.#\\-]+$", message = "Address contains invalid characters") String address) {
+        @Size(max = 200, message = "Address must not exceed 200 characters") @Pattern(regexp = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s,.#\\-]+$", message = "Address contains invalid characters") String address,
+
+        @Size(min = 4, max = 20, message = "Username must be between 4 and 20 characters")
+        @Pattern(
+                regexp = "^[a-zA-Z0-9._-]+$",
+                message = "Username can only contain letters, numbers, dots, underscores, and hyphens"
+        )
+        String username
+
+) {
 }

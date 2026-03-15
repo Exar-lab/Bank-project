@@ -2,6 +2,7 @@ package com.banco.co.user.service.user;
 
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.exception.authentication.PasswordMismatchException;
 import com.banco.co.exception.authentication.UnauthorizedException;
@@ -32,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -60,16 +63,16 @@ public class UserService implements IUserService {
         public CustomerResponseDto createUser(CustomerRequestDto dto) {
 
                 // Validar email
-                if (userRepository.existsByEmail(dto.email())) {
-
+                if (userRepository.existsByEmail(dto.email())){
                         // ⚠️ AUDITAR: Intento de registro con email existente
                         auditLogService.logAnonymous(
                                         AuditAction.CREATE_PROFILE_FAILED,
                                         AuditEntityType.USER,
                                         null,
-                                        String.format("Registration attempt with existing email: %s", dto.email()),
-                                        null,
-                                        null);
+                                        List.of(
+                                                new AuditLogDetail("message", "Registration attempt with existing email"),
+                                                new AuditLogDetail("email", dto.email())
+                                        ));
 
                         throw new UserAlreadyExist(dto.email());
                 }
@@ -82,10 +85,10 @@ public class UserService implements IUserService {
                                         AuditAction.CREATE_PROFILE_FAILED,
                                         AuditEntityType.USER,
                                         null,
-                                        String.format("Registration attempt with existing document number: %s",
-                                                        dto.documentNumber()),
-                                        null,
-                                        null);
+                                        List.of(
+                                                new AuditLogDetail("message", "Registration attempt with existing document number"),
+                                                new AuditLogDetail("documentNumber", dto.documentNumber())
+                                        ));
 
                         throw new UserAlreadyExist(dto.documentNumber());
                 }
@@ -93,7 +96,6 @@ public class UserService implements IUserService {
                 // Crear User
                 User user = customerMapper.toEntity(dto);
                 user.setStatus(UserStatus.ACTIVE);
-
                 // Crear Credential
                 UserCredential credential = new UserCredential();
                 credential.setEmail(dto.email());
@@ -117,9 +119,10 @@ public class UserService implements IUserService {
                                 AuditAction.CREATE_PROFILE,
                                 AuditEntityType.USER,
                                 savedUser.getId().toString(),
-                                String.format("User %s registered successfully", savedUser.getEmail()),
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "User registered successfully"),
+                                        new AuditLogDetail("email", savedUser.getEmail())
+                                ));
 
                 return customerMapper.toDto(savedUser);
         }
@@ -151,8 +154,12 @@ public class UserService implements IUserService {
                                         userCreator,
                                         AuditAction.CREATE_PROFILE_FAILED,
                                         AuditEntityType.USER,
-                                        String.format("User %s (role %s) cannot assign role %s",
-                                                        creatorEmail, highestRole, dto.role()));
+                                        List.of(
+                                                new AuditLogDetail("message", "User cannot assign role"),
+                                                new AuditLogDetail("creatorEmail", creatorEmail),
+                                                new AuditLogDetail("highestRole", highestRole),
+                                                new AuditLogDetail("assignedRole", dto.role())
+                                        ));
                         throw new RoleLevelMismatchException(dto.role().name());
                 }
 
@@ -164,10 +171,10 @@ public class UserService implements IUserService {
                                         AuditAction.CREATE_PROFILE_FAILED,
                                         AuditEntityType.USER,
                                         null,
-                                        String.format("Registration employee attempt with existing email: %s",
-                                                        dto.email()),
-                                        null,
-                                        null);
+                                        List.of(
+                                                new AuditLogDetail("message", "Registration employee attempt with existing email"),
+                                                new AuditLogDetail("email", dto.email())
+                                        ));
 
                         throw new UserAlreadyExist(dto.email());
                 }
@@ -180,10 +187,10 @@ public class UserService implements IUserService {
                                         AuditAction.CREATE_PROFILE_FAILED,
                                         AuditEntityType.USER,
                                         null,
-                                        String.format("Registration employee attempt with existing document number: %s",
-                                                        dto.documentNumber()),
-                                        null,
-                                        null);
+                                        List.of(
+                                                new AuditLogDetail("message", "Registration employee attempt with existing document number"),
+                                                new AuditLogDetail("documentNumber", dto.documentNumber())
+                                        ));
 
                         throw new UserAlreadyExist(dto.documentNumber());
                 }
@@ -216,10 +223,12 @@ public class UserService implements IUserService {
                                 AuditAction.EMPLOYEE_CREATED,
                                 AuditEntityType.USER,
                                 savedUser.getId().toString(),
-                                String.format("Admin %s created employee %s with role %s",
-                                                creatorEmail, savedUser.getEmail(), dto.role()),
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "Admin created employee"),
+                                        new AuditLogDetail("adminEmail", creatorEmail),
+                                        new AuditLogDetail("employeeEmail", savedUser.getEmail()),
+                                        new AuditLogDetail("role", dto.role())
+                                ));
 
                 return employeeMapper.toDto(savedUser);
         }
@@ -263,9 +272,13 @@ public class UserService implements IUserService {
                                 AuditAction.UPDATE_PROFILE,
                                 AuditEntityType.USER,
                                 user.getId().toString(),
-                                String.format("User %s updated profile", user.getEmail()),
-                                oldValues,
-                                newValues);
+                                List.of(
+                                        new AuditLogDetail("message", "User updated profile"),
+                                        new AuditLogDetail("email", user.getEmail()),
+                                        new AuditLogDetail("oldValues", oldValues),
+                                        new AuditLogDetail("newValues", newValues)
+                                )
+                );
 
                 return customerMapper.toDto(user);
         }
@@ -287,7 +300,9 @@ public class UserService implements IUserService {
                                         user,
                                         AuditAction.PASSWORD_CHANGE_FAILED,
                                         AuditEntityType.USER,
-                                        "Password and confirmation do not match");
+                                        List.of(
+                                                new AuditLogDetail("message", "Password and confirmation do not match")
+                                        ));
 
                         throw new PasswordMismatchException();
                 }
@@ -298,7 +313,9 @@ public class UserService implements IUserService {
                                         user,
                                         AuditAction.PASSWORD_CHANGE_FAILED,
                                         AuditEntityType.USER,
-                                        "Current password do not match");
+                                        List.of(
+                                                new AuditLogDetail("message", "Current password do not match")
+                                        ));
                         throw new PasswordMismatchException();
                 }
 
@@ -315,9 +332,9 @@ public class UserService implements IUserService {
                                 AuditAction.PASSWORD_CHANGED,
                                 AuditEntityType.SECURITY,
                                 user.getId().toString(),
-                                "Password changed successfully",
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "Password changed successfully")
+                                ));
         }
 
         /**
@@ -338,9 +355,10 @@ public class UserService implements IUserService {
                                 AuditAction.DELETE_PROFILE,
                                 AuditEntityType.USER,
                                 user.getId().toString(),
-                                String.format("User %s deleted account", user.getEmail()),
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "User deleted account"),
+                                        new AuditLogDetail("email", user.getEmail())
+                                ));
         }
 
         // ══════════════════════════════════════════════════════════
@@ -362,9 +380,11 @@ public class UserService implements IUserService {
                                 AuditAction.USER_READ_BY_ADMIN,
                                 AuditEntityType.USER,
                                 userId.toString(),
-                                String.format("Admin %s viewed user %s", adminEmail, user.getEmail()),
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "Admin viewed user"),
+                                        new AuditLogDetail("adminEmail", adminEmail),
+                                        new AuditLogDetail("userEmail", user.getEmail())
+                                ));
 
                 return customerMapper.toDto(user);
         }
@@ -399,9 +419,14 @@ public class UserService implements IUserService {
                                 AuditAction.USER_UPDATED_BY_ADMIN,
                                 AuditEntityType.USER,
                                 userId.toString(),
-                                String.format("Admin %s updated user %s", adminEmail, user.getEmail()),
-                                oldValues,
-                                newValues);
+                                List.of(
+                                        new AuditLogDetail("message", "Admin updated user"),
+                                        new AuditLogDetail("adminEmail", adminEmail),
+                                        new AuditLogDetail("userEmail", user.getEmail()),
+                                        new AuditLogDetail("oldValues", oldValues),
+                                        new AuditLogDetail("newValues", newValues)
+                                )
+                );
 
                 return customerMapper.toDto(user);
         }
@@ -427,10 +452,12 @@ public class UserService implements IUserService {
                                 AuditAction.USER_SUSPENDED,
                                 AuditEntityType.USER,
                                 userId.toString(),
-                                String.format("Admin %s suspended user %s. Reason: %s",
-                                                adminEmail, user.getEmail(), reason),
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "Admin suspended user"),
+                                        new AuditLogDetail("adminEmail", adminEmail),
+                                        new AuditLogDetail("userEmail", user.getEmail()),
+                                        new AuditLogDetail("reason", reason)
+                                ));
 
                 log.warn("User {} suspended by admin {}. Reason: {}",
                                 user.getEmail(), adminEmail, reason);
@@ -457,9 +484,11 @@ public class UserService implements IUserService {
                                 AuditAction.USER_ACTIVATED,
                                 AuditEntityType.USER,
                                 userId.toString(),
-                                String.format("Admin %s activated user %s", adminEmail, user.getEmail()),
-                                null,
-                                null);
+                                List.of(
+                                        new AuditLogDetail("message", "Admin activated user"),
+                                        new AuditLogDetail("adminEmail", adminEmail),
+                                        new AuditLogDetail("userEmail", user.getEmail())
+                                ));
 
                 log.info("User {} activated by admin {}", user.getEmail(), adminEmail);
         }
@@ -486,10 +515,16 @@ public class UserService implements IUserService {
                                 AuditAction.USER_STATUS_CHANGED,
                                 AuditEntityType.USER,
                                 userId.toString(),
-                                String.format("Admin %s changed user %s status from %s to %s",
-                                                adminEmail, user.getEmail(), oldStatus, status),
-                                oldStatus.toString(),
-                                status.toString());
+                                List.of(
+                                        new AuditLogDetail("message", "Admin changed user status"),
+                                        new AuditLogDetail("adminEmail", adminEmail),
+                                        new AuditLogDetail("userEmail", user.getEmail()),
+                                        new AuditLogDetail("oldStatus", oldStatus),
+                                        new AuditLogDetail("newStatus", status),
+                                        new AuditLogDetail("oldValues", oldStatus.toString()),
+                                        new AuditLogDetail("newValues", status.toString())
+                                )
+                );
 
                 log.info("User {} status changed from {} to {} by admin {}",
                                 user.getEmail(), oldStatus, status, adminEmail);

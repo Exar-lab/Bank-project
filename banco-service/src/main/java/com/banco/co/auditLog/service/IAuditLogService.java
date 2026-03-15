@@ -2,7 +2,9 @@ package com.banco.co.auditLog.service;
 
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.user.model.User;
+import java.util.List;
 
 public interface IAuditLogService {
     void logSuccess(
@@ -10,28 +12,24 @@ public interface IAuditLogService {
             AuditAction action,
             AuditEntityType entityType,
             String entityId,
-            String details,
-            String oldValues,
-            String newValues
+            List<AuditLogDetail> details
     );
     void logFailure(
             User user,
             AuditAction action,
             AuditEntityType entityType,
-            String details
+            List<AuditLogDetail> details
     );
     void logCritical(
             User user,
             AuditAction action,
-            String details
+            List<AuditLogDetail> details
     );
     public void logAnonymous(
             AuditAction action,
             AuditEntityType entityType,
             String entityId,
-            String details,
-            String oldValues,
-            String newValues
+            List<AuditLogDetail> details
     );
 
 

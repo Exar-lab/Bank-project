@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record AccountResponseDto(
-        UUID id,
         String accountCode,
         String accountNumber,
         AccountType accountType,
@@ -18,8 +17,7 @@ public record AccountResponseDto(
         BigDecimal availableBalance,
         BigDecimal overdraftLimit,
         BigDecimal interestRate,
-        UUID userId,
-        UUID bankId,
+        String userEmail,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime lastTransactionAt) {

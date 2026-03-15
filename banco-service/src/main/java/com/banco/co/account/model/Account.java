@@ -1,9 +1,8 @@
 package com.banco.co.account.model;
 
-import com.banco.co.Bank.model.Bank;
 import com.banco.co.account.exception.account.AccountInsufficientFundsException;
 import com.banco.co.account.exception.account.AccountMaxWithdrawExceededException;
-import com.banco.co.Transaction.exception.transaction.TransactionInvalidAmountException;
+import com.banco.co.transaction.exception.transaction.TransactionInvalidAmountException;
 import com.banco.co.security.codeGenerator.CodeGenerator;
 import com.banco.co.security.cryptoLib.JasyptEncryptor;
 import com.banco.co.account.enums.AccountStatus;
@@ -21,8 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -40,9 +38,9 @@ public class Account {
     @Column(nullable = false, unique = true)
     private String accountCode; // Se muestra al usuario
 
-    @Convert(converter = JasyptEncryptor.class)
+    @Convert(converter = JasyptEncryptor.class) // Encriptado
     @Column(nullable = false, unique = true, length = 255)
-    private String accountNumber;
+    private String accountNumber; // Se muestra al usuario, pero solo al propietario
 
     // Relaciones
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -50,11 +48,8 @@ public class Account {
     private User user;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL,orphanRemoval = true,fetch = FetchType.LAZY)
-    private List<Card> cards;  // Una cuenta puede tener VARIAS tarjetas
+    private List<Card> cards = new ArrayList<>();  // Una cuenta puede tener VARIAS tarjetas
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bank_id")
-    private Bank bank;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
@@ -90,13 +85,23 @@ public class Account {
 
     private LocalDateTime lastTransactionAt;
 
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal blockedBalance = BigDecimal.ZERO; // Fondos en proceso
+
     // Envelopes (si usas sistema de sobres/presupuestos)
     @OneToMany(mappedBy = "account",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
-    private List<Envelope> envelopes;
+    private Set<Envelope> envelopes = new HashSet<>();
+
+
+    @Column(nullable = false)
+    private Integer maxEnvelope = 10;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal moneyFromEnvelope = BigDecimal.ZERO; // Cantidad de dinero en sobres
 
     // Generar código antes de persistir
     @PrePersist
@@ -120,11 +125,47 @@ public class Account {
         this.lastTransactionAt = LocalDateTime.now();
     }
 
+    /**
+     * Balance total (disponible + bloqueado)
+     */
+    public BigDecimal getTotalBalance() {
+        return balance.add(blockedBalance);
+    }
+
+    public BigDecimal getAvailableBalance() {
+        // Saldo Total - Fondos Bloqueados - Fondos en Sobres (opcional según tu lógica)
+        return this.balance;
+    }
+    /**
+     * Bloquear fondos para una transacción pendiente
+     */
+    public void blockFunds(BigDecimal amount) {
+        BigDecimal maxWithdraw = this.getAvailableBalance().add(this.overdraftLimit);
+        if (balance.compareTo(amount) < 0) {
+            throw new AccountInsufficientFundsException(this.accountCode,amount,maxWithdraw);
+        }
+
+        balance = balance.subtract(amount);
+        blockedBalance = blockedBalance.add(amount);
+    }
+
+    /**
+     * Desbloquear fondos (si transacción falla o se cancela)
+     */
+    public void unblockFunds(BigDecimal amount) {
+        if (blockedBalance.compareTo(amount) < 0) {
+            throw new IllegalStateException("Cannot unblock more than blocked amount");
+        }
+
+        blockedBalance = blockedBalance.subtract(amount);
+        balance = balance.add(amount);
+    }
+
     public void withdraw(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new TransactionInvalidAmountException(amount,"Amount must be positive");
         }
-        BigDecimal maxWithdraw = this.availableBalance.add(this.overdraftLimit);
+        BigDecimal maxWithdraw = this.getAvailableBalance().add(this.overdraftLimit);
         if (amount.compareTo(maxWithdraw) > 0) {
             throw new AccountMaxWithdrawExceededException(this.accountCode,amount,maxWithdraw);
         }
@@ -142,6 +183,16 @@ public class Account {
     public void removeEnvelope(Envelope envelope) {
         this.envelopes.remove(envelope);
         envelope.setAccount(null);
+    }
+
+    public void depositFromEnvelope(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+        this.moneyFromEnvelope = this.moneyFromEnvelope.subtract(amount);
+    }
+
+    public void withdrawFromEnvelope(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
+        this.moneyFromEnvelope = this.moneyFromEnvelope.add(amount);
     }
 
 }

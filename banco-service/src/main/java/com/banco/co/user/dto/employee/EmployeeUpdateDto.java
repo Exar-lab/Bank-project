@@ -11,5 +11,5 @@ public record EmployeeUpdateDto(
 
         @Size(max = 20, message = "Phone number must not exceed 20 characters") @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Phone number must contain only numbers, optionally starting with +") String phoneNumber,
 
-        @Size(max = 200, message = "Address must not exceed 200 characters") @Pattern(regexp = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s,\\.#\\-]+$", message = "Address contains invalid characters") String address) {
+        @Size(max = 200, message = "Address must not exceed 200 characters") @Pattern(regexp = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s,.#\\-]+$", message = "Address contains invalid characters") String address) {
 }

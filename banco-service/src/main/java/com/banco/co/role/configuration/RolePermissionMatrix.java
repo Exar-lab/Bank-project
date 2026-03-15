@@ -20,7 +20,8 @@ public class RolePermissionMatrix {
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.CARD_READ,
-                SystemPermission.CARD_BLOCK
+                SystemPermission.CARD_BLOCK,
+                SystemPermission.TRANSACTION_CREATE
         ));
 
         // Cliente premium: puede más operaciones
@@ -31,7 +32,8 @@ public class RolePermissionMatrix {
                 SystemPermission.TRANSACTION_EXPORT,
                 SystemPermission.CARD_READ,
                 SystemPermission.CARD_BLOCK,
-                SystemPermission.CARD_LIMIT_UPDATE
+                SystemPermission.CARD_LIMIT_UPDATE,
+                SystemPermission.TRANSACTION_CREATE
         ));
 
         // Cajero: opera cuentas pero no las crea

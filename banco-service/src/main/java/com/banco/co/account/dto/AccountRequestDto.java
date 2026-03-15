@@ -4,7 +4,6 @@ import com.banco.co.account.enums.AccountType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public record AccountRequestDto(
 
@@ -16,7 +15,6 @@ public record AccountRequestDto(
 
         @DecimalMin(value = "0", message = "Interest rate must be zero or positive") @DecimalMax(value = "100", message = "Interest rate must not exceed 100") BigDecimal interestRate,
 
-        @NotNull(message = "User ID is required") UUID userId,
-
-        @NotNull(message = "Bank ID is required") UUID bankId) {
+        @NotBlank(message = "Document number is required") @Size(max = 12, message = "Document number must not exceed 12 characters") @Pattern(regexp = "^[0-9]+$", message = "Document number must contain only numbers") String documentNumber
+) {
 }
