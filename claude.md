@@ -61,16 +61,18 @@ El sistema usa **7 agentes en 3 categorías**. La separación no es arbitraria: 
 
 Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas → el orquestador la divide en dos tareas para dos agentes distintos.
 
-| Agente | Capa | Responsabilidad |
-|--------|------|-----------------|
-| **Domain Agent** | `com.banco.co.domain.*` | Value objects, aggregates, domain services, reglas de negocio puras |
-| **Application Agent** | `com.banco.co.application.*` | Use cases, services, DTOs, MapStruct mappers |
-| **Infrastructure Agent** | `com.banco.co.infrastructure.*` | JPA entities, repositories, Kafka publishers, adapters externos |
-| **Presentation Agent** | `com.banco.co.presentation.*` | REST controllers, exception handlers, request/response mapping |
+> **Estructura actual**: Screaming Architecture (feature-first). Los packages son `com.banco.co.{feature}.*` donde `{feature}` = `account`, `transaction`, `envelope`, `user`, `card`, `role`, `permission`, `fraud`, `auditLog`, `security`, `exception`. Dentro de cada feature existen sub-paquetes por capa (ver tabla abajo).
+
+| Agente | Sub-paquete que toca | Responsabilidad |
+|--------|----------------------|-----------------|
+| **Domain Agent** | `{feature}/model/`, `{feature}/enums/`, `{feature}/exception/` | Value objects, modelos de dominio, enums, jerarquías de excepción sealed |
+| **Application Agent** | `{feature}/service/`, `{feature}/dto/`, `{feature}/mapper/` | Use cases, services, DTOs (Records), MapStruct mappers |
+| **Infrastructure Agent** | `{feature}/repository/`, `security/`, `exception/` (global) | JPA entities, repositories, Kafka publishers (cuando existan), adapters, config de seguridad |
+| **Presentation Agent** | `{feature}/controller/`, `{feature}/handler/` | REST controllers, exception handlers, request/response mapping |
 
 #### Domain Agent
 
-**Puede tocar**: `domain/` únicamente  
+**Puede tocar**: `{feature}/model/`, `{feature}/enums/`, `{feature}/exception/`  
 **No puede tocar**: `@Entity`, `@Service`, `@RestController`, nada de Spring  
 **Skills que lee**:
 - `.gentle/skills/java-records-dtos.md`
@@ -80,7 +82,7 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 
 #### Application Agent
 
-**Puede tocar**: `application/service/`, `application/dto/`, `application/mapper/`  
+**Puede tocar**: `{feature}/service/`, `{feature}/dto/`, `{feature}/mapper/`  
 **No puede tocar**: `@Entity`, `@RestController`, lógica de negocio pura  
 **Skills que lee**:
 - `.atl/skill-spring-boot-mapstruct-dtos.md`
@@ -89,16 +91,16 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 
 #### Infrastructure Agent
 
-**Puede tocar**: `infrastructure/persistence/`, `infrastructure/publisher/`, `infrastructure/config/`  
+**Puede tocar**: `{feature}/repository/`, `security/`, `exception/` (global), `{feature}/config/`  
 **No puede tocar**: Lógica de negocio, DTOs de response, controllers  
 **Skills que lee**:
 - `.atl/skill-spring-data-jpa-repositories.md`
-- `.atl/skill-kafka-async-messaging.md` (cuando exista)
+- `.atl/skill-kafka-async-messaging.md` ← **PENDIENTE** (crear cuando se implemente Kafka; usar `.atl/skill-spring-data-jpa-repositories.md` mientras tanto)
 - `.gentle/skills/java-dependency-injection.md`
 
 #### Presentation Agent
 
-**Puede tocar**: `presentation/controller/`, `presentation/exception/`  
+**Puede tocar**: `{feature}/controller/`, `{feature}/handler/`  
 **No puede tocar**: Lógica de negocio, queries JPA, publicación de eventos  
 **Skills que lee**:
 - `.atl/skill-spring-boot-validation.md`
@@ -278,8 +280,11 @@ public class AccountService {
 }
 
 // ❌ NUNCA
-@Autowired
-private IAccountRepository repo; // no testeable, acoplado
+@Service
+public class AccountService {
+    @Autowired
+    private IAccountRepository repo; // no testeable, acoplado al container
+}
 ```
 
 ### 3. Optional sin .get()
@@ -294,7 +299,7 @@ return repo.findById(id)
     .orElse(BigDecimal.ZERO);
 
 // ❌ NUNCA
-return repo.findById(id).get(); // NPE esperando el momento justo
+return repo.findById(id).get(); // NoSuchElementException esperando el momento justo
 ```
 
 ### 4. Sealed exceptions
@@ -388,7 +393,7 @@ proposal → spec ──→ tasks → apply → verify → archive
   → Capa: com.banco.co.application.*
 
 [Infrastructure Agent]  ← Task 3 (después de Domain)
-  → Lee: skill-kafka-async-messaging.md
+  → Lee: skill-spring-data-jpa-repositories.md  (skill-kafka-async-messaging.md aún no existe — crear en sprint Kafka)
   → Escribe: TransferEventPublisher, OutboxEntry
   → Capa: com.banco.co.infrastructure.*
 
