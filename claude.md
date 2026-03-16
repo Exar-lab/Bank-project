@@ -1,363 +1,511 @@
 # claude.md — Multi-Agent Context for Banco-Service
 
-**Propósito**: Brújula para agentes Claude que trabajan en distintas partes del código. Define qué hacer, cómo pensar, y cuándo leer skills.
+**Propósito**: Brújula para agentes Claude que trabajan en banco-service. Define el rol de cada agente, cuándo se activa, qué skills leer, y qué reglas jamás romper.
 
 ---
 
-## 🎯 Filosofía Multi-Agente
+## 🏗️ Arquitectura Multi-Agente (Híbrida)
 
-Este proyecto UTILIZA MULTIPLES AGENTES CLAUDE:
+El sistema usa **7 agentes en 3 categorías**. La separación no es arbitraria: Planning y Build siguen el ciclo de vida del software, Build se especializa por capa (protege la arquitectura hexagonal), y QA+Security son cross-cutting porque aplican a TODO.
 
-| Agente | Responsabilidad | Entrada | Salida |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  CATEGORÍA 1: PLANNING                                      │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  Planning Agent  →  SDD workflow, specs, diseño      │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────┬───────────────────────────────────┘
+                          ↓ (entrega tasks + specs)
+┌─────────────────────────────────────────────────────────────┐
+│  CATEGORÍA 2: BUILD (especializados por capa)               │
+│  ┌────────────┐ ┌─────────────┐ ┌────────────────────────┐  │
+│  │   Domain   │ │ Application │ │    Infrastructure      │  │
+│  │   Agent    │ │   Agent     │ │       Agent            │  │
+│  └────────────┘ └─────────────┘ └────────────────────────┘  │
+│                 ┌─────────────┐                             │
+│                 │Presentation │                             │
+│                 │   Agent     │                             │
+│                 └─────────────┘                             │
+└─────────────────────────┬───────────────────────────────────┘
+                          ↓ (entrega código)
+┌─────────────────────────────────────────────────────────────┐
+│  CATEGORÍA 3: QA + SECURITY (cross-cutting)                 │
+│  ┌──────────────────┐   ┌─────────────────────────────┐    │
+│  │   Test Agent     │   │      Security Agent         │    │
+│  │  (todas las      │   │   (todas las capas,         │    │
+│  │   capas)         │   │    siempre)                 │    │
+│  └──────────────────┘   └─────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🤖 Los 7 Agentes
+
+### CATEGORÍA 1 — PLANNING
+
+| Agente | Se activa cuando | Entrada | Salida |
 |--------|-----------------|---------|--------|
-| **Domain Agent** | Lógica de negocio, modelos, validaciones | Feature request / Bug en domain | Domain entities + unit tests |
-| **Application Agent** | Use cases, mappers, orquestación | Feature request | Services + DTOs + integration tests |
-| **Infrastructure Agent** | Persistencia, adapters, Kafka | Feature request | Repositories + Publishers + Testcontainers |
-| **Presentation Agent** | REST endpoints, exception handlers | Feature request | Controllers + error handling + integration tests |
-| **Architect Agent** | SDD workflow, decisions, design docs | Change scope / Refactoring | Specifications, designs, task breakdowns |
+| **Planning Agent** | Empezás un feature, refactor, o decisión de diseño | Descripción del cambio | Proposal + Spec + Design + Tasks (SDD artifacts) |
 
-**CLAVE**: Cada agente es especializado y SOLO lee skills de su dominio.
+**Skills que lee**:
+- `.gentle/context/project-roadmap.md`
+- `.gentle/skills/hexagonal-architecture.md`
+- `.atl/SKILL_NAVIGATION_INDEX.md` (para entender qué existe)
+
+**Regla clave**: Planning Agent NO escribe código. Entrega artifacts SDD. Si escribe código, está haciendo el trabajo de Build.
+
+---
+
+### CATEGORÍA 2 — BUILD
+
+Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas → el orquestador la divide en dos tareas para dos agentes distintos.
+
+| Agente | Capa | Responsabilidad |
+|--------|------|-----------------|
+| **Domain Agent** | `com.banco.co.domain.*` | Value objects, aggregates, domain services, reglas de negocio puras |
+| **Application Agent** | `com.banco.co.application.*` | Use cases, services, DTOs, MapStruct mappers |
+| **Infrastructure Agent** | `com.banco.co.infrastructure.*` | JPA entities, repositories, Kafka publishers, adapters externos |
+| **Presentation Agent** | `com.banco.co.presentation.*` | REST controllers, exception handlers, request/response mapping |
+
+#### Domain Agent
+
+**Puede tocar**: `domain/` únicamente  
+**No puede tocar**: `@Entity`, `@Service`, `@RestController`, nada de Spring  
+**Skills que lee**:
+- `.gentle/skills/java-records-dtos.md`
+- `.gentle/skills/java-optional-handling.md`
+- `.gentle/skills/java-exception-handling.md`
+- `.gentle/skills/hexagonal-architecture.md`
+
+#### Application Agent
+
+**Puede tocar**: `application/service/`, `application/dto/`, `application/mapper/`  
+**No puede tocar**: `@Entity`, `@RestController`, lógica de negocio pura  
+**Skills que lee**:
+- `.atl/skill-spring-boot-mapstruct-dtos.md`
+- `.gentle/skills/java-optional-handling.md`
+- `.gentle/skills/java-records-dtos.md`
+
+#### Infrastructure Agent
+
+**Puede tocar**: `infrastructure/persistence/`, `infrastructure/publisher/`, `infrastructure/config/`  
+**No puede tocar**: Lógica de negocio, DTOs de response, controllers  
+**Skills que lee**:
+- `.atl/skill-spring-data-jpa-repositories.md`
+- `.atl/skill-kafka-async-messaging.md` (cuando exista)
+- `.gentle/skills/java-dependency-injection.md`
+
+#### Presentation Agent
+
+**Puede tocar**: `presentation/controller/`, `presentation/exception/`  
+**No puede tocar**: Lógica de negocio, queries JPA, publicación de eventos  
+**Skills que lee**:
+- `.atl/skill-spring-boot-validation.md`
+- `.atl/skill-spring-security-oauth2.md`
+- `.gentle/skills/java-exception-handling.md`
+
+---
+
+### CATEGORÍA 3 — QA + SECURITY
+
+Estos dos agentes son **cross-cutting**: no tienen capa asignada. Actúan sobre lo que produce Build, en cualquier capa.
+
+| Agente | Se activa cuando | Qué revisa/escribe |
+|--------|-----------------|-------------------|
+| **Test Agent** | Después de cualquier Build agent | Tests unitarios + integración para la capa que se acaba de construir |
+| **Security Agent** | Después de cualquier Build agent que toque auth, datos sensibles, o endpoints | Security review, RBAC, JWT, validaciones de seguridad |
+
+#### Test Agent
+
+**Responsabilidad**: Escribir y verificar tests para TODAS las capas  
+**Cobertura mínima por capa**:
+
+| Capa | Mínimo | Herramienta |
+|------|--------|-------------|
+| Domain | 90% | JUnit 5, sin mocks |
+| Application | 85% | JUnit 5 + Mockito (mock ports) |
+| Infrastructure | 70% | Testcontainers |
+| Presentation | 75% | @WebMvcTest |
+
+**Skills que lee**:
+- `.atl/skill-spring-boot-testing-junit5-complete.md`
+- `.gentle/skills/junit5-testing-patterns.md`
+
+**Naming convention**:
+```
+Unit:        test<Method>_<Condition>_<Expected>
+             testWithdraw_InsufficientFunds_ThrowsException
+
+Integration: test<Scenario>_<Expected>
+             testCreateAccount_ValidData_ReturnsCreatedAndPublishesEvent
+```
+
+#### Security Agent
+
+**Responsabilidad**: Revisar y reforzar seguridad en cualquier capa donde aparezca  
+**Se activa ante**: Nuevo endpoint, cambio en auth, acceso a datos de usuario, publicación de eventos con datos sensibles  
+
+**Skills que lee**:
+- `.atl/skill-spring-security-oauth2.md`
+- `AGENTS.md` → sección Spring Security / OAuth2
+
+**Checklist que aplica en cada revisión**:
+- [ ] JWT validado en header `Authorization: Bearer <token>`
+- [ ] `@PreAuthorize` en endpoints que requieren rol específico
+- [ ] Datos sensibles NO loggeados (contraseñas, tokens, PAN de tarjetas)
+- [ ] Inputs sanitizados antes de persistir
+- [ ] No secrets hardcodeados (API keys, passwords)
+- [ ] `SecurityFilterChain` bean (nunca `WebSecurityConfigurerAdapter`)
+- [ ] CORS configurado explícitamente (no `*` en producción)
+- [ ] Excepciones de seguridad no exponen stack traces al cliente
 
 ---
 
 ## 📖 Cómo Leer Skills (Protocol)
 
-### 1. Antes de Escribir Código
+### Antes de escribir código — siempre
 
-Tu checklist:
-- [ ] ¿Qué necesito hacer? (e.g., "crear un DTO", "escribir una query")
-- [ ] ¿Cuál es mi agente/dominio? (e.g., Application, Infrastructure)
-- [ ] ¿Existe una skill para esto?
-
-### 2. Encontrar la Skill Correcta
-
-**Opción A (RECOMENDADA)**: Lee `.atl/SKILL_NAVIGATION_INDEX.md`
 ```
-Go to: .atl/SKILL_NAVIGATION_INDEX.md
-Look for: Your scenario (e.g., "Map entity to DTO")
-→ Find the skill name (e.g., "spring-boot-mapstruct-dtos")
-→ Reference: .atl/skill-{name}.md
+1. ¿Qué necesito hacer?       → "crear un JPA repository"
+2. ¿Qué agente soy?           → Infrastructure Agent
+3. ¿Existe skill para esto?   → .atl/SKILL_NAVIGATION_INDEX.md
+4. Leer la skill              → .atl/skill-spring-data-jpa-repositories.md
+5. Copiar el patrón ✅         → adaptar solo nombres/datos
+6. Escribir código            → siguiendo exactamente el patrón
 ```
 
-**Opción B**: Usa el registry por layer
+**REGLA DE ORO**: Si la skill tiene un patrón ✅ para tu caso → copialo. No inventes. No "mejores". El patrón existe porque alguien ya resolvió ese problema.
+
+### Encontrar la skill correcta
+
+**Opción A — por escenario** (recomendada):
 ```
-Go to: .atl/skill-registry.md
-Look for: Your layer (Application, Infrastructure, etc.)
-→ Find your scenario
-→ Reference the linked skill
+.atl/SKILL_NAVIGATION_INDEX.md
+→ Buscar: "Map entity to DTO"
+→ Resultado: skill-spring-boot-mapstruct-dtos
+→ Leer: .atl/skill-spring-boot-mapstruct-dtos.md
 ```
 
-### 3. Dentro de la Skill
+**Opción B — por capa**:
+```
+.atl/skill-registry.md
+→ Buscar: tu capa (Application, Infrastructure, etc.)
+→ Encontrar el escenario
+→ Leer la skill linkeada
+```
 
-Estructura de cada skill:
+### Estructura de cada skill
 
 ```markdown
-# Skill: [Name]
-
 ## When to Use
-- You need to [problem]
-- Use this skill when [condition]
+- Cuándo aplica esta skill
 
 ## Critical Patterns
-### ✅ Correct Pattern (Always)
-[Code example - COPY THIS]
-
-### ❌ Common Mistake (Never)
-[Anti-pattern - DON'T DO THIS]
+### ✅ Correct Pattern    ← COPIÁ ESTO
+### ❌ Common Mistake     ← NUNCA HAGAS ESTO
 
 ## Examples for Banco-Service
-1. [Real example 1 - actual project context]
-2. [Real example 2 - another layer]
-3. [Common mistake to avoid]
+- Ejemplos reales del proyecto
 
 ## Best Practices
-- [Banco-specific convention 1]
-- [Banco-specific convention 2]
-
-## References
-- [Link to architecture doc]
-- [Link to related skill]
+- Convenciones específicas de banco-service
 ```
-
-**REGLA DE ORO**: Copy patterns directly from skill → Modify only data/names → Done.
 
 ---
 
-## 🏛️ Architecture + Layering
-
-### Layer Responsibilities
+## 🏛️ Capas de la Arquitectura
 
 ```
 ┌─ Presentation (REST)
-│  └─ Controllers, @RestController, exception handlers
-│     → OUTPUT: JSON, HTTP status codes
-│     → INPUT: HTTP requests
+│  └─ @RestController, exception handlers
+│     INPUT:  HTTP requests
+│     OUTPUT: JSON + HTTP status codes
+│     REGLA:  Nunca lógica de negocio aquí
 │
 ├─ Application (Orchestration)
-│  └─ Services, Use Cases, @Service, MapStruct mappers
-│     → Calls Domain for business logic
-│     → Calls Infrastructure for persistence
-│     → Maps between DTOs ↔ Domain models
+│  └─ @Service, use cases, MapStruct mappers
+│     INPUT:  DTOs (records) desde Presentation
+│     OUTPUT: DTOs (records) hacia Presentation
+│     REGLA:  Orquesta, no decide. La decisión es del Domain.
 │
 ├─ Infrastructure (Adapters)
-│  └─ Repositories, JPA entities, Kafka publishers
-│     → Implements application ports
-│     → Persists to DB
-│     → Publishes events
+│  └─ @Repository, @Entity, Kafka publishers
+│     INPUT:  Domain objects desde Application
+│     OUTPUT: Persisted data / published events
+│     REGLA:  Implementa puertos. No tiene opinión de negocio.
 │
 └─ Domain (Pure Logic)
-   └─ Value objects, Aggregates, Domain services
-      → NO Spring annotations
-      → NO JPA
-      → NO external deps
-      → 100% testable without mocks
+   └─ Value objects, aggregates, domain services
+      INPUT:  Primitivos / value objects
+      OUTPUT: Resultado de negocio o excepción sealed
+      REGLA:  ZERO Spring. ZERO JPA. 100% testeable sin mocks.
 ```
 
-**CUANDO ESCRIBAS**: Define layer PRIMERO, luego lee skill PARA ESE LAYER.
+**Define tu capa PRIMERO → luego lee la skill DE ESA CAPA.**
 
 ---
 
-## ✅ Conventions You Must Follow
+## ✅ Convenciones (No Negociables)
 
-### 1. DTOs are ALWAYS Records
+### 1. DTOs son siempre Records
+
 ```java
 // ✅ CORRECTO
 public record CreateAccountDto(
-    String accountHolder,
-    BigDecimal initialBalance
+    @NotBlank String accountHolder,
+    @Positive BigDecimal initialBalance
 ) {}
 
 // ❌ NUNCA
 @Data
 public class CreateAccountDto {
-    private String accountHolder;
-    // ...
+    private String accountHolder; // mutable = problema
 }
 ```
 
-### 2. Constructor Injection ONLY
+### 2. Constructor injection únicamente
+
 ```java
 // ✅ CORRECTO
 @Service
 public class AccountService {
-    private final AccountRepository repo;
-    
-    public AccountService(AccountRepository repo) {
+    private final IAccountRepository repo;
+
+    public AccountService(IAccountRepository repo) {
         this.repo = repo;
     }
 }
 
 // ❌ NUNCA
-@Service
-public class AccountService {
-    @Autowired
-    private AccountRepository repo;
-}
+@Autowired
+private IAccountRepository repo; // no testeable, acoplado
 ```
 
-### 3. Optional (never .get())
+### 3. Optional sin .get()
+
 ```java
 // ✅ CORRECTO
 return repo.findById(id)
-    .orElseThrow(() -> new AccountNotFoundException());
+    .orElseThrow(() -> new AccountNotFoundException(id));
 
 return repo.findById(id)
-    .map(acc -> acc.getBalance())
+    .map(Account::getBalance)
     .orElse(BigDecimal.ZERO);
 
 // ❌ NUNCA
-return repo.findById(id).get(); // NPE waiting to happen
+return repo.findById(id).get(); // NPE esperando el momento justo
 ```
 
-### 4. Sealed Exceptions
+### 4. Sealed exceptions
+
 ```java
 // ✅ CORRECTO
-public sealed class BancoException extends Exception
+public sealed class BancoException extends RuntimeException
     permits InsufficientFundsException,
             AccountNotFoundException,
             TransferFailedException {}
 
-public final class InsufficientFundsException 
-    extends BancoException {}
+public final class InsufficientFundsException extends BancoException {
+    public InsufficientFundsException(BigDecimal required, BigDecimal available) {
+        super("Required: " + required + ", available: " + available);
+    }
+}
 
 // ❌ NUNCA
-public class BancoException extends Exception {}
+public class BancoException extends Exception {} // no sellada = jerarquía descontrolada
 ```
 
-### 5. Package Naming
+### 5. Package naming
+
 ```
 ✅ CORRECTO
 com.banco.co.domain.account.Account
 com.banco.co.application.service.AccountService
-com.banco.co.infrastructure.repository.JpaAccountRepository
+com.banco.co.infrastructure.persistence.JpaAccountRepository
 com.banco.co.presentation.controller.AccountController
 
 ❌ NUNCA
 com.myapp.Account
-org.example.services.AccountService
+org.example.AccountService
 ```
 
-### 6. JPA Queries (no N+1)
+### 6. JPA sin N+1
+
 ```java
-// ✅ CORRECTO - Explicit join
-@Query("SELECT new com.banco.co.application.dto.AccountDto(" +
+// ✅ CORRECTO — join explícito + proyección DTO
+@Query("SELECT new com.banco.co.application.dto.AccountSummaryDto(" +
        "a.id, a.holder, COUNT(t.id)) " +
        "FROM Account a LEFT JOIN a.transactions t " +
-       "GROUP BY a.id")
-List<AccountDto> findAllWithTransactionCount();
+       "GROUP BY a.id, a.holder")
+@Transactional(readOnly = true)
+List<AccountSummaryDto> findAllWithTransactionCount();
 
-// ❌ NUNCA - Lazy loading = N+1
-@Query("SELECT a FROM Account a")
-List<Account> findAll();
-// then: account.getTransactions() in loop = N queries
+// ❌ NUNCA — lazy loading dentro de un loop = N queries
+List<Account> accounts = repo.findAll();
+accounts.forEach(a -> a.getTransactions()); // BOOM: N+1
 ```
 
 ---
 
-## 🔄 SDD Workflow (When You See It)
+## 🔄 SDD Workflow
 
-If orchestrator says: `/sdd-explore`, `/sdd-propose`, `/sdd-spec`, `/sdd-design`, `/sdd-tasks`, `/sdd-apply`, `/sdd-verify`:
+Cuando el orquestador dice `/sdd-explore`, `/sdd-propose`, `/sdd-spec`, `/sdd-design`, `/sdd-tasks`, `/sdd-apply`, `/sdd-verify`:
 
-1. **You are a specialist agent** - you do ONE phase well
-2. **Read the orchestrator's prompt** - it tells you what artifact to read/write
-3. **Save to Engram** - use `mem_save` with topic_key
-4. **Return ONE message** - executive summary + artifacts
+1. **Sos un agente especialista** — hacés UNA fase bien
+2. **Leé el prompt del orquestador** — te dice qué artifact leer/escribir
+3. **Guardá en Engram** — `mem_save` con `topic_key`
+4. **Devolvés UN mensaje** — executive summary + artifacts
 
-Example topic_key: `sdd/kafka-event-driven/spec`
+**Formato de topic_key**: `sdd/{change-name}/{phase}`
+Ejemplo: `sdd/kafka-event-driven-refactor/spec`
+
+**Dependency chain**:
+```
+proposal → spec ──→ tasks → apply → verify → archive
+            ↑
+          design
+```
 
 ---
 
-## 🎓 Learning Path (Read in Order)
-
-### New to Project?
-1. `.gentle/context/project-roadmap.md` ← You are here
-2. `AGENTS.md` ← Code review rules
-3. `.atl/SKILL_NAVIGATION_INDEX.md` ← Find skills
-
-### Starting a Feature?
-1. Identify your layer (Domain/App/Infra/Presentation)
-2. Go to `.atl/SKILL_NAVIGATION_INDEX.md`
-3. Find your scenario → Read the skill
-4. Copy pattern → Adapt to your context
-
-### Debugging N+1 or Performance?
-→ Read: `.atl/skill-spring-data-jpa-repositories.md`
-
-### Writing Tests?
-→ Read: `.atl/skill-spring-boot-testing-junit5-complete.md`
-
-### Mapping DTOs?
-→ Read: `.atl/skill-spring-boot-mapstruct-dtos.md`
-
-### Implementing OAuth2/JWT?
-→ Read: `.atl/skill-spring-security-oauth2.md`
-
-### Validating Input?
-→ Read: `.atl/skill-spring-boot-validation.md`
-
----
-
-## 🚀 Workflow for Agentes
-
-### Scenario: "Implement account transfer"
+## 🚀 Workflow Completo: "Implementar account transfer"
 
 ```
-1. ORCHESTRATOR assigns: "domain-agent, implement transfer domain logic"
-   → Read: .gentle/skills/java-records-dtos.md (for Money value object)
-   → Read: .gentle/skills/java-optional-handling.md (for error cases)
-   → Write: com.banco.co.domain.account.Account#transfer()
-   
-2. ORCHESTRATOR assigns: "app-agent, create TransferUseCase"
-   → Read: .atl/SKILL_NAVIGATION_INDEX.md → find "Transfer funds"
-   → Read: .atl/skill-spring-boot-mapstruct-dtos.md (for DTO mapping)
-   → Write: TransferService, TransferDto
-   
-3. ORCHESTRATOR assigns: "infra-agent, publish TransferEvent to Kafka"
-   → Read: .atl/skill-kafka-async-messaging.md (coming soon!)
-   → Write: TransferEventPublisher
-   
-4. ORCHESTRATOR assigns: "presentation-agent, create POST /transfer endpoint"
-   → Read: .atl/skill-spring-boot-validation.md
-   → Write: TransferController with validation
+[Planning Agent]
+  → /sdd-new account-transfer
+  → Entrega: spec + design + tasks
+  → Artifact: sdd/account-transfer/tasks
+
+[Domain Agent]  ← Task 1
+  → Lee: java-records-dtos.md, java-exception-handling.md
+  → Escribe: Account#transfer(), InsufficientFundsException
+  → Capa: com.banco.co.domain.account.*
+
+[Application Agent]  ← Task 2 (parallel con Domain)
+  → Lee: skill-spring-boot-mapstruct-dtos.md
+  → Escribe: TransferService, TransferDto, TransferResponseDto
+  → Capa: com.banco.co.application.*
+
+[Infrastructure Agent]  ← Task 3 (después de Domain)
+  → Lee: skill-kafka-async-messaging.md
+  → Escribe: TransferEventPublisher, OutboxEntry
+  → Capa: com.banco.co.infrastructure.*
+
+[Presentation Agent]  ← Task 4 (después de Application)
+  → Lee: skill-spring-boot-validation.md
+  → Escribe: TransferController, GlobalExceptionHandler
+  → Capa: com.banco.co.presentation.*
+
+[Test Agent]  ← Task 5 (después de todos los Build)
+  → Lee: skill-spring-boot-testing-junit5-complete.md
+  → Escribe: tests para TODAS las capas anteriores
+  → Coverage: Domain 90%, Application 85%, Infra 70%, Presentation 75%
+
+[Security Agent]  ← Task 6 (parallel con Test Agent)
+  → Lee: skill-spring-security-oauth2.md
+  → Revisa: POST /transfer requiere auth, datos sensibles no loggeados
+  → Agrega: @PreAuthorize, JWT validation, CORS config
 ```
 
-**KEY**: Each agent knows its layer, reads the RIGHT skill, copies the pattern.
+**KEY**: Planning entrega el plan → Build construye capa por capa → QA+Security validan todo.
 
 ---
 
 ## 🔗 Navigation Quick Links
 
-| Need | File |
-|------|------|
-| Find a skill | `.atl/SKILL_NAVIGATION_INDEX.md` |
-| Code review checklist | `AGENTS.md` → Code Review Checklist |
-| Architecture reference | `.gentle/context/project-roadmap.md` |
-| Exception handling | `.gentle/skills/java-exception-handling.md` |
-| DTOs + Records | `.gentle/skills/java-records-dtos.md` |
+| Necesito... | Archivo |
+|-------------|---------|
+| Encontrar una skill | `.atl/SKILL_NAVIGATION_INDEX.md` |
+| Ver todas las skills por capa | `.atl/skill-registry.md` |
+| Checklist pre-merge | `AGENTS.md` → Code Review Checklist |
+| Arquitectura del proyecto | `.gentle/context/project-roadmap.md` |
+| Records / DTOs | `.gentle/skills/java-records-dtos.md` |
 | Optional handling | `.gentle/skills/java-optional-handling.md` |
-| Dependency injection | `.gentle/skills/java-dependency-injection.md` |
+| Constructor injection | `.gentle/skills/java-dependency-injection.md` |
+| Sealed exceptions | `.gentle/skills/java-exception-handling.md` |
+| Arquitectura hexagonal | `.gentle/skills/hexagonal-architecture.md` |
 | Git commits | `.gentle/skills/conventional-commits.md` |
-| Hexagonal architecture | `.gentle/skills/hexagonal-architecture.md` |
-| JUnit 5 testing | `.gentle/skills/junit5-testing-patterns.md` |
+| Testing JUnit 5 | `.gentle/skills/junit5-testing-patterns.md` |
+| JPA + N+1 prevention | `.atl/skill-spring-data-jpa-repositories.md` |
+| MapStruct mappers | `.atl/skill-spring-boot-mapstruct-dtos.md` |
+| OAuth2 / JWT | `.atl/skill-spring-security-oauth2.md` |
+| Validación de inputs | `.atl/skill-spring-boot-validation.md` |
+| Tests completos | `.atl/skill-spring-boot-testing-junit5-complete.md` |
 
 ---
 
-## 🎯 Multi-Agent Rules
+## 📋 Reglas Multi-Agente
 
-1. **YOU SPECIALIZE**: Domain agent writes domain. Infra agent writes infra. NO mixing.
-2. **READ SKILLS FIRST**: Don't invent patterns. Skills have banco-specific examples.
-3. **LAYER SEPARATION**: Never put logic outside your layer.
-4. **RECORDS ALWAYS**: No getters/setters, no @Data, no mutable classes.
-5. **OPTIONAL EVERYWHERE**: Use Optional, never null.
-6. **SEALED EXCEPTIONS**: Type-safe error handling.
-7. **NO FIELD @AUTOWIRED**: Constructor injection only.
-8. **100% CONVENTIONAL**: Commits, package names, naming.
-
----
-
-## 📝 Red Flags (Stop and Ask)
-
-If you see any of these, ASK THE ORCHESTRATOR before proceeding:
-
-- 🚩 Circular dependencies between layers
-- 🚩 Domain logic leaked into Controller
-- 🚩 N+1 queries in JPA
-- 🚩 .get() on Optional
-- 🚩 @Autowired on fields
-- 🚩 @Data classes (use Records!)
-- 🚩 Business logic in @Entity
-- 🚩 Mutable DTOs
-- 🚩 Catch generic Exception
-- 🚩 No tests written
+1. **ESPECIALIZATE**: Cada agente solo toca su capa/responsabilidad. Sin excepciones.
+2. **LEÉ SKILLS PRIMERO**: Antes de escribir una línea. Sin excepciones.
+3. **PLANNING antes de BUILD**: Sin spec ni tasks, Build no arranca.
+4. **TEST y SECURITY siempre**: No se entregan features sin Test Agent y Security Agent.
+5. **RECORDS siempre**: Ningún DTO es una clase mutable.
+6. **OPTIONAL sin .get()**: Siempre `orElseThrow` o `orElse`.
+7. **CONSTRUCTOR INJECTION**: Nunca `@Autowired` en campos.
+8. **SEALED EXCEPTIONS**: Toda jerarquía de excepciones es sellada.
+9. **PACKAGE NAMING**: Todo bajo `com.banco.co.*`.
+10. **CONVENTIONAL COMMITS**: `feat(domain):`, `feat(infrastructure):`, `test(application):`, etc.
 
 ---
 
-## 🎓 Philosophy
+## 🚩 Red Flags — Parar y consultar al orquestador
 
-**This is NOT a code generator project.**
+**Arquitectura**
+- 🚩 Lógica de negocio en un `@RestController`
+- 🚩 `@Entity` o `@Repository` en el domain layer
+- 🚩 Dependencia circular entre capas
+- 🚩 Business logic en un `@Entity`
 
-Skills are KNOWLEDGE CARDS for specialized agents:
-- They teach patterns
-- They prevent mistakes
-- They enforce conventions
-- They document banco-specific best practices
+**Código**
+- 🚩 `.get()` en un `Optional`
+- 🚩 `@Autowired` en un campo
+- 🚩 `@Data` en un DTO (usar Record)
+- 🚩 `catch (Exception e)` genérico
+- 🚩 N+1 query detectada (lazy loading en loop)
 
-**An agent that reads skills and follows them** is better than an agent that writes code from scratch.
+**Testing**
+- 🚩 Cero tests escritos para la feature
+- 🚩 Test agent mockeando Kafka (usar Testcontainers)
+- 🚩 Coverage por debajo del mínimo por capa
+
+**Seguridad**
+- 🚩 Endpoint sin `@PreAuthorize` que requiere auth
+- 🚩 Password, token, o secreto loggeado
+- 🚩 Secret hardcodeado en código fuente
+- 🚩 Stack trace expuesto en response HTTP
+- 🚩 CORS configurado con `*` en producción
 
 ---
 
-## 🔄 How to Update This File
+## 🎓 Filosofía
 
-When:
-- New multi-agent pattern discovered
-- New skill created
-- New convention established
-- New layer added to architecture
+**Este no es un proyecto de generación de código.**
 
-Update this file. It's the SOURCE OF TRUTH for all Claude agents.
+Los agentes son especialistas que conocen su dominio en profundidad. Un agente que:
+- lee su skill antes de escribir
+- se mantiene en su capa
+- pasa el código a Test Agent y Security Agent
+
+...vale diez veces más que un agente que escribe todo de corrido sin leer nada.
+
+Las skills son el conocimiento acumulado del equipo. No las ignores.
 
 ---
 
-**Last Updated**: $(date)  
-**SDD Context**: skill-registry-completion (complete)  
-**Next Change**: kafka-event-driven-refactor (in progress)
+## 🔄 Cómo actualizar este archivo
+
+Actualizá `claude.md` cuando:
+- Se agrega un nuevo agente
+- Se crea una nueva skill
+- Se establece una nueva convención
+- Cambia la arquitectura del proyecto
+
+Este archivo es el SOURCE OF TRUTH. Si algo cambia en el sistema y no está acá, los agentes van a seguir el comportamiento viejo.
+
+---
+
+**Last Updated**: 2026-03-16
+**Arquitectura**: Híbrida — Planning / Build (x4) / QA+Security
+**SDD en curso**: `kafka-event-driven-refactor`
