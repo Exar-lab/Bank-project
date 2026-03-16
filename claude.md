@@ -281,7 +281,7 @@ public class AccountService {
 
 // ❌ NUNCA
 @Service
-public class AccountService {
+public class BadAccountService {
     @Autowired
     private IAccountRepository repo; // no testeable, acoplado al container
 }
