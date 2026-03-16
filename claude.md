@@ -91,7 +91,7 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 
 #### Infrastructure Agent
 
-**Puede tocar**: `{feature}/repository/`, `security/`, `exception/` (global), `{feature}/config/`  
+**Puede tocar**: `{feature}/repository/`, `security/`, `exception/` (global), `com.banco.co.security.config`, `com.banco.co.role.configuration` *(y futuros paquetes `{feature}.config` si se definen explícitamente)*  
 **No puede tocar**: Lógica de negocio, DTOs de response, controllers  
 **Skills que lee**:
 - `.atl/skill-spring-data-jpa-repositories.md`
