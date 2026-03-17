@@ -100,7 +100,7 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 
 #### Presentation Agent
 
-**Puede tocar**: `{feature}/controller/`, `{feature}/handler/`  
+**Puede tocar**: `{feature}/controller/` (cuando exista), `{feature}/handler/` (cuando exista)  
 **No puede tocar**: Lógica de negocio, queries JPA, publicación de eventos  
 **Skills que lee**:
 - `.atl/skill-spring-boot-validation.md`
