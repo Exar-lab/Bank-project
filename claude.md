@@ -385,22 +385,22 @@ proposal → spec ──→ tasks → apply → verify → archive
 [Domain Agent]  ← Task 1
   → Lee: java-records-dtos.md, java-exception-handling.md
   → Escribe: Account#transfer(), InsufficientFundsException
-  → Capa: com.banco.co.domain.account.*
+  → Capa: com.banco.co.account.domain.*
 
 [Application Agent]  ← Task 2 (parallel con Domain)
   → Lee: skill-spring-boot-mapstruct-dtos.md
   → Escribe: TransferService, TransferDto, TransferResponseDto
-  → Capa: com.banco.co.application.*
+  → Capa: com.banco.co.account.application.*
 
 [Infrastructure Agent]  ← Task 3 (después de Domain)
   → Lee: skill-spring-data-jpa-repositories.md  (skill-kafka-async-messaging.md aún no existe — crear en sprint Kafka)
   → Escribe: TransferEventPublisher, OutboxEntry
-  → Capa: com.banco.co.infrastructure.*
+  → Capa: com.banco.co.account.repository.*
 
 [Presentation Agent]  ← Task 4 (después de Application)
   → Lee: skill-spring-boot-validation.md
   → Escribe: TransferController, GlobalExceptionHandler
-  → Capa: com.banco.co.presentation.*
+  → Capa: com.banco.co.account.presentation.*
 
 [Test Agent]  ← Task 5 (después de todos los Build)
   → Lee: skill-spring-boot-testing-junit5-complete.md
