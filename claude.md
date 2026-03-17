@@ -61,7 +61,7 @@ El sistema usa **7 agentes en 3 categorías**. La separación no es arbitraria: 
 
 Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas → el orquestador la divide en dos tareas para dos agentes distintos.
 
-> **Estructura actual**: Screaming Architecture (feature-first). Los packages son `com.banco.co.{feature}.*` donde `{feature}` = `account`, `transaction`, `envelope`, `user`, `card`, `role`, `permission`, `fraud`, `auditLog`, `security`, `exception`. Dentro de cada feature existen sub-paquetes por capa (ver tabla abajo).
+> **Estructura actual**: Screaming Architecture (feature-first). Los packages siguen la convención `com.banco.co.{feature}.*`, donde típicamente `{feature}` incluye `account`, `transaction`, `envelope`, `user`, `card`, `role`, `permission`, `fraud`, `auditLog`, `security`, `exception`, y además existen otros paquetes top-level (por ejemplo `com.banco.co.utils`). Dentro de cada feature existen sub-paquetes por capa (ver tabla abajo).
 
 | Agente | Sub-paquete que toca | Responsabilidad |
 |--------|----------------------|-----------------|
