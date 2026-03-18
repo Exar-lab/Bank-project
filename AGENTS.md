@@ -5,7 +5,7 @@
 **Project**: banco-service  
 **Language**: Java 21+  
 **Framework**: Spring Boot 3.x/4.x  
-**Architecture**: Hexagonal (Ports & Adapters) + Domain-Driven Design  
+**Architecture**: Hexagonal (Ports & Adapters) + DDD + Screaming Architecture (feature-first)  
 **Database**: MySQL/PostgreSQL  
 **Messaging**: Kafka (async event publishing)  
 **Testing**: JUnit 5 + Mockito + Testcontainers  
@@ -23,14 +23,41 @@
 - **Package Naming**: All code under `com.banco.co.*`
 - **Annotations**: Use only javax/jakarta (Spring 6+), never com.sun or internal APIs
 
+### Package Organization (Screaming Architecture)
+
+- **Feature-First Root**: Organize by feature under `com.banco.co.{feature}.*`, not by global layer roots
+- **Current Main Features**: `account`, `transaction`, `envelope`, `user`, `card`, `role`, `permission`, `fraud`, `auditLog`, `security`, `exception` (plus supporting packages such as `utils`)
+- **Layering Is Conceptual + Local to Feature**: Domain/Application/Infrastructure/Presentation are preserved as responsibilities, but materialized inside each feature via subpackages (for example `model`, `service`, `repository`, `controller`, `dto`, `mapper`, `exception`, `handler`)
+- **Avoid Fake Paths**: Do not document or assume root packages like `com.banco.co.domain.*`, `com.banco.co.application.*`, `com.banco.co.infrastructure.*`, `com.banco.co.presentation.*` unless they are explicitly created in code
+
 ### Architecture Layers
 
 | Layer | Rules | Examples |
 |-------|-------|----------|
-| **Domain** | No Spring, no JPA, pure logic | `Account`, `Money`, `Transaction` value objects |
-| **Application** | Orchestrates domain, DTOs, mappers | Use cases, service interfaces, MapStruct mappers |
-| **Infrastructure** | Repository impls, external adapters, JPA entities | `@Repository`, `@Entity`, Kafka publishers |
-| **Presentation** | REST endpoints, exception handlers, request/response mapping | `@RestController`, `@ExceptionHandler` |
+| **Domain** | No Spring, no JPA, pure logic | `com.banco.co.account.model.Account`, `com.banco.co.card.exception.card.CardException` |
+| **Application** | Orchestrates domain, DTOs, mappers | `com.banco.co.account.service.AccountService`, `com.banco.co.user.dto.*`, `com.banco.co.account.mapper.*` |
+| **Infrastructure** | Repository impls, external adapters, persistence/security config | `com.banco.co.account.repository.*`, `com.banco.co.security.config.*` |
+| **Presentation** | REST endpoints, exception handlers, request/response mapping | `com.banco.co.{feature}.controller.*`, `com.banco.co.{feature}.handler.*` |
+
+Layer boundaries remain mandatory, but package layout is feature-first.
+
+### Multi-Agent Operating Model
+
+This repository follows a **7-agent model in 3 categories**. Activation and ownership are explicit to protect hexagonal boundaries and feature-first structure.
+
+| Category | Agent | Activate When | Main Tasks / Output | Boundaries |
+|----------|-------|---------------|---------------------|------------|
+| **Planning** | **Planning Agent** | A new feature, refactor, or architectural decision starts | Produces SDD artifacts: proposal, spec, design, tasks | Does not write production code |
+| **Build** | **Domain Agent** | Domain rules, value objects, enums, or domain exceptions change | Updates domain model and sealed exception hierarchies | Touches only `com.banco.co.{feature}.model`, `com.banco.co.{feature}.enums`, `com.banco.co.{feature}.exception`; no Spring/JPA/controllers |
+| **Build** | **Application Agent** | Use-case orchestration, DTO mapping, or service flow changes | Implements application services, record DTOs, mappers | Touches only `com.banco.co.{feature}.service`, `com.banco.co.{feature}.dto`, `com.banco.co.{feature}.mapper`; no entities/repositories/controllers |
+| **Build** | **Infrastructure Agent** | Persistence, external adapters, messaging, or security config changes | Implements repositories/adapters and infrastructure configuration | Touches `com.banco.co.{feature}.repository` plus explicit infrastructure packages like `com.banco.co.security.config`; no domain business decisions |
+| **Build** | **Presentation Agent** | REST contract, validation entrypoints, or error handling at API layer changes | Implements controllers and HTTP exception handlers | Touches only `com.banco.co.{feature}.controller`, `com.banco.co.{feature}.handler`; no domain logic or JPA query logic |
+| **QA+Security** | **Test Agent** | After any Build change | Adds/updates unit/integration tests and validates coverage targets by layer | Cross-cutting; tests all layers but does not redefine architecture ownership |
+| **QA+Security** | **Security Agent** | Any auth, endpoint, sensitive-data, or access-control change | Performs security review and hardening (JWT, RBAC, validation, secret handling) | Cross-cutting; enforces security controls without changing functional scope |
+
+Operational notes:
+- Keep ownership **feature-first** under `com.banco.co.{feature}.*`; do not introduce or document fake global roots (`com.banco.co.domain.*`, `com.banco.co.application.*`, etc.) unless they are explicitly created.
+- If a task spans multiple layers, split work by agent instead of allowing one agent to cross boundaries.
 
 ### Spring Data JPA
 
@@ -65,7 +92,7 @@
 
 - **Conventional Commits**: `type(scope): subject`
   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-  - Scope: domain, application, infrastructure, presentation, skills
+  - Scope: `domain`, `application`, `infrastructure`, `presentation`, or affected feature (`account`, `transaction`, `security`, etc.)
   - Subject: lowercase, no period, imperative mood
 - **PR Title**: `feat(scope): description` (same format as commit)
 - **No AI Attribution**: Never add "Co-Authored-By: AI/Claude"
@@ -78,6 +105,7 @@
 
 - [ ] All tests pass locally
 - [ ] Code follows package naming `com.banco.co.*`
+- [ ] Package structure follows feature-first convention `com.banco.co.{feature}.*`
 - [ ] DTOs are Records (not classes)
 - [ ] No `@Autowired` on fields (constructor injection only)
 - [ ] No `.get()` on Optional without `isPresent()`
