@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "mcp__plugin_engram_engram__mem_context"
-    ]
-  }
-}

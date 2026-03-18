@@ -42,8 +42,10 @@ Global cross-feature concerns:
 ```
 com/banco/co/
 ├── exception/   # BankingException base hierarchy (used by all features)
-├── security/    # JwtUtils, JwtTokenValidator, SecurityUser, HashUtils, JasyptEncryptor
-└── utils/       # Shared utility classes
+├── security/    # JwtTokenValidator, HashUtils (securityhasher/), JasyptEncryptor (cryptoLib/)
+│   └── config/
+│       └── filter/  # JwtTokenValidator
+├── utils/       # JwtUtils and other shared utility classes
 ```
 
 ---

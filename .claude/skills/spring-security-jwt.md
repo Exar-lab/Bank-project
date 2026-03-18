@@ -35,7 +35,7 @@ JWT is implemented manually via:
 ### 1. JwtUtils — Token Generation and Validation
 
 ```java
-// com/banco/co/security/JwtUtils.java
+// com/banco/co/utils/JwtUtils.java
 @Component
 @Slf4j
 public class JwtUtils {
@@ -44,9 +44,9 @@ public class JwtUtils {
     private final long refreshTokenExpiryMs;
 
     public JwtUtils(
-        @Value("${jwt.secret}") String secret,
-        @Value("${jwt.access-expiry-minutes:15}") long accessExpiryMinutes,
-        @Value("${jwt.refresh-expiry-days:30}") long refreshExpiryDays
+        @Value("${security.jwt.secret-key}") String secret,
+        @Value("${security.jwt.access-token.expiration-minutes}") long accessExpiryMinutes,
+        @Value("${security.jwt.refresh-token.expiration-days}") long refreshExpiryDays
     ) {
         this.algorithm = Algorithm.HMAC256(secret);
         this.accessTokenExpiryMs = accessExpiryMinutes * 60 * 1000L;
@@ -102,14 +102,20 @@ public class JwtUtils {
 
 ### 2. JwtTokenValidator — Custom Filter
 
+> **Package**: `com.banco.co.security.config.filter.JwtTokenValidator`
+> **Registration**: instantiated inline in `SecurityConfig` via
+> `http.addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)` — NOT a `@Component`.
+
+**Current state: stub** — `doFilterInternal()` body is empty in the codebase.
+The implementation below is the **target design** (not yet written).
+
 ```java
-// com/banco/co/security/JwtTokenValidator.java
-@Component
+// com/banco/co/security/config/filter/JwtTokenValidator.java
+// NOTE: registered via SecurityConfig, NOT @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenValidator extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
-    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -118,6 +124,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
         FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // TARGET IMPLEMENTATION (currently a stub in codebase):
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -132,16 +139,19 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 
             // Only load if not already authenticated
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // Build authentication from JWT claims directly (no UserDetailsService call needed)
+                List<SimpleGrantedAuthority> authorities = decoded.getClaim("roles")
+                    .asList(String.class).stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
                 UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                    );
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (BankingException ex) {
-            // Let the exception propagate — SecurityConfig handles unauthenticated responses
+            // Clear context and continue chain — Spring Security will reject unauthenticated requests
+            // at the authorization layer. Do NOT re-throw or the filter chain is broken.
             log.warn("JWT validation failed: {}", ex.getMessage());
             SecurityContextHolder.clearContext();
         }
@@ -154,7 +164,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 ### 3. SecurityUser — UserDetails Implementation
 
 ```java
-// com/banco/co/security/SecurityUser.java
+// com/banco/co/user/model/adapter/SecurityUser.java
 @Getter
 public class SecurityUser implements UserDetails {
     private final UUID userId;
@@ -195,12 +205,12 @@ public class SecurityUser implements UserDetails {
 ### 4. SecurityFilterChain — Spring Security Config
 
 ```java
-// com/banco/co/security/SecurityConfig.java
+// com/banco/co/security/config/SecurityConfig.java
 @Configuration
 @EnableMethodSecurity          // enables @PreAuthorize on methods
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtTokenValidator jwtTokenValidator;
+    private final JwtUtils jwtUtils;   // JwtTokenValidator is NOT injected — instantiated inline
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -213,7 +223,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
                 .anyRequest().authenticated())
-            .addFilterBefore(jwtTokenValidator, BasicAuthenticationFilter.class)
+            // JwtTokenValidator is instantiated here — NOT a @Component
+            .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)
             .build();
     }
 
@@ -272,7 +283,7 @@ public class AccountController {
 ### 6. HashUtils — Hashing Strategies
 
 ```java
-// com/banco/co/security/HashUtils.java
+// com/banco/co/security/securityhasher/HashUtils.java
 @Component
 public class HashUtils {
     private static final int BCRYPT_STRENGTH = 12;
@@ -306,17 +317,19 @@ public class HashUtils {
 
 Encrypts sensitive fields at the JPA layer (stored encrypted in DB, decrypted on load).
 
-```java
-// com/banco/co/security/JasyptEncryptor.java
-@Converter
-public class JasyptEncryptor implements AttributeConverter<String, String> {
-    private final StandardPBEStringEncryptor encryptor;
+> **Package**: `com.banco.co.security.cryptoLib.JasyptEncryptor`
+> **Wiring**: Injects `org.jasypt.encryption.StringEncryptor` auto-configured by `jasypt-spring-boot-starter`.
+> Algorithm and IV settings come from `application.yml` (`jasypt.encryptor.*`) — NOT set in Java code.
 
-    public JasyptEncryptor(@Value("${jasypt.encryptor.password}") String password) {
-        this.encryptor = new StandardPBEStringEncryptor();
-        this.encryptor.setPassword(password);
-        this.encryptor.setAlgorithm("PBEWithMD5AndDES");
-    }
+```java
+// com/banco/co/security/cryptoLib/JasyptEncryptor.java
+@Converter
+@RequiredArgsConstructor
+public class JasyptEncryptor implements AttributeConverter<String, String> {
+    // Provided by jasypt-spring-boot-starter autoconfiguration.
+    // Algorithm/IV are configured in application.yml under jasypt.encryptor.*
+    // Do NOT instantiate StandardPBEStringEncryptor here.
+    private final StringEncryptor encryptor;
 
     @Override
     public String convertToDatabaseColumn(String attribute) {
@@ -336,6 +349,14 @@ public class Account {
     @Convert(converter = JasyptEncryptor.class)
     private String accountNumber;   // stored encrypted in DB
 }
+```
+
+**application.yml (drives encryption config — not Java code):**
+```yaml
+jasypt:
+  encryptor:
+    password: ${JASYPT_ENCRYPTOR_PASSWORD}
+    # algorithm, iv-generator-classname, etc. configured here
 ```
 
 ---

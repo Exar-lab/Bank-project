@@ -49,9 +49,9 @@ com/banco/co/
 ├── permission/         # Fine-grained permissions (account:read, etc.)
 ├── auditLog/           # Audit trail for all mutations
 ├── fraud/              # Fraud detection rules
-├── security/           # JwtUtils, JwtTokenValidator, SecurityUser, HashUtils, JasyptEncryptor
+├── security/           # JwtTokenValidator (config/filter/), HashUtils (securityhasher/), JasyptEncryptor (cryptoLib/)
 ├── exception/          # Global BankingException hierarchy (abstract base classes)
-└── utils/              # Shared utilities
+└── utils/              # Shared utilities (JwtUtils lives here)
 ```
 
 ### Layer Responsibilities
@@ -78,7 +78,7 @@ com/banco/co/
 | `permission` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ stub | ❌ |
 | `auditLog` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `fraud` | ✅ | partial | partial | partial | partial | ❌ | ❌ |
-| `security` | ✅ JwtUtils | — | — | — | — | — | ❌ |
+| `security` | ✅ filter/hasher/encryptor | — | — | — | — | — | ❌ |
 | `exception` | ✅ hierarchy | — | — | — | — | — | — |
 
 ---
@@ -135,22 +135,33 @@ loads `SecurityUser` (implements `UserDetails`) into the `SecurityContextHolder`
 
 ## Environment Variables
 
+Variable names must match exactly what `application.yml` references via `${...}` placeholders.
+
 ```properties
 # Datasource
-SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/banco_service
-SPRING_DATASOURCE_USERNAME=banco_user
-SPRING_DATASOURCE_PASSWORD=<encrypted via Jasypt>
+DB_URL=jdbc:mysql://localhost:3306/banco_service
+DB_USERNAME=banco_user
+DB_PASSWORD=<your db password>
 
 # JWT
-JWT_SECRET=<HMAC256 secret key>
-JWT_ACCESS_EXPIRY_MINUTES=15
-JWT_REFRESH_EXPIRY_DAYS=30
+JWT_SECRET_KEY=<HMAC256 secret — min 256 bits>
+ISSUER_GENERATOR=<token issuer identifier>
 
 # Jasypt (field-level encryption)
 JASYPT_ENCRYPTOR_PASSWORD=<master password>
+```
 
-# BCrypt
-BCRYPT_STRENGTH=12
+`application.yml` mappings:
+```yaml
+spring.datasource.url:      ${DB_URL}
+spring.datasource.username: ${DB_USERNAME}
+spring.datasource.password: ${DB_PASSWORD}
+security.jwt.secret-key:    ${JWT_SECRET_KEY}
+security.jwt.issuer:        ${ISSUER_GENERATOR}
+jasypt.encryptor.password:  ${JASYPT_ENCRYPTOR_PASSWORD}
+# Expiry values are hardcoded in application.yml (not env vars):
+security.jwt.access-token.expiration-minutes: 15
+security.jwt.refresh-token.expiration-days: 30
 ```
 
 ---
