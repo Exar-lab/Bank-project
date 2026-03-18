@@ -38,7 +38,7 @@ These skills are available in `~/.config/opencode/skills/`:
 
 ## Project Context Documents
 
-These files live in `.gentle/context/` and provide project-specific guidance:
+These files live in `.claude/context/` and provide project-specific guidance:
 
 | Document | Purpose | Key Reference |
 |----------|---------|--------|
@@ -241,7 +241,24 @@ These files live in `.gentle/context/` and provide project-specific guidance:
 
 ---
 
-#### 5. **spring-boot-testing-junit5-complete**
+#### 5. **spring-security-jwt**
+**Purpose**: JWT authentication with auth0 java-jwt:4.5.0, SecurityFilterChain, RBAC  
+**File**: [.claude/skills/spring-security-jwt.md](../.claude/skills/spring-security-jwt.md)  
+**Key Topics**:
+- Custom JWT filter with auth0 java-jwt (not Spring OAuth2 Resource Server)
+- SecurityFilterChain configuration (Spring Boot 4.x)
+- @PreAuthorize with role-based access control
+- Principal extraction from SecurityContextHolder
+- CORS and stateless session configuration
+
+**Example Scenarios**:
+- Scenario 1: Configure JWT filter with auth0 java-jwt
+- Scenario 2: Secure endpoints with @PreAuthorize
+- Scenario 3: Extract user from JWT token in service layer
+
+---
+
+#### 6. **spring-boot-testing-junit5-complete**
 **Purpose**: Unit/integration tests, @DataJpaTest, @WebMvcTest, MockMvc  
 **File**: [skill-spring-boot-testing-junit5-complete.md](./skill-spring-boot-testing-junit5-complete.md)  
 **Key Topics**:
@@ -272,7 +289,7 @@ These files live in `.gentle/context/` and provide project-specific guidance:
 - **DTOs**: Use Records (not classes with getters/setters)
 - **Null Handling**: Always use `Optional`, never call `.get()` without `isPresent()` check
 - **Dependency Injection**: Constructor injection only; NO field injection
-- **Exception Handling**: Create sealed exception hierarchies; domain-specific exceptions
+- **Exception Handling**: Create abstract exception hierarchies; domain-specific exceptions
 - **Domain Models**: No Spring annotations, no JPA in domain layer
 - **REST Controllers**: Thin layer; business logic belongs in Application or Domain
 
@@ -339,7 +356,7 @@ git commit -m "feat(scope): description"
 
 ### Question: Should I use inheritance for entities?
 
-**Answer**: No. Use composition and sealed exception hierarchies. Domain models are Records (immutable value objects).
+**Answer**: No. Use composition and abstract exception hierarchies. Domain models are Records (immutable value objects).
 
 ### Question: How do I handle database transactions?
 
@@ -357,7 +374,7 @@ git commit -m "feat(scope): description"
 
 ## Next Steps for New Developers
 
-1. Read `.gentle/context/project-roadmap.md` — understand architecture and conventions
+1. Read `.claude/context/project-roadmap.md` — understand architecture and conventions
 2. Load `sdd-explore` → pick a small task to understand patterns
 3. Load `sdd-propose` + `sdd-spec` → plan your first feature
 4. Load `sdd-apply` → write code following project patterns
@@ -368,5 +385,5 @@ git commit -m "feat(scope): description"
 ## Support
 
 - **SDD Documentation**: Run `mem_search(query: "sdd-init/banco-service", project: "banco-service")` to retrieve project context
-- **Architecture Questions**: Read `.gentle/context/project-roadmap.md` § "Architecture" and "Common Mistakes to Avoid"
-- **Testing Patterns**: Check `.gentle/context/project-roadmap.md` § "Testing" and load `sdd-apply` skill
+- **Architecture Questions**: Read `.claude/context/project-roadmap.md` § "Architecture" and "Common Mistakes to Avoid"
+- **Testing Patterns**: Check `.claude/context/project-roadmap.md` § "Testing" and load `sdd-apply` skill

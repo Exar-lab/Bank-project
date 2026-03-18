@@ -49,8 +49,8 @@ El sistema usa **7 agentes en 3 categorías**. La separación no es arbitraria: 
 | **Planning Agent** | Empezás un feature, refactor, o decisión de diseño | Descripción del cambio | Proposal + Spec + Design + Tasks (SDD artifacts) |
 
 **Skills que lee**:
-- `.gentle/context/project-roadmap.md`
-- `.gentle/skills/hexagonal-architecture.md`
+- `.claude/context/project-roadmap.md`
+- `.claude/skills/hexagonal-architecture.md`
 - `.atl/SKILL_NAVIGATION_INDEX.md` (para entender qué existe)
 
 **Regla clave**: Planning Agent NO escribe código. Entrega artifacts SDD. Si escribe código, está haciendo el trabajo de Build.
@@ -65,7 +65,7 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 
 | Agente | Carpeta/Path que toca | Responsabilidad |
 |--------|-----------------------|-----------------|
-| **Domain Agent** | `{feature}/model/`, `{feature}/enums/`, `{feature}/exception/` | Value objects, modelos de dominio, enums, jerarquías de excepción sealed |
+| **Domain Agent** | `{feature}/model/`, `{feature}/enums/`, `{feature}/exception/` | Value objects, modelos de dominio, enums, jerarquías de excepción abstract |
 | **Application Agent** | `{feature}/service/`, `{feature}/dto/`, `{feature}/mapper/` | Use cases, services, DTOs (Records), MapStruct mappers |
 | **Infrastructure Agent** | `{feature}/repository/`, `security/`, `exception/` (global) | JPA entities, repositories, Kafka publishers (cuando existan), adapters, config de seguridad |
 | **Presentation Agent** | `{feature}/controller/`, `{feature}/handler/` | REST controllers, exception handlers, request/response mapping |
@@ -75,10 +75,10 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **Puede tocar**: `{feature}/model/`, `{feature}/enums/`, `{feature}/exception/`  
 **No puede tocar**: `@Entity`, `@Service`, `@RestController`, nada de Spring  
 **Skills que lee**:
-- `.gentle/skills/java-records-dtos.md`
-- `.gentle/skills/java-optional-handling.md`
-- `.gentle/skills/java-exception-handling.md`
-- `.gentle/skills/hexagonal-architecture.md`
+- `.claude/skills/java-records-dtos.md`
+- `.claude/skills/java-optional-handling.md`
+- `.claude/skills/java-exception-handling.md`
+- `.claude/skills/hexagonal-architecture.md`
 
 #### Application Agent
 
@@ -86,8 +86,8 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **No puede tocar**: `@Entity`, `@RestController`, lógica de negocio pura  
 **Skills que lee**:
 - `.atl/skill-spring-boot-mapstruct-dtos.md`
-- `.gentle/skills/java-optional-handling.md`
-- `.gentle/skills/java-records-dtos.md`
+- `.claude/skills/java-optional-handling.md`
+- `.claude/skills/java-records-dtos.md`
 
 #### Infrastructure Agent
 
@@ -96,7 +96,8 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **Skills que lee**:
 - `.atl/skill-spring-data-jpa-repositories.md`
 - `.atl/skill-kafka-async-messaging.md` ← **PENDIENTE** (crear cuando se implemente Kafka; usar `.atl/skill-spring-data-jpa-repositories.md` mientras tanto)
-- `.gentle/skills/java-dependency-injection.md`
+- `.claude/skills/java-dependency-injection.md`
+- `.claude/skills/spring-security-jwt.md`
 
 #### Presentation Agent
 
@@ -105,7 +106,7 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **Skills que lee**:
 - `.atl/skill-spring-boot-validation.md`
 - `.atl/skill-spring-security-oauth2.md`
-- `.gentle/skills/java-exception-handling.md`
+- `.claude/skills/java-exception-handling.md`
 
 ---
 
@@ -132,7 +133,7 @@ Estos dos agentes son **cross-cutting**: no tienen capa asignada. Actúan sobre 
 
 **Skills que lee**:
 - `.atl/skill-spring-boot-testing-junit5-complete.md`
-- `.gentle/skills/junit5-testing-patterns.md`
+- `.claude/skills/junit5-testing-patterns.md`
 
 **Naming convention**:
 ```
@@ -150,6 +151,7 @@ Integration: test<Scenario>_<Expected>
 
 **Skills que lee**:
 - `.atl/skill-spring-security-oauth2.md`
+- `.claude/skills/spring-security-jwt.md`
 - `AGENTS.md` → sección Spring Security / OAuth2
 
 **Checklist que aplica en cada revisión**:
@@ -240,7 +242,7 @@ Integration: test<Scenario>_<Expected>
 └─ Domain (Pure Logic)
    └─ Value objects, aggregates, domain services
       INPUT:  Primitivos / value objects
-      OUTPUT: Resultado de negocio o excepción sealed
+      OUTPUT: Resultado de negocio o excepción abstract
       REGLA:  ZERO Spring. ZERO JPA. 100% testeable sin mocks.
 ```
 
@@ -302,23 +304,24 @@ return repo.findById(id)
 return repo.findById(id).get(); // NoSuchElementException esperando el momento justo
 ```
 
-### 4. Sealed exceptions
+### 4. Abstract exceptions
 
 ```java
 // ✅ CORRECTO
-public sealed class BancoException extends RuntimeException
-    permits InsufficientFundsException,
-            AccountNotFoundException,
-            TransferFailedException {}
+public abstract class BankingException extends RuntimeException {
+    protected BankingException(String message) {
+        super(message);
+    }
+}
 
-public final class InsufficientFundsException extends BancoException {
+public class InsufficientFundsException extends BankingException {
     public InsufficientFundsException(BigDecimal required, BigDecimal available) {
         super("Required: " + required + ", available: " + available);
     }
 }
 
 // ❌ NUNCA
-public class BancoException extends Exception {} // no sellada = jerarquía descontrolada
+public class BankingException extends Exception {} // no abstract = jerarquía descontrolada
 ```
 
 ### 5. Package naming
@@ -408,7 +411,7 @@ proposal → spec ──→ tasks → apply → verify → archive
   → Coverage: Domain 90%, Application 85%, Infra 70%, Presentation 75%
 
 [Security Agent]  ← Task 6 (parallel con Test Agent)
-  → Lee: skill-spring-security-oauth2.md
+  → Lee: skill-spring-security-oauth2.md, spring-security-jwt.md
   → Revisa: POST /transfer requiere auth, datos sensibles no loggeados
   → Agrega: @PreAuthorize, JWT validation, CORS config
 ```
@@ -424,14 +427,15 @@ proposal → spec ──→ tasks → apply → verify → archive
 | Encontrar una skill | `.atl/SKILL_NAVIGATION_INDEX.md` |
 | Ver todas las skills por capa | `.atl/skill-registry.md` |
 | Checklist pre-merge | `AGENTS.md` → Code Review Checklist |
-| Arquitectura del proyecto | `.gentle/context/project-roadmap.md` |
-| Records / DTOs | `.gentle/skills/java-records-dtos.md` |
-| Optional handling | `.gentle/skills/java-optional-handling.md` |
-| Constructor injection | `.gentle/skills/java-dependency-injection.md` |
-| Sealed exceptions | `.gentle/skills/java-exception-handling.md` |
-| Arquitectura hexagonal | `.gentle/skills/hexagonal-architecture.md` |
-| Git commits | `.gentle/skills/conventional-commits.md` |
-| Testing JUnit 5 | `.gentle/skills/junit5-testing-patterns.md` |
+| Arquitectura del proyecto | `.claude/context/project-roadmap.md` |
+| Records / DTOs | `.claude/skills/java-records-dtos.md` |
+| Optional handling | `.claude/skills/java-optional-handling.md` |
+| Constructor injection | `.claude/skills/java-dependency-injection.md` |
+| Abstract exceptions | `.claude/skills/java-exception-handling.md` |
+| Arquitectura hexagonal | `.claude/skills/hexagonal-architecture.md` |
+| Git commits | `.claude/skills/conventional-commits.md` |
+| Testing JUnit 5 | `.claude/skills/junit5-testing-patterns.md` |
+| Security / JWT (auth0) | `.claude/skills/spring-security-jwt.md` |
 | JPA + N+1 prevention | `.atl/skill-spring-data-jpa-repositories.md` |
 | MapStruct mappers | `.atl/skill-spring-boot-mapstruct-dtos.md` |
 | OAuth2 / JWT | `.atl/skill-spring-security-oauth2.md` |
@@ -449,7 +453,7 @@ proposal → spec ──→ tasks → apply → verify → archive
 5. **RECORDS siempre**: Ningún DTO es una clase mutable.
 6. **OPTIONAL sin .get()**: Siempre `orElseThrow` o `orElse`.
 7. **CONSTRUCTOR INJECTION**: Nunca `@Autowired` en campos.
-8. **SEALED EXCEPTIONS**: Toda jerarquía de excepciones es sellada.
+8. **ABSTRACT EXCEPTIONS**: Toda jerarquía de excepciones usa clases abstract.
 9. **PACKAGE NAMING**: Todo bajo `com.banco.co.*`.
 10. **CONVENTIONAL COMMITS**: `feat(domain):`, `feat(infrastructure):`, `test(application):`, etc.
 
