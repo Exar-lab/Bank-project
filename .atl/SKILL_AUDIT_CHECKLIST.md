@@ -76,7 +76,7 @@ These checks require human review to verify accuracy and relevance.
   - [x] @Entity models use Lombok
   - [x] DTOs use records (not classes)
   - [x] Methods use Optional (never call .get() without isPresent())
-  - [x] Custom exceptions follow sealed hierarchy pattern
+  - [x] Custom exceptions follow abstract hierarchy pattern
 
 ### Scenario Accuracy
 - [x] Scenarios match actual use cases in banco-service
@@ -163,7 +163,7 @@ These checks require human review to verify accuracy and relevance.
 
 ❌ Existing project code (no breaking changes to banco-service)  
 ❌ Global SDD skills in ~/.config/opencode/skills/ (not our scope)  
-❌ .gentle/context/ files (project conventions already defined)  
+❌ .claude/context/ files (project conventions already defined)  
 
 ---
 

@@ -28,9 +28,9 @@ This is the **SOURCE OF TRUTH** for what skills to reference for each task.
 
 | Scenario | What You're Doing | Skills to Read | Project Package | Notes |
 |----------|------------------|-----------------|-----------------|-------|
-| Create a new Account model | Define entity with validations, relationships | Read: `hexagonal-architecture` (domain layer concept), `java-records-dtos` (entity design) | com.banco.co.account.model | Use Lombok, sealed classes for hierarchy |
+| Create a new Account model | Define entity with validations, relationships | Read: `hexagonal-architecture` (domain layer concept), `java-records-dtos` (entity design) | com.banco.co.account.model | Use Lombok, abstract classes for hierarchy |
 | Add business logic to Account | Implement transfer rules, balance checks | Read: `hexagonal-architecture` (domain services) | com.banco.co.account.service | Keep pure Java, no Spring annotations |
-| Handle domain exceptions | Create sealed exception hierarchy | Read: `java-exception-handling`, `hexagonal-architecture` | com.banco.co.exception | Use sealed classes for type safety |
+| Handle domain exceptions | Create abstract exception hierarchy | Read: `java-exception-handling`, `hexagonal-architecture` | com.banco.co.exception | Use abstract classes for type safety |
 
 ### Application Layer Scenarios
 
@@ -126,7 +126,7 @@ When reviewing code, use this to know which skills to reference:
 
 ### ✅ Domain Layer Check
 - [ ] Business logic is pure Java (no Spring)
-- [ ] Exceptions are sealed classes (not generic Exception)
+- [ ] Exceptions are abstract classes (not generic Exception)
 - [ ] Read: `java-exception-handling`, `hexagonal-architecture`
 
 ### ✅ Application Layer Check
@@ -199,7 +199,7 @@ If you're an AI agent working on banco-service:
    - DTOs: Use Records (not @Data)
    - Injection: Constructor only (no @Autowired fields)
    - Nulls: Use Optional (never .get() without isPresent())
-   - Exceptions: Sealed classes
+   - Exceptions: Abstract classes
    - Mapping: Use MapStruct (@Mapper)
 6. **Code with confidence**: All skills are project-specific, tested, and verified
 
