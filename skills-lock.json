@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "skill-creator": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "c7f9c119860a1dcee69f2cce344d46ca910a8b32c0e2acf4485b40bdf2ccadb3"
+    }
+  }
+}

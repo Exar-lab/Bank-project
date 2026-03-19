@@ -51,7 +51,7 @@ El sistema usa **7 agentes en 3 categorías**. La separación no es arbitraria: 
 **Skills que lee**:
 - `.claude/context/project-roadmap.md`
 - `.claude/skills/hexagonal-architecture.md`
-- `.atl/SKILL_NAVIGATION_INDEX.md` (para entender qué existe)
+- `.claude/navigation/SKILL_NAVIGATION_INDEX.md` (para entender qué existe)
 
 **Regla clave**: Planning Agent NO escribe código. Entrega artifacts SDD. Si escribe código, está haciendo el trabajo de Build.
 
@@ -85,7 +85,7 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **Puede tocar**: `{feature}/service/`, `{feature}/dto/`, `{feature}/mapper/`  
 **No puede tocar**: `@Entity`, `@RestController`, lógica de negocio pura  
 **Skills que lee**:
-- `.atl/skill-spring-boot-mapstruct-dtos.md`
+- `.claude/skills/spring-boot-mapstruct-dtos.md`
 - `.claude/skills/java-optional-handling.md`
 - `.claude/skills/java-records-dtos.md`
 
@@ -94,8 +94,8 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **Puede tocar**: `{feature}/repository/`, `security/`, `exception/` (global), `com.banco.co.security.config`, `com.banco.co.role.configuration` *(y futuros paquetes `{feature}.config` si se definen explícitamente)*  
 **No puede tocar**: Lógica de negocio, DTOs de response, controllers  
 **Skills que lee**:
-- `.atl/skill-spring-data-jpa-repositories.md`
-- `.atl/skill-kafka-async-messaging.md` ← **PENDIENTE** (crear cuando se implemente Kafka; usar `.atl/skill-spring-data-jpa-repositories.md` mientras tanto)
+- `.claude/skills/spring-data-jpa-repositories.md`
+- `.atl/skill-kafka-async-messaging.md` ← **PENDIENTE** (crear cuando se implemente Kafka; usar `.claude/skills/spring-data-jpa-repositories.md` mientras tanto)
 - `.claude/skills/java-dependency-injection.md`
 - `.claude/skills/spring-security-jwt.md`
 
@@ -104,8 +104,8 @@ Cada agente de Build SOLO toca su capa. Si una tarea requiere tocar dos capas �
 **Puede tocar**: `{feature}/controller/` (cuando exista), `{feature}/handler/` (cuando exista)  
 **No puede tocar**: Lógica de negocio, queries JPA, publicación de eventos  
 **Skills que lee**:
-- `.atl/skill-spring-boot-validation.md`
-- `.atl/skill-spring-security-oauth2.md`
+- `.claude/skills/spring-boot-validation.md`
+- `.claude/skills/spring-security-jwt.md`
 - `.claude/skills/java-exception-handling.md`
 
 ---
@@ -132,7 +132,7 @@ Estos dos agentes son **cross-cutting**: no tienen capa asignada. Actúan sobre 
 | Presentation | 75% | @WebMvcTest |
 
 **Skills que lee**:
-- `.atl/skill-spring-boot-testing-junit5-complete.md`
+- `.claude/skills/spring-boot-testing-junit5-complete.md`
 - `.claude/skills/junit5-testing-patterns.md`
 
 **Naming convention**:
@@ -150,7 +150,6 @@ Integration: test<Scenario>_<Expected>
 **Se activa ante**: Nuevo endpoint, cambio en auth, acceso a datos de usuario, publicación de eventos con datos sensibles  
 
 **Skills que lee**:
-- `.atl/skill-spring-security-oauth2.md`
 - `.claude/skills/spring-security-jwt.md`
 - `AGENTS.md` → sección Spring Security / OAuth2
 
@@ -173,8 +172,8 @@ Integration: test<Scenario>_<Expected>
 ```
 1. ¿Qué necesito hacer?       → "crear un JPA repository"
 2. ¿Qué agente soy?           → Infrastructure Agent
-3. ¿Existe skill para esto?   → .atl/SKILL_NAVIGATION_INDEX.md
-4. Leer la skill              → .atl/skill-spring-data-jpa-repositories.md
+3. ¿Existe skill para esto?   → .claude/navigation/SKILL_NAVIGATION_INDEX.md
+4. Leer la skill              → .claude/skills/spring-data-jpa-repositories.md
 5. Copiar el patrón ✅         → adaptar solo nombres/datos
 6. Escribir código            → siguiendo exactamente el patrón
 ```
@@ -185,15 +184,15 @@ Integration: test<Scenario>_<Expected>
 
 **Opción A — por escenario** (recomendada):
 ```
-.atl/SKILL_NAVIGATION_INDEX.md
+.claude/navigation/SKILL_NAVIGATION_INDEX.md
 → Buscar: "Map entity to DTO"
-→ Resultado: skill-spring-boot-mapstruct-dtos
-→ Leer: .atl/skill-spring-boot-mapstruct-dtos.md
+→ Resultado: spring-boot-mapstruct-dtos
+→ Leer: .claude/skills/spring-boot-mapstruct-dtos.md
 ```
 
 **Opción B — por capa**:
 ```
-.atl/skill-registry.md
+.claude/navigation/skill-registry.md
 → Buscar: tu capa (Application, Infrastructure, etc.)
 → Encontrar el escenario
 → Leer la skill linkeada
@@ -391,27 +390,27 @@ proposal → spec ──→ tasks → apply → verify → archive
   → Capa: com.banco.co.account.domain.*
 
 [Application Agent]  ← Task 2 (parallel con Domain)
-  → Lee: skill-spring-boot-mapstruct-dtos.md
+  → Lee: .claude/skills/spring-boot-mapstruct-dtos.md
   → Escribe: TransferService, TransferDto, TransferResponseDto
   → Capa: com.banco.co.account.application.*
 
 [Infrastructure Agent]  ← Task 3 (después de Domain)
-  → Lee: skill-spring-data-jpa-repositories.md  (skill-kafka-async-messaging.md aún no existe — crear en sprint Kafka)
+  → Lee: .claude/skills/spring-data-jpa-repositories.md  (skill-kafka-async-messaging.md aún no existe — crear en sprint Kafka)
   → Escribe: TransferEventPublisher, OutboxEntry
   → Capa: com.banco.co.account.repository.*
 
 [Presentation Agent]  ← Task 4 (después de Application)
-  → Lee: skill-spring-boot-validation.md
+  → Lee: .claude/skills/spring-boot-validation.md
   → Escribe: TransferController, GlobalExceptionHandler
   → Capa: com.banco.co.account.presentation.*
 
 [Test Agent]  ← Task 5 (después de todos los Build)
-  → Lee: skill-spring-boot-testing-junit5-complete.md
+  → Lee: .claude/skills/spring-boot-testing-junit5-complete.md
   → Escribe: tests para TODAS las capas anteriores
   → Coverage: Domain 90%, Application 85%, Infra 70%, Presentation 75%
 
 [Security Agent]  ← Task 6 (parallel con Test Agent)
-  → Lee: skill-spring-security-oauth2.md, spring-security-jwt.md
+  → Lee: .claude/skills/spring-security-jwt.md
   → Revisa: POST /transfer requiere auth, datos sensibles no loggeados
   → Agrega: @PreAuthorize, JWT validation, CORS config
 ```
@@ -424,8 +423,8 @@ proposal → spec ──→ tasks → apply → verify → archive
 
 | Necesito... | Archivo |
 |-------------|---------|
-| Encontrar una skill | `.atl/SKILL_NAVIGATION_INDEX.md` |
-| Ver todas las skills por capa | `.atl/skill-registry.md` |
+| Encontrar una skill | `.claude/navigation/SKILL_NAVIGATION_INDEX.md` |
+| Ver todas las skills por capa | `.claude/navigation/skill-registry.md` |
 | Checklist pre-merge | `AGENTS.md` → Code Review Checklist |
 | Arquitectura del proyecto | `.claude/context/project-roadmap.md` |
 | Records / DTOs | `.claude/skills/java-records-dtos.md` |
@@ -436,11 +435,10 @@ proposal → spec ──→ tasks → apply → verify → archive
 | Git commits | `.claude/skills/conventional-commits.md` |
 | Testing JUnit 5 | `.claude/skills/junit5-testing-patterns.md` |
 | Security / JWT (auth0) | `.claude/skills/spring-security-jwt.md` |
-| JPA + N+1 prevention | `.atl/skill-spring-data-jpa-repositories.md` |
-| MapStruct mappers | `.atl/skill-spring-boot-mapstruct-dtos.md` |
-| OAuth2 / JWT | `.atl/skill-spring-security-oauth2.md` |
-| Validación de inputs | `.atl/skill-spring-boot-validation.md` |
-| Tests completos | `.atl/skill-spring-boot-testing-junit5-complete.md` |
+| JPA + N+1 prevention | `.claude/skills/spring-data-jpa-repositories.md` |
+| MapStruct mappers | `.claude/skills/spring-boot-mapstruct-dtos.md` |
+| Validación de inputs | `.claude/skills/spring-boot-validation.md` |
+| Tests completos | `.claude/skills/spring-boot-testing-junit5-complete.md` |
 
 ---
 

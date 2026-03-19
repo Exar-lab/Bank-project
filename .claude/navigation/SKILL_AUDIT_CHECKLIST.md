@@ -17,13 +17,13 @@ This checklist validates that the skill registry and 5 new technical skills meet
 These checks can be executed via script or regex validator.
 
 ### File Structure
-- [x] `.atl/skill-spring-data-jpa-repositories.md` exists
-- [x] `.atl/skill-spring-boot-mapstruct-dtos.md` exists
-- [x] `.atl/skill-spring-security-oauth2.md` exists
-- [x] `.atl/skill-spring-boot-validation.md` exists
-- [x] `.atl/skill-spring-boot-testing-junit5-complete.md` exists
-- [x] `.atl/skill-registry.md` updated with all skills
-- [x] `.atl/SKILL_AUDIT_CHECKLIST.md` exists (this file)
+- [x] `.claude/skills/spring-data-jpa-repositories.md` exists
+- [x] `.claude/skills/spring-boot-mapstruct-dtos.md` exists
+- [x] `.claude/skills/spring-security-jwt.md` exists (merged from spring-security-oauth2)
+- [x] `.claude/skills/spring-boot-validation.md` exists
+- [x] `.claude/skills/spring-boot-testing-junit5-complete.md` exists
+- [x] `.claude/navigation/skill-registry.md` updated with all skills
+- [x] `.claude/navigation/SKILL_AUDIT_CHECKLIST.md` exists (this file)
 
 ### Code Quality
 - [x] Each skill has YAML frontmatter (name, description, trigger, layer, tags)
@@ -43,11 +43,11 @@ These checks can be executed via script or regex validator.
 - [x] spring-boot-testing-junit5-complete: 7 examples (4 ✅, 3 ❌)
 
 ### Cross-References
-- [x] Registry references skill-spring-data-jpa-repositories by exact name
-- [x] Registry references skill-spring-boot-mapstruct-dtos by exact name
-- [x] Registry references skill-spring-security-oauth2 by exact name
-- [x] Registry references skill-spring-boot-validation by exact name
-- [x] Registry references skill-spring-boot-testing-junit5-complete by exact name
+- [x] Registry references spring-data-jpa-repositories by exact name
+- [x] Registry references spring-boot-mapstruct-dtos by exact name
+- [x] Registry references spring-security-jwt by exact name (merged from spring-security-oauth2)
+- [x] Registry references spring-boot-validation by exact name
+- [x] Registry references spring-boot-testing-junit5-complete by exact name
 - [x] No dead links in registry (all skills referenced exist)
 - [x] No dead links in skill files (all internal references valid)
 
@@ -97,12 +97,13 @@ These checks require human review to verify accuracy and relevance.
   - Collections handling
   - Enum transformation
   - Null-safe partial updates
-- [x] spring-security-oauth2 covers:
+- [x] spring-security-jwt covers (merged from spring-security-oauth2):
   - SecurityFilterChain configuration
-  - Custom JWT validator filters
+  - Custom JWT validator filter with auth0 java-jwt
   - @PreAuthorize with RBAC
-  - Principal extraction
+  - Principal extraction from SecurityContextHolder
   - CORS configuration
+  - Extracting authenticated principal in services
 - [x] spring-boot-validation covers:
   - Standard constraints (@NotNull, @NotBlank, @Pattern, etc.)
   - @Valid on @RequestBody
@@ -141,7 +142,7 @@ These checks require human review to verify accuracy and relevance.
 |---|---|---|---|---|---|
 | spring-data-jpa-repositories | 4 | 3 | 2 | com.banco.co.account.repository | ✅ |
 | spring-boot-mapstruct-dtos | 4 | 3 | 2 | com.banco.co.account.mapper | ✅ |
-| spring-security-oauth2 | 4 | 3 | 2 | com.banco.co.security.config | ✅ |
+| spring-security-jwt (merged) | 5 | 4 | 3 | com.banco.co.security.config | ✅ |
 | spring-boot-validation | 4 | 3 | 2 | com.banco.co.*.dto | ✅ |
 | spring-boot-testing-junit5-complete | 5+ | 4+ | 3+ | com.banco.co.*.* | ✅ |
 | **TOTAL** | **≥15** | **≥27** | **≥11** | **All layers** | **✅** |
@@ -198,7 +199,7 @@ This skill registry and audit checklist are compatible with Google Release Pleas
 
 1. **Merge** this registry update to main branch
 2. **Create GitHub release** with conventional commit message: `feat(skills): add 5 spring-boot-* skills to registry`
-3. **Notify team** that new skills are available: `/sdd-apply` can now reference spring-data-jpa-repositories, spring-boot-mapstruct-dtos, spring-security-oauth2, spring-boot-validation, spring-boot-testing-junit5-complete
+3. **Notify team** that new skills are available: `/sdd-apply` can now reference spring-data-jpa-repositories, spring-boot-mapstruct-dtos, spring-security-jwt, spring-boot-validation, spring-boot-testing-junit5-complete
 4. **Archive change** via `/sdd-archive skill-registry-completion` to sync delta specs to main specs
 
 ---
