@@ -39,49 +39,63 @@ JWT is implemented manually via:
 @Component
 @Slf4j
 public class JwtUtils {
-    private final Algorithm algorithm;
-    private final long accessTokenExpiryMs;
-    private final long refreshTokenExpiryMs;
+    // @Value field injection — NOT constructor injection
+    @Value("${security.jwt.secret-key}")
+    private String secretKey;
 
-    public JwtUtils(
-        @Value("${security.jwt.secret-key}") String secret,
-        @Value("${security.jwt.access-token.expiration-minutes}") long accessExpiryMinutes,
-        @Value("${security.jwt.refresh-token.expiration-days}") long refreshExpiryDays
-    ) {
-        this.algorithm = Algorithm.HMAC256(secret);
-        this.accessTokenExpiryMs = accessExpiryMinutes * 60 * 1000L;
-        this.refreshTokenExpiryMs = refreshExpiryDays * 24 * 60 * 60 * 1000L;
-    }
+    @Value("${security.jwt.issuer}")
+    private String issuer;
 
-    public String generateAccessToken(SecurityUser user) {
+    @Value("${security.jwt.access-token.expiration-minutes}")
+    private int accessTokenExpirationMinutes;
+
+    @Value("${security.jwt.refresh-token.expiration-days}")
+    private int refreshTokenExpirationDays;
+
+    // Algorithm is built INSIDE each method — NOT stored as a field
+    public String generateAccessToken(Authentication authentication, Map<String, Object> extraClaims) {
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
+        UserCredential user = securityUser.getUser();
+
         return JWT.create()
-            .withSubject(user.getUsername())
-            .withClaim("userId", user.getUserId().toString())
+            .withSubject(securityUser.getUsername())
+            .withClaim("userId", user.getId().toString())
             .withClaim("email", user.getEmail())
-            .withClaim("username", user.getUsername())
-            .withClaim("roles", user.getAuthorities().stream()
+            .withClaim("username", user.getEmail())
+            .withClaim("roles", securityUser.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(a -> a.startsWith("ROLE_"))
                 .collect(Collectors.toList()))
-            .withClaim("scope", user.getAuthorities().stream()
+            .withClaim("scope", securityUser.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(a -> !a.startsWith("ROLE_"))
-                .collect(Collectors.joining(" ")))
+                .collect(Collectors.toList()))
+            .withClaim("type", "access")
             .withIssuedAt(new Date())
-            .withExpiresAt(new Date(System.currentTimeMillis() + accessTokenExpiryMs))
+            .withExpiresAt(new Date(System.currentTimeMillis()
+                + (long) accessTokenExpirationMinutes * 60 * 1000))
             .sign(algorithm);
     }
 
-    public String generateRefreshToken(SecurityUser user) {
+    public String generateAccessToken(Authentication authentication) {
+        return generateAccessToken(authentication, Map.of());
+    }
+
+    public String generateRefreshToken(String username, UUID userId) {
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
         return JWT.create()
-            .withSubject(user.getUsername())
-            .withClaim("userId", user.getUserId().toString())
+            .withSubject(username)
+            .withClaim("userId", userId.toString())
+            .withClaim("type", "refresh")
             .withIssuedAt(new Date())
-            .withExpiresAt(new Date(System.currentTimeMillis() + refreshTokenExpiryMs))
+            .withExpiresAt(new Date(System.currentTimeMillis()
+                + (long) refreshTokenExpirationDays * 24 * 60 * 60 * 1000))
             .sign(algorithm);
     }
 
     public DecodedJWT validateToken(String token) {
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
         try {
             JWTVerifier verifier = JWT.require(algorithm).build();
             return verifier.verify(token);
@@ -91,13 +105,43 @@ public class JwtUtils {
             throw new com.banco.co.security.exception.TokenMalformedException(ex.getMessage());
         }
     }
+
+    public DecodedJWT validateAccessToken(String token) {
+        DecodedJWT decoded = validateToken(token);
+        if (!"access".equals(decoded.getClaim("type").asString())) {
+            throw new com.banco.co.security.exception.TokenMalformedException("Not an access token");
+        }
+        return decoded;
+    }
+
+    public DecodedJWT validateRefreshToken(String token) {
+        DecodedJWT decoded = validateToken(token);
+        if (!"refresh".equals(decoded.getClaim("type").asString())) {
+            throw new com.banco.co.security.exception.TokenMalformedException("Not a refresh token");
+        }
+        return decoded;
+    }
+
+    // Extract helpers
+    public String getUsername(DecodedJWT jwt)      { return jwt.getSubject(); }
+    public UUID   getUserId(DecodedJWT jwt)        { return UUID.fromString(jwt.getClaim("userId").asString()); }
+    public String getEmail(DecodedJWT jwt)         { return jwt.getClaim("email").asString(); }
+    public List<String> getRoles(DecodedJWT jwt)   { return jwt.getClaim("roles").asList(String.class); }
+    public List<String> getScopes(DecodedJWT jwt)  { return jwt.getClaim("scope").asList(String.class); }
+    public String getTokenId(DecodedJWT jwt)       { return jwt.getId(); }
+    public Date   getExpirationDate(DecodedJWT jwt){ return jwt.getExpiresAt(); }
+    public boolean isTokenExpired(DecodedJWT jwt)  { return jwt.getExpiresAt().before(new Date()); }
+    public boolean isRefreshToken(DecodedJWT jwt)  { return "refresh".equals(jwt.getClaim("type").asString()); }
+    public boolean isAccessToken(DecodedJWT jwt)   { return "access".equals(jwt.getClaim("type").asString()); }
 }
 ```
 
 **Key facts:**
-- Algorithm: HMAC256 (symmetric) — secret must be at least 256 bits
-- Access token: 15 min expiry, claims: `userId`, `email`, `username`, `roles` (ROLE_* list), `scope` (space-separated permissions)
-- Refresh token: 30 day expiry, minimal claims: `userId` only
+- `@Value` field injection — NOT constructor injection; `Algorithm.HMAC256(secretKey)` is built inside each method
+- `generateAccessToken` takes `Authentication` (+ optional extra-claims overload); principal is cast to `SecurityUser`, user fetched via `securityUser.getUser()`
+- `generateRefreshToken(String username, UUID userId)` — minimal claims + `type:"refresh"`
+- `validateAccessToken` / `validateRefreshToken` call `validateToken` then check the `type` claim
+- Claims: `userId` (string), `email`, `username`, `roles` (ROLE_* list), `scope` (non-ROLE_ list), `type` ("access"/"refresh")
 - `TokenExpiredException` and `TokenMalformedException` are domain exceptions (extend `AuthenticationException`)
 
 ### 2. JwtTokenValidator — Custom Filter
@@ -165,40 +209,36 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 
 ```java
 // com/banco/co/user/model/adapter/SecurityUser.java
+@RequiredArgsConstructor
 @Getter
 public class SecurityUser implements UserDetails {
-    private final UUID userId;
-    private final String email;
-    private final String username;
-    private final String password;             // BCrypt-hashed PIN
-    private final List<GrantedAuthority> authorities;
-    private final boolean accountNonLocked;
+    // Single field — caller accesses full UserCredential via getUser()
+    private final UserCredential user;
 
-    public SecurityUser(UserCredential credential) {
-        this.userId = credential.getId();
-        this.email = credential.getEmail();
-        this.username = credential.getUsername();
-        this.password = credential.getHashedPin();
-        this.accountNonLocked = credential.getStatus() == UserStatus.ACTIVE;
-        this.authorities = buildAuthorities(credential.getRoles(), credential.getPermissions());
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Each role emits ROLE_{roleName} + all of that role's permission scopes
+        return user.getRoles().stream()
+            .flatMap(role -> {
+                Stream<SimpleGrantedAuthority> roleAuthority =
+                    Stream.of(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+                Stream<SimpleGrantedAuthority> permissionAuthorities =
+                    role.getPermissions().stream()
+                        .map(p -> new SimpleGrantedAuthority(p.getScope()));
+                return Stream.concat(roleAuthority, permissionAuthorities);
+            })
+            .collect(Collectors.toList());
     }
 
-    private List<GrantedAuthority> buildAuthorities(
-        Set<Role> roles,
-        Set<Permission> permissions
-    ) {
-        List<GrantedAuthority> auths = new ArrayList<>();
-        // Roles: ROLE_ADMIN, ROLE_USER, etc.
-        roles.forEach(r -> auths.add(new SimpleGrantedAuthority("ROLE_" + r.getName())));
-        // Permissions: account:read, transaction:write, etc.
-        permissions.forEach(p -> auths.add(new SimpleGrantedAuthority(p.getName())));
-        return Collections.unmodifiableList(auths);
-    }
+    @Override public String getPassword() { return user.getPasswordHash(); }
+    @Override public String getUsername() { return user.getEmail(); }
 
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return accountNonLocked; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled() { return accountNonLocked; }
+    // NOTE: inverted in source — isAccountNonLocked returns !user.isAccountNonLocked()
+    @Override public boolean isAccountNonLocked() { return !user.isAccountNonLocked(); }
+
+    @Override public boolean isAccountNonExpired()    { return true; }
+    @Override public boolean isCredentialsNonExpired(){ return true; }
+    @Override public boolean isEnabled()              { return true; }
 }
 ```
 
@@ -206,40 +246,47 @@ public class SecurityUser implements UserDetails {
 
 ```java
 // com/banco/co/security/config/SecurityConfig.java
+@EnableMethodSecurity
 @Configuration
-@EnableMethodSecurity          // enables @PreAuthorize on methods
+@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtUtils jwtUtils;   // JwtTokenValidator is NOT injected — instantiated inline
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
+    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
-                .anyRequest().authenticated())
-            // JwtTokenValidator is instantiated here — NOT a @Component
-            .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)
-            .build();
+            // No authorizeHttpRequests block in current code
+            .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class);
+        return http.build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);   // strength=12 for PINs
+    public BCryptPasswordEncoder getBCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration authenticationConfiguration
+    ) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }
 ```
 
 **Key decisions:**
+- All four class annotations required: `@EnableMethodSecurity`, `@Configuration`, `@EnableWebSecurity`, `@RequiredArgsConstructor`
+- Method is named `configure` (NOT `filterChain`)
+- No `authorizeHttpRequests` block in current code — authorization is handled entirely via `@PreAuthorize`
 - CSRF disabled — stateless REST API with JWT
 - Sessions: `STATELESS` — no server-side session
 - Filter placed `BEFORE` `BasicAuthenticationFilter`
 - `WebSecurityConfigurerAdapter` is NOT used (removed in Spring Security 6)
+- Two extra beans: `getBCryptPasswordEncoder()` and `authenticationManager(AuthenticationConfiguration)`
 
 ### 5. RBAC Annotations
 
@@ -284,28 +331,32 @@ public class AccountController {
 
 ```java
 // com/banco/co/security/securityhasher/HashUtils.java
-@Component
+// Plain utility class — NO @Component, NO Spring injection, ALL methods STATIC
 public class HashUtils {
-    private static final int BCRYPT_STRENGTH = 12;
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     // For PINs and passwords (one-way, verifiable)
-    public String hashPin(String rawPin) {
-        return BCrypt.hashpw(rawPin, BCrypt.gensalt(BCRYPT_STRENGTH));
+    public static String hashBcrypt(String pin) {
+        return encoder.encode(pin);
     }
 
-    public boolean verifyPin(String rawPin, String hashedPin) {
-        return BCrypt.checkpw(rawPin, hashedPin);
+    public static boolean verifyBcrypt(String pin, String storedHash) {
+        return encoder.matches(pin, storedHash);
     }
 
-    // For idempotency keys (deterministic, fast)
-    public String sha256(String input) {
+    // For idempotency keys / content hashes (deterministic, fast — NOT for secrets)
+    public static String hashSha256(String pin) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest(pin.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 not available", e);
         }
+    }
+
+    public static boolean verifySha256(String pin, String storedHash) {
+        return hashSha256(pin).equals(storedHash);
     }
 }
 ```
@@ -323,22 +374,23 @@ Encrypts sensitive fields at the JPA layer (stored encrypted in DB, decrypted on
 
 ```java
 // com/banco/co/security/cryptoLib/JasyptEncryptor.java
+@Component
 @Converter
 @RequiredArgsConstructor
 public class JasyptEncryptor implements AttributeConverter<String, String> {
     // Provided by jasypt-spring-boot-starter autoconfiguration.
     // Algorithm/IV are configured in application.yml under jasypt.encryptor.*
     // Do NOT instantiate StandardPBEStringEncryptor here.
-    private final StringEncryptor encryptor;
+    private final StringEncryptor stringEncryptor;
 
     @Override
-    public String convertToDatabaseColumn(String attribute) {
-        return attribute != null ? encryptor.encrypt(attribute) : null;
+    public String convertToDatabaseColumn(String number) {
+        return stringEncryptor.encrypt(number);
     }
 
     @Override
     public String convertToEntityAttribute(String dbData) {
-        return dbData != null ? encryptor.decrypt(dbData) : null;
+        return stringEncryptor.decrypt(dbData);
     }
 }
 
