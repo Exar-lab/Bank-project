@@ -327,7 +327,59 @@ public class AccountController {
 - `hasAuthority('account:read')` — exact match on the authority string
 - Roles are coarse (`ADMIN`, `USER`, `MANAGER`); permissions are fine (`account:read`, `transaction:write`)
 
-### 6. HashUtils — Hashing Strategies
+### 6. CORS Configuration
+
+When the frontend is on a different origin, add `CorsConfigurationSource` to `SecurityConfig`:
+
+```java
+// Optional: only needed for browser-based frontend on different origin
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(Arrays.asList("https://app.example.com")); // Never "*" in production
+    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
+    config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+    config.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+}
+
+// Then wire it in SecurityFilterChain:
+.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+```
+
+**Convention**: Never use `"*"` for allowed origins in production. List explicit origins.
+
+### 7. Extracting Authenticated Principal in Services
+
+```java
+// Service layer: extract current user from SecurityContextHolder
+private SecurityUser getCurrentUser() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getPrincipal() instanceof SecurityUser securityUser) {
+        return securityUser;
+    }
+    throw new UnauthorizedException("No authenticated user in context");
+}
+
+// Usage: ownership check before returning data
+public List<AccountResponseDto> getMyAccounts() {
+    SecurityUser currentUser = getCurrentUser();
+    String email = currentUser.getUsername(); // returns user email
+    UUID userId  = currentUser.getUser().getId();
+    return accountRepository.findByUser_Email(email).stream()
+        .map(mapper::toDto).toList();
+}
+```
+
+**Key rules:**
+- Access `SecurityContextHolder` ONLY in service layer — NEVER in domain models
+- Cast principal to `SecurityUser` (our adapter), NOT to `UserDetails` — gives access to full `UserCredential`
+- `getUsername()` returns email (that's what `SecurityUser.getUsername()` returns)
+
+### 8. HashUtils — Hashing Strategies
 
 ```java
 // com/banco/co/security/securityhasher/HashUtils.java
@@ -364,7 +416,7 @@ public class HashUtils {
 **Use BCrypt for:** PINs, passwords — one-way, slow by design (brute-force resistant).
 **Use SHA-256 for:** idempotency keys, content hashes — fast, deterministic, not for secrets.
 
-### 7. JasyptEncryptor — Field-Level Encryption
+### 9. JasyptEncryptor — Field-Level Encryption
 
 Encrypts sensitive fields at the JPA layer (stored encrypted in DB, decrypted on load).
 
@@ -425,6 +477,8 @@ jasypt:
 | SHA-256 for passwords | Fast, crackable — wrong tool | BCrypt strength=12 |
 | Storing raw account numbers in DB | PCI compliance violation | `@Convert(converter = JasyptEncryptor.class)` |
 | `SecurityContextHolder.getContext()` in domain layer | Domain must not touch Spring Security | Service layer reads principal and passes values to domain |
+| `"*"` as `allowedOrigin` in production | Allows any origin — CSRF risk | List explicit origins |
+| Accessing `SecurityContextHolder` in domain layer | Domain must be Spring-free | Move principal extraction to service |
 
 ---
 

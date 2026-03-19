@@ -47,7 +47,7 @@ This is the **SOURCE OF TRUTH** for what skills to reference for each task.
 |----------|------------------|-----------------|-----------------|-------|
 | Query database for accounts | Custom JPA queries, pagination, sorting | Read: `spring-data-jpa-repositories`, `java-optional-handling` | com.banco.co.account.repository | Use @Query, JOIN FETCH for N+1 prevention |
 | Save/update in database | Persist entity changes | Read: `spring-data-jpa-repositories`, `hexagonal-architecture` (infrastructure layer) | com.banco.co.account.repository | Use repository interface, @Transactional at service |
-| Implement security | OAuth2, JWT, role checks | Read: `spring-security-oauth2`, `java-dependency-injection` | com.banco.co.security | Use SecurityFilterChain, no hardcoded secrets |
+| Implement security | JWT, role checks, CORS | Read: `spring-security-jwt`, `java-dependency-injection` | com.banco.co.security | Use SecurityFilterChain, no hardcoded secrets |
 
 ### Presentation Layer Scenarios
 
@@ -80,7 +80,7 @@ This is the **SOURCE OF TRUTH** for what skills to reference for each task.
 
 **Step 4: Infrastructure Layer**
 - Read: `spring-data-jpa-repositories` (JPA queries, @Repository)
-- Read: `spring-security-oauth2` (if access control needed)
+- Read: `spring-security-jwt` (if access control needed)
 
 **Step 5: Presentation Layer**
 - Read: `spring-boot-validation` (request validation)
@@ -101,7 +101,7 @@ This is the **SOURCE OF TRUTH** for what skills to reference for each task.
 2. **Find relevant skill**:
    - Query issue? → `spring-data-jpa-repositories`
    - Mapping issue? → `spring-boot-mapstruct-dtos`
-   - Security issue? → `spring-security-oauth2`
+   - Security issue? → `spring-security-jwt`
    - Validation issue? → `spring-boot-validation`
    - Exception issue? → `java-exception-handling`
 3. **Review ❌ examples**: "How would this fail?"
@@ -145,7 +145,7 @@ When reviewing code, use this to know which skills to reference:
 - [ ] Input validation with @Valid (not in service)
 - [ ] Global exception handler for errors
 - [ ] Security filters applied (@PreAuthorize, CORS)
-- [ ] Read: `spring-boot-validation`, `spring-boot-exception-handler`, `spring-security-oauth2`
+   - [ ] Read: `spring-boot-validation`, `spring-boot-exception-handler`, `spring-security-jwt`
 
 ### ✅ Testing Check
 - [ ] Domain tests: 90%+ coverage
@@ -157,18 +157,32 @@ When reviewing code, use this to know which skills to reference:
 
 ## Skill Directory
 
-All skills live in `.atl/` or are global SDD skills.
+All project skills live in `.claude/skills/`. Navigation files live in `.claude/navigation/`. Global SDD skills are in `~/.config/Claude/skills/`.
 
-### Project-Level Skills (`.atl/`)
+### Project-Level Skills (`.claude/skills/`)
 
 | Skill | Purpose | For Who | When |
 |-------|---------|---------|------|
-| `skill-spring-data-jpa-repositories.md` | JPA queries, pagination, N+1 prevention | Backend Dev, AI | Writing repository methods |
-| `skill-spring-boot-mapstruct-dtos.md` | DTO mapping, nested objects | Backend Dev, AI | Creating mappers |
-| `skill-spring-security-oauth2.md` | OAuth2, JWT, RBAC | Backend Dev, AI | Implementing security |
-| `skill-spring-boot-validation.md` | Request validation | Backend Dev, AI | Creating DTOs/controllers |
-| `skill-spring-boot-testing-junit5-complete.md` | Unit/integration tests | Backend Dev, AI | Writing tests |
-| `skill-registry.md` | Scenario-based skill selection | Backend Dev, AI | Finding which skill to read |
+| `spring-data-jpa-repositories.md` | JPA queries, pagination, N+1 prevention | Backend Dev, AI | Writing repository methods |
+| `spring-boot-mapstruct-dtos.md` | DTO mapping, nested objects | Backend Dev, AI | Creating mappers |
+| `spring-security-jwt.md` | JWT, SecurityFilterChain, RBAC, CORS | Backend Dev, AI | Implementing security |
+| `spring-boot-validation.md` | Request validation | Backend Dev, AI | Creating DTOs/controllers |
+| `spring-boot-testing-junit5-complete.md` | Unit/integration tests | Backend Dev, AI | Writing tests |
+| `hexagonal-architecture.md` | Layer separation, package structure | All agents | Any architecture question |
+| `java-records-dtos.md` | Records as DTOs | Domain/Application agent | Creating value objects |
+| `java-optional-handling.md` | Optional patterns | Application agent | Null-safe service methods |
+| `java-dependency-injection.md` | Constructor injection | All Build agents | Wiring Spring beans |
+| `java-exception-handling.md` | Abstract exception hierarchies | Domain agent | Custom exceptions |
+| `junit5-testing-patterns.md` | JUnit 5 patterns | Test agent | Writing tests |
+| `conventional-commits.md` | Commit message format | All agents | Before committing |
+
+### Navigation Files (`.claude/navigation/`)
+
+| File | Purpose |
+|------|---------|
+| `skill-registry.md` | Scenario-based skill selection with scenario→skill mapping |
+| `SKILL_NAVIGATION_INDEX.md` | This file — central navigation guide |
+| `SKILL_AUDIT_CHECKLIST.md` | Quality checklist for skill registry |
 
 ### Global Skills (SDD Lifecycle)
 

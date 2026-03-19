@@ -172,7 +172,7 @@ This project uses a 7-agent team for parallel development:
 
 | Agent | Role | Touches |
 |---|---|---|
-| **Planning** | SDD orchestration, proposals, specs, design | `.claude/`, `.atl/` docs |
+| **Planning** | SDD orchestration, proposals, specs, design | `.claude/` docs |
 | **Build-Domain** | Entities, enums, domain exceptions | `{feature}/model/`, `{feature}/enums/`, `{feature}/exception/` |
 | **Build-Application** | Services, DTOs, mappers | `{feature}/service/`, `{feature}/dto/`, `{feature}/mapper/` |
 | **Build-Infrastructure** | Repositories, security config | `{feature}/repository/`, `security/` |

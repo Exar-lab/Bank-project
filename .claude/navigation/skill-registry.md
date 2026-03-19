@@ -124,9 +124,9 @@ These files live in `.claude/context/` and provide project-specific guidance:
 | I need to map Account → AccountResponseDto | `spring-boot-mapstruct-dtos` | com.banco.co.account.mapper |
 | I need to handle nested objects in mapping | `spring-boot-mapstruct-dtos` | com.banco.co.account.mapper |
 | I need custom field transformation during mapping | `spring-boot-mapstruct-dtos` | com.banco.co.account.mapper |
-| I need to secure an endpoint with roles | `spring-security-oauth2` | com.banco.co.security.config |
-| I need to validate JWT tokens | `spring-security-oauth2` | com.banco.co.security.config |
-| I need to implement OAuth2 client credentials flow | `spring-security-oauth2` | com.banco.co.security.config |
+| I need to secure an endpoint with roles | `spring-security-jwt` | com.banco.co.security.config |
+| I need to validate JWT tokens | `spring-security-jwt` | com.banco.co.security.config |
+| I need to implement OAuth2 client credentials flow | `spring-security-jwt` | com.banco.co.security.config |
 | I need to validate request DTOs | `spring-boot-validation` | com.banco.co.account.dto |
 | I need custom validation rules | `spring-boot-validation` | com.banco.co.account.dto |
 | I need method-level validation | `spring-boot-validation` | com.banco.co.account.service |
@@ -149,7 +149,7 @@ These files live in `.claude/context/` and provide project-specific guidance:
 **Focus**: Business logic, orchestration, use cases
 
 - **spring-data-jpa-repositories**: Query repositories for business operations
-- **spring-security-oauth2**: Extract principal and check permissions in services
+- **spring-security-jwt**: Extract principal and check permissions in services
 - **spring-boot-testing-junit5-complete**: Test business logic with 85%+ coverage
 - **spring-boot-validation**: Validate business inputs with custom rules
 
@@ -158,7 +158,7 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 - **spring-data-jpa-repositories**: Implement custom repository queries
 - **spring-boot-mapstruct-dtos**: Map JPA results to application DTOs
-- **spring-security-oauth2**: Configure SecurityFilterChain, JWT validation
+- **spring-security-jwt**: Configure SecurityFilterChain, JWT validation
 - **spring-boot-testing-junit5-complete**: Test repositories with @DataJpaTest or TestContainers
 
 #### **Presentation Layer** (com.banco.co.*.controller)
@@ -166,7 +166,7 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 - **spring-boot-validation**: Validate @RequestBody with @Valid
 - **spring-boot-mapstruct-dtos**: Map response DTOs to HTTP JSON
-- **spring-security-oauth2**: Extract JWT principal and check @PreAuthorize
+- **spring-security-jwt**: Extract JWT principal and check @PreAuthorize
 - **spring-boot-testing-junit5-complete**: Test endpoints with @WebMvcTest
 
 ---
@@ -175,7 +175,7 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 #### 1. **spring-data-jpa-repositories**
 **Purpose**: Repository patterns, custom queries, pagination, N+1 prevention  
-**File**: [skill-spring-data-jpa-repositories.md](./skill-spring-data-jpa-repositories.md)  
+**File**: [spring-data-jpa-repositories.md](../.claude/skills/spring-data-jpa-repositories.md)  
 **Key Topics**:
 - Custom @Query with JPQL/native SQL
 - @EntityGraph to prevent N+1
@@ -192,7 +192,7 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 #### 2. **spring-boot-mapstruct-dtos**
 **Purpose**: DTO mapping, nested objects, custom transformations  
-**File**: [skill-spring-boot-mapstruct-dtos.md](./skill-spring-boot-mapstruct-dtos.md)  
+**File**: [spring-boot-mapstruct-dtos.md](../skills/spring-boot-mapstruct-dtos.md)  
 **Key Topics**:
 - @Mapper with componentModel
 - @Mapping field transforms
@@ -207,26 +207,26 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 ---
 
-#### 3. **spring-security-oauth2**
-**Purpose**: OAuth2 flows, JWT validation, RBAC, security config  
-**File**: [skill-spring-security-oauth2.md](./skill-spring-security-oauth2.md)  
+#### 3. **spring-security-jwt**
+**Purpose**: JWT security with auth0 java-jwt, SecurityFilterChain, RBAC, CORS  
+**File**: [spring-security-jwt.md](../skills/spring-security-jwt.md)  
 **Key Topics**:
-- SecurityFilterChain configuration
-- Custom JWT validator filters
+- SecurityFilterChain configuration (Spring Boot 4.x)
+- Custom JWT validator filter with auth0 java-jwt
 - @PreAuthorize with role checks
 - Principal extraction from SecurityContextHolder
 - CORS configuration
 
 **Example Scenarios**:
 - Scenario 1: Configure SecurityFilterChain
-- Scenario 2: Validate JWT tokens
+- Scenario 2: Validate JWT tokens with auth0 java-jwt
 - Scenario 3: Role-based access control with @PreAuthorize
 
 ---
 
 #### 4. **spring-boot-validation**
 **Purpose**: Request validation, custom constraints, validation groups  
-**File**: [skill-spring-boot-validation.md](./skill-spring-boot-validation.md)  
+**File**: [spring-boot-validation.md](../skills/spring-boot-validation.md)  
 **Key Topics**:
 - Standard constraints (@NotNull, @NotBlank, @Size, @Pattern)
 - @Valid on @RequestBody
@@ -241,9 +241,9 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 ---
 
-#### 5. **spring-security-jwt**
+#### 5. **spring-security-jwt** _(merged into §3 above — kept for cross-reference)_
 **Purpose**: JWT authentication with auth0 java-jwt:4.5.0, SecurityFilterChain, RBAC  
-**File**: [.claude/skills/spring-security-jwt.md](../.claude/skills/spring-security-jwt.md)  
+**File**: [spring-security-jwt.md](../skills/spring-security-jwt.md)  
 **Key Topics**:
 - Custom JWT filter with auth0 java-jwt (not Spring OAuth2 Resource Server)
 - SecurityFilterChain configuration (Spring Boot 4.x)
@@ -260,7 +260,7 @@ These files live in `.claude/context/` and provide project-specific guidance:
 
 #### 6. **spring-boot-testing-junit5-complete**
 **Purpose**: Unit/integration tests, @DataJpaTest, @WebMvcTest, MockMvc  
-**File**: [skill-spring-boot-testing-junit5-complete.md](./skill-spring-boot-testing-junit5-complete.md)  
+**File**: [spring-boot-testing-junit5-complete.md](../skills/spring-boot-testing-junit5-complete.md)  
 **Key Topics**:
 - @DataJpaTest for repository testing (fast, in-memory)
 - @WebMvcTest for REST endpoint testing
