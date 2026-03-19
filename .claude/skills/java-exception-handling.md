@@ -71,7 +71,8 @@ public abstract class BankingException extends RuntimeException {
 
     public String getErrorCode() { return errorCode; }
     public HttpStatus getHttpStatus() { return httpStatus; }
-    public Map<String, Object> getMetadata() { return Collections.unmodifiableMap(metadata); }
+    // Lombok @Getter on the field — returns the mutable map directly (not unmodifiable)
+    public Map<String, Object> getMetadata() { return metadata; }
 }
 ```
 
