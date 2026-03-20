@@ -6,7 +6,7 @@
 **Language**: Java 21+  
 **Framework**: Spring Boot 3.x/4.x  
 **Architecture**: Hexagonal (Ports & Adapters) + DDD + Screaming Architecture (feature-first)  
-**Database**: MySQL/PostgreSQL  
+**Database**: MySQL  
 **Messaging**: Kafka (async event publishing)  
 **Testing**: JUnit 5 + Mockito + Testcontainers  
 
@@ -19,7 +19,7 @@
 - **Records for DTOs**: All value objects MUST be `record`, never `@Data` or mutable classes
 - **Constructor Injection**: Spring beans use constructor-only DI, no `@Autowired` on fields
 - **Optional Handling**: Use `Optional` for nullability; NEVER call `.get()` without `isPresent()` check
-- **Sealed Exceptions**: Exception hierarchies MUST be sealed (e.g., `public sealed class BancoException { }`)
+- **Abstract Exceptions**: Exception hierarchies MUST use `abstract` classes (e.g., `public abstract class BancoException extends RuntimeException { }`)
 - **Package Naming**: All code under `com.banco.co.*`
 - **Annotations**: Use only javax/jakarta (Spring 6+), never com.sun or internal APIs
 
@@ -111,7 +111,7 @@ Operational notes:
 - [ ] No `.get()` on Optional without `isPresent()`
 - [ ] No hardcoded secrets (API keys, passwords)
 - [ ] JPA queries use projections to avoid N+1
-- [ ] Exception handling uses sealed classes
+- [ ] Exception handling uses abstract classes
 - [ ] Commit message is conventional format
 - [ ] Code coverage meets minimum (see testing section)
 
@@ -121,7 +121,7 @@ Operational notes:
 🚩 Mutable DTOs (`@Data`, setters) → Use Records  
 🚩 `Optional.get()` without guard → NPE in production  
 🚩 N+1 queries → Always use joins or projections  
-🚩 Checked exceptions → Use sealed exception hierarchies  
+🚩 Non-abstract exception hierarchies → Use abstract class hierarchies extending RuntimeException  
 🚩 No @Transactional(readOnly=true) on queries → Unnecessary write overhead  
 
 ---

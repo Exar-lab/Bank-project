@@ -121,6 +121,13 @@ These files live in `.claude/context/` and provide project-specific guidance:
 | I need to query accounts with filters | `spring-data-jpa-repositories` | com.banco.co.account.repository |
 | I need to paginate large result sets | `spring-data-jpa-repositories` | com.banco.co.account.repository |
 | I need to prevent N+1 queries | `spring-data-jpa-repositories` | com.banco.co.account.repository |
+| I need to publish a domain event to Kafka | `skill-kafka-async-messaging` | com.banco.co.infrastructure.kafka |
+| I need to implement the transactional outbox pattern | `skill-kafka-async-messaging` | com.banco.co.infrastructure.persistence |
+| I need to write the OutboxScheduler | `skill-kafka-async-messaging` | com.banco.co.infrastructure.scheduler |
+| I need to define a domain event Record | `skill-kafka-async-messaging` | com.banco.co.{feature}.event |
+| I need to consume Kafka events with @KafkaListener | `skill-kafka-async-messaging` | com.banco.co.{feature}.listener |
+| I need Dead Letter Topic error handling for consumers | `skill-kafka-async-messaging` | com.banco.co.infrastructure.kafka |
+| I need to configure Kafka producer/consumer beans | `skill-kafka-async-messaging` | com.banco.co.infrastructure.kafka |
 | I need to map Account → AccountResponseDto | `spring-boot-mapstruct-dtos` | com.banco.co.account.mapper |
 | I need to handle nested objects in mapping | `spring-boot-mapstruct-dtos` | com.banco.co.account.mapper |
 | I need custom field transformation during mapping | `spring-boot-mapstruct-dtos` | com.banco.co.account.mapper |
@@ -154,12 +161,13 @@ These files live in `.claude/context/` and provide project-specific guidance:
 - **spring-boot-validation**: Validate business inputs with custom rules
 
 #### **Infrastructure Layer** (com.banco.co.*.repository, com.banco.co.*.config, com.banco.co.*.infrastructure.*)
-**Focus**: Persistence, security config, adapters
+**Focus**: Persistence, security config, adapters, Kafka producers/consumers
 
 - **spring-data-jpa-repositories**: Implement custom repository queries
 - **spring-boot-mapstruct-dtos**: Map JPA results to application DTOs
 - **spring-security-jwt**: Configure SecurityFilterChain, JWT validation
 - **spring-boot-testing-junit5-complete**: Test repositories with @DataJpaTest or TestContainers
+- **skill-kafka-async-messaging**: Kafka transactional outbox, KafkaTemplate, OutboxScheduler, @KafkaListener, Dead Letter Topics
 
 #### **Presentation Layer** (com.banco.co.*.controller)
 **Focus**: HTTP endpoints, input validation, response formatting

@@ -48,6 +48,13 @@ This is the **SOURCE OF TRUTH** for what skills to reference for each task.
 | Query database for accounts | Custom JPA queries, pagination, sorting | Read: `spring-data-jpa-repositories`, `java-optional-handling` | com.banco.co.account.repository | Use @Query, JOIN FETCH for N+1 prevention |
 | Save/update in database | Persist entity changes | Read: `spring-data-jpa-repositories`, `hexagonal-architecture` (infrastructure layer) | com.banco.co.account.repository | Use repository interface, @Transactional at service |
 | Implement security | JWT, role checks, CORS | Read: `spring-security-jwt`, `java-dependency-injection` | com.banco.co.security | Use SecurityFilterChain, no hardcoded secrets |
+| Publish a domain event to Kafka | Transactional outbox + KafkaTemplate send | Read: `skill-kafka-async-messaging` | com.banco.co.infrastructure.kafka | Use outbox pattern — never dual-write |
+| Create an outbox entry after domain operation | Persist event atomically with domain entity | Read: `skill-kafka-async-messaging`, `spring-data-jpa-repositories` | com.banco.co.infrastructure.persistence | Same @Transactional block as domain save |
+| Poll outbox and batch-publish events | OutboxScheduler with @Scheduled | Read: `skill-kafka-async-messaging` | com.banco.co.infrastructure.scheduler | fixedDelay not fixedRate; per-entry try/catch |
+| Define a domain event DTO | Immutable event payload Record | Read: `skill-kafka-async-messaging`, `java-records-dtos` | com.banco.co.{feature}.event | Nested Payload record; eventId for idempotency |
+| Configure Kafka topics and producer | KafkaTemplate, ProducerFactory, NewTopic beans | Read: `skill-kafka-async-messaging` | com.banco.co.infrastructure.kafka | acks=all, idempotence=true, 3 partitions |
+| Consume Kafka events (@KafkaListener) | Event listener with manual ack + DLT | Read: `skill-kafka-async-messaging` | com.banco.co.{feature}.listener | Always ack duplicates; check alreadyProcessed |
+| Handle Kafka consumer failures | Dead Letter Topic routing | Read: `skill-kafka-async-messaging` | com.banco.co.infrastructure.kafka | DefaultErrorHandler + ExponentialBackOff + DLT |
 
 ### Presentation Layer Scenarios
 
@@ -175,6 +182,7 @@ All project skills live in `.claude/skills/`. Navigation files live in `.claude/
 | `java-exception-handling.md` | Abstract exception hierarchies | Domain agent | Custom exceptions |
 | `junit5-testing-patterns.md` | JUnit 5 patterns | Test agent | Writing tests |
 | `conventional-commits.md` | Commit message format | All agents | Before committing |
+| `skill-kafka-async-messaging.md` | Kafka outbox pattern, KafkaTemplate, @KafkaListener, DLT | Infrastructure agent | Publishing/consuming events |
 
 ### Navigation Files (`.claude/navigation/`)
 
