@@ -105,32 +105,39 @@ public class CreateAccountDto {
 ### ✅ Correct Pattern — @ConfigurationProperties for Config
 
 ```java
+// RECOMMENDED REFACTOR — replaces scattered @Value fields in JwtUtils
 package com.banco.co.security.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "banco.jwt")
+@ConfigurationProperties(prefix = "security.jwt")   // matches current application.yml keys
 public record JwtProperties(
-    String secret,
-    long expirationMs,
-    String issuer
+    String secretKey,
+    String issuer,
+    long accessTokenExpirationMinutes,
+    long refreshTokenExpirationDays
 ) {}
 
 // In main application class or a @Configuration:
 // @EnableConfigurationProperties(JwtProperties.class)
 ```
 
-### ❌ Common Mistake — @Value in Service
+> **Current state**: `JwtUtils` uses `@Value("${security.jwt.secret-key}")` etc. The record above is the recommended refactor target. Until migrated, use the `@Value` approach from `JwtUtils`.
+
+### ❌ Common Mistake — @Value scattered across multiple fields
 
 ```java
-// NEVER DO THIS
-@Service
-public class JwtService {
-    @Value("${banco.jwt.secret}")   // scattered, untestable, no type safety
-    private String secret;
+// AVOID when you have 3+ related config keys — group into @ConfigurationProperties instead
+@Component
+public class JwtUtils {
+    @Value("${security.jwt.secret-key}")
+    private String secretKey;          // scattered, hard to test, no type safety
 
-    @Value("${banco.jwt.expirationMs}")
-    private long expirationMs;
+    @Value("${security.jwt.issuer}")
+    private String issuer;
+
+    @Value("${security.jwt.access-token.expiration-minutes}")
+    private long expirationMinutes;
 }
 ```
 
@@ -227,35 +234,34 @@ public class AccountService {
 ```java
 package com.banco.co.security.config;
 
+import com.banco.co.security.config.filter.JwtTokenValidator;
+import com.banco.co.utils.JwtUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+@EnableMethodSecurity
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
+    private final JwtUtils jwtUtils;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
+    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class);
+        return http.build();
     }
 }
 ```
@@ -275,8 +281,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 - `com.banco.co.account.service.AccountService` — uses constructor injection + MapStruct mapper
 - `com.banco.co.transaction.service.TransactionService` — constructor injection, Optional handling
-- `com.banco.co.security.config.SecurityConfig` — SecurityFilterChain bean, never WebSecurityConfigurerAdapter
-- `com.banco.co.security.config.JwtProperties` — @ConfigurationProperties record
+- `com.banco.co.security.config.SecurityConfig` — SecurityFilterChain bean, `JwtTokenValidator` before `BasicAuthenticationFilter`
+- `com.banco.co.utils.JwtUtils` — JWT signing/validation via `@Value("${security.jwt.*}")` (refactor target: `JwtProperties` record)
 - `com.banco.co.account.dto.CreateAccountDto` — Record DTO with @Valid constraints
 - `com.banco.co.account.mapper.AccountMapper` — MapStruct interface with @Mapper(componentModel="spring")
 

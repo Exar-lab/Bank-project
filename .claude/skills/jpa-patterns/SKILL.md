@@ -248,15 +248,15 @@ public class OutboxEventEntity {
 
 - `com.banco.co.account.repository.AccountEntity` — @Entity with proper column definitions, no @Data
 - `com.banco.co.account.repository.IAccountRepository` — JpaRepository with JOIN FETCH queries
-- `com.banco.co.transaction.repository.TransactionEntity` — @ManyToOne to AccountEntity
-- `com.banco.co.transaction.repository.OutboxEventEntity` — Outbox pattern for Kafka events
+- `com.banco.co.account.model.Account` — @Entity with @EntityListeners(AuditingEntityListener.class)
+- `com.banco.co.transaction.model.Transaction` — @Entity with @ManyToOne to Account
 - `com.banco.co.account.service.AccountService` — @Transactional(readOnly=true) for reads
 - `com.banco.co.transaction.service.TransactionService` — @Transactional for multi-step writes
 
 ## Best Practices
 
 - NEVER use `@Data` on a JPA entity. Implement getters/setters explicitly, or use `@Getter`/`@Setter` individually.
-- ALL JPA entities go in `{feature}/repository/`. NEVER in `{feature}/model/` (domain model is pure Java, no JPA).
+- ALL JPA entities go in `{feature}/model/`. This is the current project convention — Account, Transaction, Card, User, etc. all live in their respective `model/` packages.
 - Always add `@Index` annotations for columns used in WHERE clauses — especially `status`, foreign keys, and lookup fields.
 - Use `@Transactional(readOnly = true)` for ALL read-only service methods. Enables performance optimizations.
 - Prevent N+1: use `JOIN FETCH` in @Query for collection relationships. Use DTO projections with `new` constructor.

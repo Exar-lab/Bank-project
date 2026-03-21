@@ -19,9 +19,9 @@ BEFORE reviewing:
 
 ### Authentication
 - [ ] JWT validated in `Authorization: Bearer <token>` header on every protected request
-- [ ] `JwtAuthenticationFilter` registered in `SecurityFilterChain` before `UsernamePasswordAuthenticationFilter`
+- [ ] `JwtTokenValidator` (custom `OncePerRequestFilter`) registered in `SecurityFilterChain` before `BasicAuthenticationFilter`
 - [ ] Token expiration checked — `TokenExpiredException` thrown with 401 status
-- [ ] Token signature verified with the correct secret/key from `@ConfigurationProperties`
+- [ ] Token signature verified with the correct secret/key from `JwtUtils` (currently via `@Value("${security.jwt.*}")`)
 - [ ] `SecurityFilterChain` bean used — NEVER `WebSecurityConfigurerAdapter` (removed in Spring Security 6)
 
 ### Authorization
@@ -67,7 +67,7 @@ These are non-negotiable merge blockers:
 - `WebSecurityConfigurerAdapter` used
 - Stack trace in HTTP response
 - CORS configured with `*` and not restricted to development only
-- JWT secret read from `@Value("${jwt.secret}")` directly in a service (use `@ConfigurationProperties`)
+- JWT secret hardcoded as a literal string — must come from `@Value("${security.jwt.secret-key}")` or environment variable
 
 ## Output Format
 

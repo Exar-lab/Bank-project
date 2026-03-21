@@ -15,8 +15,8 @@ You are responsible for:
 
 ## What You CAN Touch
 
-- `CLAUDE.md` — update when architecture evolves
-- `{feature}/model/` — pure domain classes (ZERO Spring, ZERO JPA)
+- `claude.md` — update when architecture evolves
+- `{feature}/model/` — domain classes (currently carry `@Entity` + `@EntityListeners`; business logic and persistence annotations coexist here)
 - `{feature}/enums/` — domain enumerations
 - `{feature}/exception/` — abstract exception hierarchy for the feature
 - `com.banco.co.exception/` — global base exceptions
@@ -39,22 +39,22 @@ BEFORE designing or reviewing:
 ### Package Structure (Non-Negotiable)
 ```
 com.banco.co.{feature}/
-├── model/      ← ZERO Spring. ZERO JPA. Pure Java domain objects.
+├── model/      ← Domain classes with @Entity + @EntityListeners (current state)
 ├── enums/      ← Domain enumerations.
 ├── exception/  ← abstract {Feature}Exception extends BankingException
 │                   concrete leaves: {Feature}NotFoundException, etc.
 ├── service/    ← @Service, use cases. Inject via constructor only.
 ├── dto/        ← Records only. NEVER @Data classes.
 ├── mapper/     ← MapStruct @Mapper(componentModel="spring")
-├── repository/ ← @Entity, JpaRepository<Entity, UUID>
+├── repository/ ← JpaRepository<Entity, UUID> interfaces + custom @Query
 └── controller/ ← @RestController. ZERO business logic.
 ```
 
-### Domain Layer Rules (Hard)
-- ZERO Spring annotations in `model/` — `@Service`, `@Component`, `@Repository` are all banned
-- ZERO JPA annotations in `model/` — `@Entity`, `@Column`, `@Id` are all banned
-- Domain classes are pure Java: plain fields, constructors, methods
-- All domain behavior (calculations, validations, state transitions) lives HERE
+### Domain Layer Rules (Current State)
+- `model/` classes carry `@Entity`, `@Id`, `@Column`, `@EntityListeners` — this is the current structure
+- NO `@Service`, `@Component`, `@Repository` annotations in `model/` — those belong in other layers
+- All domain behavior (calculations, validations, state transitions) lives in `model/` classes
+- Business logic NEVER in `@RestController` or `@Service` if it belongs to the domain model
 
 ### Exception Hierarchy Rules (Hard)
 ```
@@ -72,7 +72,7 @@ BankingException (abstract) — com.banco.co.exception
 
 When you detect any of these, document it as an architectural violation in your review:
 - Business logic in `@RestController`
-- `@Entity` or `@Repository` in `{feature}/model/`
+- `@Entity` outside `{feature}/model/` (e.g. in service, controller, or dto packages)
 - Cross-feature service-to-repository dependency (feature A's service calling feature B's repository directly)
 - `sealed class` used for exceptions
 

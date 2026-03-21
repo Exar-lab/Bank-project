@@ -15,7 +15,7 @@ Feature-first (Screaming Architecture) with hexagonal layering inside each featu
 ```
 com.banco.co.
 ├── account/
-│   ├── model/          ← Pure domain: Account, Money (NO Spring, NO JPA)
+│   ├── model/          ← Domain + persistence: Account (@Entity + business logic)
 │   ├── enums/          ← AccountStatus, AccountType
 │   ├── exception/      ← AccountException (abstract), AccountNotFoundException, etc.
 │   ├── service/        ← AccountService (@Service, uses IAccountRepository)
