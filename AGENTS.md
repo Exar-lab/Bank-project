@@ -19,7 +19,7 @@
 - **Records for DTOs**: All value objects MUST be `record`, never `@Data` or mutable classes
 - **Constructor Injection**: Spring beans use constructor-only DI, no `@Autowired` on fields
 - **Optional Handling**: Use `Optional` for nullability; NEVER call `.get()` without `isPresent()` check
-- **Abstract Exceptions**: Exception hierarchies MUST use `abstract` classes (e.g., `public abstract class BancoException extends RuntimeException { }`)
+- **Abstract Exceptions**: Exception hierarchies MUST use `abstract` classes (e.g., `public abstract class BankingException extends RuntimeException { }` under `com.banco.co.exception`)
 - **Package Naming**: All code under `com.banco.co.*`
 - **Annotations**: Use only javax/jakarta (Spring 6+), never com.sun or internal APIs
 
