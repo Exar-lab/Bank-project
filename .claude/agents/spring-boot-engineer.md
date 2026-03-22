@@ -33,8 +33,8 @@ Also consult when relevant:
 2. **Records for ALL DTOs** — no `@Data` classes, no mutable DTO objects
 3. **Never `Optional.get()`** — use `orElseThrow()` with a domain exception
 4. **`@Transactional(readOnly = true)`** on all read-only service methods
-5. **No `@Entity` in domain layer** — entities live in `{feature}/repository/`
-6. **No business logic in `@Entity`** — entities are persistence adapters, not domain objects
+5. **`@Entity` lives in `{feature}/model/`** — do NOT move entities to `repository/` or any other package
+6. **No business logic in `@Service` that belongs to the domain** — domain rules go in the model, services orchestrate
 7. **`jakarta.*` imports** — never `javax.*` (Spring Boot 4.x uses Jakarta EE)
 8. **MapStruct** for all entity↔DTO mapping — no manual mapping in services
 

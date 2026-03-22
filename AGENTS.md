@@ -34,7 +34,7 @@
 
 | Layer | Rules | Examples |
 |-------|-------|----------|
-| **Domain** | No Spring, no JPA, pure logic | `com.banco.co.account.model.Account`, `com.banco.co.card.exception.card.CardException` |
+| **Domain** | Business logic + JPA entities in `model/`, enums in `enums/`, exception hierarchy in `exception/` | `com.banco.co.account.model.Account` (@Entity), `com.banco.co.card.exception.card.CardException` |
 | **Application** | Orchestrates domain, DTOs, mappers | `com.banco.co.account.service.AccountService`, `com.banco.co.user.dto.*`, `com.banco.co.account.mapper.*` |
 | **Infrastructure** | Repository impls, external adapters, persistence/security config | `com.banco.co.account.repository.*`, `com.banco.co.security.config.*` |
 | **Presentation** | REST endpoints, exception handlers, request/response mapping | `com.banco.co.{feature}.controller.*`, `com.banco.co.{feature}.handler.*` |
@@ -43,12 +43,12 @@ Layer boundaries remain mandatory, but package layout is feature-first.
 
 ### Multi-Agent Operating Model
 
-This repository follows a **7-agent model in 3 categories**. Activation and ownership are explicit to protect hexagonal boundaries and feature-first structure.
+This repository follows a **8-agent model in 3 categories**. Activation and ownership are explicit to protect hexagonal boundaries and feature-first structure.
 
 | Category | Agent | Activate When | Main Tasks / Output | Boundaries |
 |----------|-------|---------------|---------------------|------------|
 | **Planning** | **Planning Agent** | A new feature, refactor, or architectural decision starts | Produces SDD artifacts: proposal, spec, design, tasks | Does not write production code |
-| **Build** | **Domain Agent** | Domain rules, value objects, enums, or domain exceptions change | Updates domain model and sealed exception hierarchies | Touches only `com.banco.co.{feature}.model`, `com.banco.co.{feature}.enums`, `com.banco.co.{feature}.exception`; no Spring/JPA/controllers |
+| **Build** | **Domain Agent** | Domain rules, value objects, enums, or domain exceptions change | Updates domain model and abstract exception hierarchies | Touches only `com.banco.co.{feature}.model`, `com.banco.co.{feature}.enums`, `com.banco.co.{feature}.exception`; no @Service/@RestController |
 | **Build** | **Application Agent** | Use-case orchestration, DTO mapping, or service flow changes | Implements application services, record DTOs, mappers | Touches only `com.banco.co.{feature}.service`, `com.banco.co.{feature}.dto`, `com.banco.co.{feature}.mapper`; no entities/repositories/controllers |
 | **Build** | **Infrastructure Agent** | Persistence, external adapters, messaging, or security config changes | Implements repositories/adapters and infrastructure configuration | Touches `com.banco.co.{feature}.repository` plus explicit infrastructure packages like `com.banco.co.security.config`; no domain business decisions |
 | **Build** | **Presentation Agent** | REST contract, validation entrypoints, or error handling at API layer changes | Implements controllers and HTTP exception handlers | Touches only `com.banco.co.{feature}.controller`, `com.banco.co.{feature}.handler`; no domain logic or JPA query logic |
@@ -151,12 +151,12 @@ When developing new features, reference:
 
 | Need | Skill |
 |------|-------|
-| Query with JPA | `.claude/skills/spring-data-jpa-repositories.md` |
-| Map DTO from entity | `.claude/skills/spring-boot-mapstruct-dtos.md` |
-| Implement OAuth2 / JWT | `.claude/skills/spring-security-jwt.md` |
-| Add validation | `.claude/skills/spring-boot-validation.md` |
-| Write tests | `.claude/skills/spring-boot-testing-junit5-complete.md` |
-| **Find which skill to use** | `.claude/navigation/SKILL_NAVIGATION_INDEX.md` ⭐ |
+| Query with JPA | `.claude/skills/jpa-patterns/SKILL.md` |
+| Map DTO from entity | `.claude/skills/spring-boot-patterns/SKILL.md` |
+| Implement OAuth2 / JWT | `.claude/skills/spring-boot-patterns/SKILL.md` |
+| Add validation | `.claude/skills/spring-boot-patterns/SKILL.md` |
+| Write tests | `.claude/skills/java-code-review/SKILL.md` |
+| **Find which skill to use** | `.claude/skills/README.md` ⭐ |
 
 ---
 
@@ -178,13 +178,13 @@ This triggers:
 7. **Verification** → All specs met + tests pass
 8. **Archive** → Persistent record for Release Please
 
-See `.claude/navigation/SKILL_NAVIGATION_INDEX.md` for full workflow.
+See `.claude/skills/README.md` for full skill index and workflow.
 
 ---
 
 ## Questions?
 
-- Architecture decisions → Check `.claude/context/project-roadmap.md`
-- How to X → Check `.claude/navigation/SKILL_NAVIGATION_INDEX.md`
+- Architecture decisions → Check `claude.md` (agent/layer responsibilities)
+- How to X → Check `.claude/skills/README.md`
 - SDD methodology → See `/sdd-explore` or `/sdd-new`
 - Code review rules → This file (AGENTS.md)

@@ -159,6 +159,50 @@ CREATE TABLE transactions (
 - `src/main/resources/db/migration/V3__add_transactions_table.sql`
 - `src/main/resources/db/migration/V4__add_outbox_events_table.sql`
 
+### ✅ Correct Pattern — Flyway Maven Goals Reference
+
+```bash
+# Apply all pending migrations
+./mvnw flyway:migrate
+
+# Show status of all migrations (applied, pending, failed)
+./mvnw flyway:info
+
+# Validate checksums — run this in CI to catch edited migrations early
+./mvnw flyway:validate
+
+# Fix checksum mismatch after an accidental migration edit (dev only)
+./mvnw flyway:repair
+
+# Wipe the DB and reapply all migrations (NEVER in production)
+./mvnw flyway:clean
+```
+
+> **`flyway:repair`**: If a migration was accidentally edited and Flyway throws `checksum mismatch`, use `repair` to resync the stored checksum with the current file. Only do this in development — in production it means the migration may have run in an inconsistent state.
+
+---
+
+### ✅ Correct Pattern — Baseline Migration (B prefix)
+
+When you need a fresh start without applying the full migration history (e.g., setting up a new environment with an existing schema):
+
+```sql
+-- B001__baseline.sql  ← prefix B, not V
+-- Applied FIRST in new environments. In existing environments: ignored.
+-- Represents the cumulative current state of the DB.
+CREATE TABLE accounts ( ... );
+CREATE TABLE transactions ( ... );
+-- ... full current schema
+```
+
+Rules:
+- Prefix `B` instead of `V`
+- Flyway applies the latest baseline first in new environments, then continues with versioned migrations
+- In existing deployments: baseline migrations are ignored (no impact)
+- Use when the migration history is too long and you want to compact it
+
+---
+
 ## Best Practices
 
 - Migration files live in `src/main/resources/db/migration/`.
@@ -169,5 +213,7 @@ CREATE TABLE transactions (
 - Add `INDEX` for every foreign key column and every column used in a WHERE clause.
 - Add `COMMENT` to every column — self-documenting schema matters for a banking system.
 - For rename/drop operations, always use the expand-contract multi-step pattern.
-- Test migrations locally with `./mvnw flyway:migrate` before committing.
+- Run `./mvnw flyway:validate` in CI — catches checksum mismatches before deployment.
+- Run `./mvnw flyway:info` to inspect migration state before running `migrate`.
+- `flyway:repair` is a dev-only escape hatch for checksum mismatches — investigate WHY it happened.
 - Flyway configuration is in `application.yml` under `spring.flyway.*`.
