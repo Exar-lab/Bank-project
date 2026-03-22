@@ -217,6 +217,35 @@ public ResponseEntity<String> handle(Exception ex) {
 
 ---
 
+### ✅ Correct Pattern — ProblemDetail (RFC 7807, Spring Boot 3+)
+
+Spring Boot 3+ supports `ProblemDetail` natively as an alternative to custom error DTOs. It's the RFC 7807 standard for HTTP error responses:
+
+```java
+// Option A: use ProblemDetail directly in GlobalExceptionHandler
+@ExceptionHandler(BankingException.class)
+public ResponseEntity<ProblemDetail> handleBankingException(BankingException ex) {
+    ProblemDetail problem = ProblemDetail.forStatusAndDetail(ex.getHttpStatus(), ex.getMessage());
+    problem.setTitle(ex.getErrorCode());
+    problem.setProperty("metadata", ex.getMetadata());
+    problem.setProperty("timestamp", LocalDateTime.now());
+    return ResponseEntity.status(ex.getHttpStatus()).body(problem);
+}
+
+// Option B: extend ErrorResponseException (Spring MVC integration)
+public class AccountNotFoundException extends ErrorResponseException {
+    public AccountNotFoundException(UUID id) {
+        super(HttpStatus.NOT_FOUND,
+            ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "Account not found: " + id), null);
+    }
+}
+```
+
+> **Current approach in banco-service**: Uses custom `ErrorResponseDto` record. `ProblemDetail` is the standard alternative — consider adopting it for new features to align with RFC 7807 and Spring's native support.
+
+---
+
 ### ✅ Correct Pattern — URL Versioning
 
 ```

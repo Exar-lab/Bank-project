@@ -135,7 +135,72 @@ public class AccountReportService {
 }
 ```
 
-**Fix**: Use `findAllWithTransactions()` with JOIN FETCH, or use DTO projection query.
+**Fix**: Use `findAllWithTransactions()` with JOIN FETCH, or `@EntityGraph`, or DTO projection query.
+
+---
+
+### ✅ Correct Pattern — @EntityGraph (cleaner alternative to JOIN FETCH)
+
+```java
+package com.banco.co.account.repository;
+
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface IAccountRepository extends JpaRepository<Account, UUID> {
+
+    // @EntityGraph: no JPQL needed — Spring Data handles the join
+    @EntityGraph(attributePaths = {"transactions"})
+    Optional<Account> findById(UUID id);  // eager loads transactions in ONE query
+
+    // Nested eager load: transactions + their audit logs
+    @EntityGraph(attributePaths = {"transactions", "transactions.auditLogs"})
+    Optional<Account> findWithFullHistoryById(UUID id);
+}
+```
+
+**When to use**: `@EntityGraph` over `JOIN FETCH` when:
+- You want clean repository methods without JPQL boilerplate
+- You're using derived query methods (no custom `@Query`)
+- You need to eagerly load 1–2 levels of relationships
+
+**When to prefer `JOIN FETCH`**: Complex queries with `WHERE`, `GROUP BY`, or DTO projections.
+
+---
+
+### ✅ Correct Pattern — Pagination
+
+```java
+package com.banco.co.account.repository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface IAccountRepository extends JpaRepository<Account, UUID> {
+
+    // Simple pagination — Spring Data generates the count query automatically
+    Page<Account> findByStatus(AccountStatus status, Pageable pageable);
+
+    // Custom query with explicit countQuery — required when using JOIN/GROUP BY
+    @Query(
+        value = "SELECT a FROM Account a WHERE a.accountHolder LIKE :holder%",
+        countQuery = "SELECT COUNT(a) FROM Account a WHERE a.accountHolder LIKE :holder%"
+    )
+    Page<Account> findByHolderLike(@Param("holder") String holder, Pageable pageable);
+}
+
+// Usage in service:
+@Transactional(readOnly = true)
+public Page<AccountResponseDto> findActiveAccounts(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    return accountRepository.findByStatus(AccountStatus.ACTIVE, pageable)
+        .map(accountMapper::toResponseDto);
+}
+```
 
 ---
 
@@ -259,8 +324,10 @@ public class OutboxEventEntity {
 - ALL JPA entities go in `{feature}/model/`. This is the current project convention — Account, Transaction, Card, User, etc. all live in their respective `model/` packages.
 - Always add `@Index` annotations for columns used in WHERE clauses — especially `status`, foreign keys, and lookup fields.
 - Use `@Transactional(readOnly = true)` for ALL read-only service methods. Enables performance optimizations.
-- Prevent N+1: use `JOIN FETCH` in @Query for collection relationships. Use DTO projections with `new` constructor.
+- Prevent N+1: use `@EntityGraph` for simple relationship loading, `JOIN FETCH` in `@Query` for complex queries, DTO projections for summaries.
 - `Optional.get()` is BANNED. Always use `orElseThrow()` with a domain exception.
 - Outbox pattern for Kafka: save `OutboxEventEntity` in the same `@Transactional` as the business entity. A scheduler/relay publishes it later.
 - MySQL specifics: use `ENGINE=InnoDB` (default in MySQL 8), charset `utf8mb4`, `precision = 19, scale = 4` for monetary amounts.
 - Never call `entityManager.flush()` or `entityManager.clear()` manually in services — let Spring manage the lifecycle.
+- Pagination: use `Pageable` + `Page<T>` for list endpoints. Add `countQuery` explicitly when using JOIN/GROUP BY in the main query.
+- Named parameters: prefer `@Param("name")` over positional `?1` in `@Query` — clearer and refactor-safe.

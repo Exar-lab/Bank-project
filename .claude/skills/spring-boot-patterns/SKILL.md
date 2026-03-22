@@ -248,7 +248,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @EnableMethodSecurity
-@Configuration
+@Configuration(proxyBeanMethods = false)  // Spring Boot 4.x: disable CGLIB proxy for perf
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -293,6 +293,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 - DTOs live in `{feature}/dto/`. Mappers live in `{feature}/mapper/`. Services in `{feature}/service/`.
 - @ConfigurationProperties records replace scattered @Value annotations. Enable with `@EnableConfigurationProperties`.
 - SecurityFilterChain is the ONLY accepted way to configure Spring Security (Spring Boot 4.x / Security 6+).
+- Use `@Configuration(proxyBeanMethods = false)` on all `@Configuration` classes — avoids CGLIB subclassing overhead.
 - MapStruct mappers use `componentModel = "spring"` so they are injectable via constructor.
 - Kafka KafkaTemplate is configured via @Bean in a dedicated config class, not inline in services.
 - Spring Boot version is 4.x — use `jakarta.*` (not `javax.*`) for all Jakarta EE imports.
+- Testing: use `MockMvcTester` (AssertJ-based) instead of `MockMvc` for controller tests — preferred in Spring Boot 4.x.

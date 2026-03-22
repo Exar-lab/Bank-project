@@ -14,10 +14,10 @@ Run through every item below on every PR. Items marked [BLOCKER] prevent merge.
 #### Architecture Layer Violations [BLOCKER]
 
 - [ ] No `@RestController` contains business logic — only HTTP mapping and delegation to service
-- [ ] No `@Entity` class exists in `{feature}/model/` (domain layer) — entities go in `{feature}/repository/`
+- [ ] `@Entity` classes live in `{feature}/model/` — this IS the current convention. DO NOT move them to `{feature}/repository/`
 - [ ] No `@Service` directly calls another feature's repository (must go through that feature's service)
 - [ ] No circular dependency between features (account → transaction is OK; transaction → account AND account → transaction is NOT)
-- [ ] No Spring annotations (`@Component`, `@Service`, `@Repository`) in domain model classes
+- [ ] No extra Spring annotations (`@Component`, `@Service`, `@Repository`) added to domain model classes beyond `@Entity` + `@EntityListeners`
 
 #### Instant Reject Conditions [BLOCKER]
 
@@ -56,10 +56,10 @@ try {
     log.error("Error", e);
 }
 
-// 6. @Entity in domain layer — instant reject
-// BLOCKER — domain is pure Java, no JPA
+// 6. @Service/@Component in {feature}/model/ — instant reject
+// BLOCKER — model/ only allows @Entity + @EntityListeners (current convention)
 package com.banco.co.account.model;
-@Entity  // BLOCKER
+@Service  // BLOCKER — wrong annotation in model/
 public class Account { ... }
 ```
 
@@ -152,26 +152,27 @@ package com.banco.co.account.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;  // Spring Boot 4.x package
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;    // Spring Boot 4.x preferred
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
 
 @WebMvcTest(AccountController.class)  // Only loads web layer — fast
 class AccountControllerTest {
 
     @Autowired
-    MockMvc mockMvc;
+    MockMvcTester mvc;  // MockMvcTester: fluent AssertJ-based API (Spring Boot 4.x)
 
     @MockitoBean
-    AccountService accountService;  // Mock the service dependency
+    AccountService accountService;
 
     @Test
-    void testCreateAccount_ValidRequest_Returns201() throws Exception {
-        when(accountService.createAccount(any())).thenReturn(buildResponseDto());
+    void testCreateAccount_ValidRequest_Returns201() {
+        given(accountService.createAccount(any())).willReturn(buildResponseDto());
 
-        mockMvc.perform(post("/api/v1/accounts")
+        assertThat(mvc.post().uri("/api/v1/accounts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -180,16 +181,23 @@ class AccountControllerTest {
                         "currency": "CRC"
                     }
                 """))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.accountHolder").value("Juan Perez"));
+            .hasStatus(HttpStatus.CREATED)
+            .bodyJson().extractingPath("$.accountHolder").isEqualTo("Juan Perez");
     }
 
     @Test
-    void testCreateAccount_MissingAccountHolder_Returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/accounts")
+    void testCreateAccount_MissingAccountHolder_Returns400() {
+        assertThat(mvc.post().uri("/api/v1/accounts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"initialBalance": 1000.00}"""))
-            .andExpect(status().isBadRequest());
+            .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void testFindById_Unauthenticated_Returns401() {
+        // Every protected endpoint needs an unauthorized test
+        assertThat(mvc.get().uri("/api/v1/accounts/{id}", UUID.randomUUID()))
+            .hasStatus(HttpStatus.UNAUTHORIZED);
     }
 }
 ```
@@ -256,7 +264,7 @@ class AccountRepositoryTest {
 
 ## Best Practices
 
-- Instant reject: `Optional.get()`, `@Autowired` field, `@Data` on DTO, business logic in `@RestController`, `catch(Exception e)` generic, `@Entity` in domain layer.
+- Instant reject: `Optional.get()`, `@Autowired` field, `@Data` on DTO, business logic in `@RestController`, `catch(Exception e)` generic, `@Service`/`@Component` in `{feature}/model/`.
 - Test naming: Unit: `test{Method}_{Condition}_{Expected}`, Integration: `test{Scenario}_{Expected}`.
 - Coverage minimums by layer: Domain 90%, Application 85%, Infrastructure 70%, Presentation 75%.
 - NEVER mock JPA repositories in infrastructure tests. Use Testcontainers with real MySQL.
