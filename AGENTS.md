@@ -151,12 +151,12 @@ When developing new features, reference:
 
 | Need | Skill |
 |------|-------|
-| Query with JPA | `.claude/skills/spring-data-jpa-repositories.md` |
-| Map DTO from entity | `.claude/skills/spring-boot-mapstruct-dtos.md` |
-| Implement OAuth2 / JWT | `.claude/skills/spring-security-jwt.md` |
-| Add validation | `.claude/skills/spring-boot-validation.md` |
-| Write tests | `.claude/skills/spring-boot-testing-junit5-complete.md` |
-| **Find which skill to use** | `.claude/navigation/SKILL_NAVIGATION_INDEX.md` ⭐ |
+| Query with JPA | `.claude/skills/jpa-patterns/SKILL.md` |
+| Map DTO from entity | `.claude/skills/spring-boot-patterns/SKILL.md` |
+| Implement OAuth2 / JWT | `.claude/skills/spring-boot-patterns/SKILL.md` |
+| Add validation | `.claude/skills/spring-boot-patterns/SKILL.md` |
+| Write tests | `.claude/skills/java-code-review/SKILL.md` |
+| **Find which skill to use** | `.claude/skills/README.md` ⭐ |
 
 ---
 
@@ -178,13 +178,13 @@ This triggers:
 7. **Verification** → All specs met + tests pass
 8. **Archive** → Persistent record for Release Please
 
-See `.claude/navigation/SKILL_NAVIGATION_INDEX.md` for full workflow.
+See `.claude/skills/README.md` for full skill index and workflow.
 
 ---
 
 ## Questions?
 
-- Architecture decisions → Check `.claude/context/project-roadmap.md`
-- How to X → Check `.claude/navigation/SKILL_NAVIGATION_INDEX.md`
+- Architecture decisions → Check `claude.md` (agent/layer responsibilities)
+- How to X → Check `.claude/skills/README.md`
 - SDD methodology → See `/sdd-explore` or `/sdd-new`
 - Code review rules → This file (AGENTS.md)
