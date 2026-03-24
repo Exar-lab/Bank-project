@@ -154,12 +154,17 @@ CREATE TABLE transactions (
 
 ## Examples for Banco-Service
 
+> **⚠️ Future setup required**: Flyway is NOT yet configured in banco-service. There is no `src/main/resources/db/migration/` directory, no `spring.flyway.*` configuration in `application.yml`, and no Flyway dependency in `pom.xml`. The patterns below are the TARGET state once Flyway is added. Do not assume these files or commands exist today.
+
+Planned migration files once Flyway is set up:
 - `src/main/resources/db/migration/V1__init_schema.sql` — initial schema
 - `src/main/resources/db/migration/V2__add_accounts_table.sql`
 - `src/main/resources/db/migration/V3__add_transactions_table.sql`
 - `src/main/resources/db/migration/V4__add_outbox_events_table.sql`
 
-### ✅ Correct Pattern — Flyway Maven Goals Reference
+### Future Pattern — Flyway Maven Goals Reference
+
+> **Not yet available**: These commands require the `flyway-maven-plugin` in `pom.xml` and `spring.flyway.*` config in `application.yml`.
 
 ```bash
 # Apply all pending migrations
@@ -182,24 +187,36 @@ CREATE TABLE transactions (
 
 ---
 
-### ✅ Correct Pattern — Baseline Migration (B prefix)
+### Future Pattern — Flyway Baseline for Existing Schemas
 
-When you need a fresh start without applying the full migration history (e.g., setting up a new environment with an existing schema):
+When onboarding Flyway onto a database that already has tables (e.g., the current banco-service schema managed by `spring.jpa.hibernate.ddl-auto`), you need to baseline so Flyway doesn't try to re-create existing tables.
+
+Flyway uses only two built-in prefixes: `V` (versioned) and `R` (repeatable). There is NO `B` prefix — baselining is a **configuration option**, not a file prefix:
+
+```yaml
+# application.yml — required when adding Flyway to an existing schema
+spring:
+  flyway:
+    baseline-on-migrate: true   # create flyway_schema_history if missing
+    baseline-version: 1         # treat everything up to V1 as already applied
+    locations: classpath:db/migration
+```
 
 ```sql
--- B001__baseline.sql  ← prefix B, not V
--- Applied FIRST in new environments. In existing environments: ignored.
--- Represents the cumulative current state of the DB.
+-- V1__baseline_existing_schema.sql
+-- Represents the current state of the DB at the moment Flyway is introduced.
+-- Flyway will mark this as applied (via baseline-version=1) without executing it
+-- on existing environments — only new environments will run it.
 CREATE TABLE accounts ( ... );
 CREATE TABLE transactions ( ... );
 -- ... full current schema
 ```
 
 Rules:
-- Prefix `B` instead of `V`
-- Flyway applies the latest baseline first in new environments, then continues with versioned migrations
-- In existing deployments: baseline migrations are ignored (no impact)
-- Use when the migration history is too long and you want to compact it
+- `baseline-on-migrate: true` → Flyway auto-creates `flyway_schema_history` if it doesn't exist
+- `baseline-version: 1` → marks V1 as the starting point; Flyway won't re-run it on existing DBs
+- New environments get the full schema from V1 and then all subsequent migrations
+- Existing environments: V1 is skipped (already baselined), only newer migrations run
 
 ---
 

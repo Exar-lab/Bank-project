@@ -43,7 +43,7 @@ Layer boundaries remain mandatory, but package layout is feature-first.
 
 ### Multi-Agent Operating Model
 
-This repository follows a **8-agent model in 3 categories**. Activation and ownership are explicit to protect hexagonal boundaries and feature-first structure.
+This repository follows an **8-agent model in 3 categories**. Activation and ownership are explicit to protect hexagonal boundaries and feature-first structure.
 
 | Category | Agent | Activate When | Main Tasks / Output | Boundaries |
 |----------|-------|---------------|---------------------|------------|

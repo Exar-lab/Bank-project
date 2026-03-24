@@ -114,9 +114,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record JwtProperties(
     String secretKey,
     String issuer,
-    long accessTokenExpirationMinutes,
-    long refreshTokenExpirationDays
-) {}
+    AccessToken accessToken,
+    RefreshToken refreshToken
+) {
+    public record AccessToken(long expirationMinutes) {}
+    public record RefreshToken(long expirationDays) {}
+}
 
 // In main application class or a @Configuration:
 // @EnableConfigurationProperties(JwtProperties.class)

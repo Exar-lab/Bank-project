@@ -187,8 +187,8 @@ public interface IAccountRepository extends JpaRepository<Account, UUID> {
 
     // Custom query with explicit countQuery — required when using JOIN/GROUP BY
     @Query(
-        value = "SELECT a FROM Account a WHERE a.accountHolder LIKE :holder%",
-        countQuery = "SELECT COUNT(a) FROM Account a WHERE a.accountHolder LIKE :holder%"
+        value = "SELECT a FROM Account a WHERE a.accountHolder LIKE CONCAT(:holder, '%')",
+        countQuery = "SELECT COUNT(a) FROM Account a WHERE a.accountHolder LIKE CONCAT(:holder, '%')"
     )
     Page<Account> findByHolderLike(@Param("holder") String holder, Pageable pageable);
 }
