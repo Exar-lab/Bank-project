@@ -242,7 +242,7 @@ public class AccountNotFoundException extends ErrorResponseException {
 }
 ```
 
-> **Current approach in banco-service**: Uses custom `ErrorResponseDto` record. `ProblemDetail` is the standard alternative — consider adopting it for new features to align with RFC 7807 and Spring's native support.
+> **Recommended pattern**: You may use a custom `ErrorResponseDto` record (or similar DTO) in a `GlobalExceptionHandler`. However, `ProblemDetail` is the standard alternative — prefer adopting it for new features to align with RFC 7807 and Spring's native support.
 
 ---
 
