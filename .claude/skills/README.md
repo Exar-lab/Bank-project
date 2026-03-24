@@ -14,6 +14,7 @@ All skills follow the pattern: `{skill-name}/SKILL.md` (patterns + anti-patterns
 | [`design-patterns`](./design-patterns/SKILL.md) | Designing a new feature — Screaming Architecture, Strategy, Factory, Repository port/adapter, Outbox |
 | [`clean-code`](./clean-code/SKILL.md) | Naming classes/methods/constants, structuring methods, Optional handling, exception hierarchy |
 | [`api-contract-review`](./api-contract-review/SKILL.md) | Designing or reviewing REST endpoints — HTTP verbs, @Valid, @PreAuthorize, GlobalExceptionHandler |
+| [`audit-logging-patterns`](./audit-logging-patterns/SKILL.md) | Calling IAuditLogService in any @Service — logSuccess, logFailure, logCritical, logAnonymous, AuditLogDetail context |
 
 ## Quick Reference
 
@@ -44,4 +45,9 @@ Create an exception hierarchy               → clean-code
 Design a REST endpoint                      → api-contract-review
 Add @PreAuthorize to controller             → api-contract-review
 Implement GlobalExceptionHandler            → api-contract-review
+Log an audit event in a @Service           → audit-logging-patterns
+Choose logSuccess vs logFailure vs logCritical → audit-logging-patterns
+Log a security violation or fraud event    → audit-logging-patterns
+Log an unauthenticated (anonymous) action  → audit-logging-patterns
+Build AuditLogDetail context for a CREATE/UPDATE → audit-logging-patterns
 ```
