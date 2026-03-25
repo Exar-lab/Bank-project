@@ -15,8 +15,13 @@ import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.envelope.enums.EnvelopeStatus;
 import com.banco.co.envelope.model.Envelope;
 import com.banco.co.exception.authentication.UnauthorizedException;
+import com.banco.co.outbox.enums.KafkaTopic;
+import com.banco.co.outbox.model.OutboxEvent;
+import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +40,8 @@ public class AccountService implements IAccountService {
     private final IUserService userService;
     private final IAuditLogService auditLogService;
     private final IAccountMapper mapper;
+    private final IOutboxEventPort outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     // ══════════════════════════════════════════════════════════
     //  CREAR CUENTA
@@ -88,6 +95,14 @@ public class AccountService implements IAccountService {
                 )
         );
 
+        outboxEventRepository.save(new OutboxEvent(
+                "Account",
+                savedAccount.getId().toString(),
+                "AccountCreated",
+                buildPayload(savedAccount),
+                KafkaTopic.ACCOUNT_EVENTS
+        ));
+
         log.info("Account {} created for user {}", savedAccount.getAccountCode(), userEmail);
 
         return mapper.toDto(savedAccount);
@@ -98,6 +113,7 @@ public class AccountService implements IAccountService {
     // ══════════════════════════════════════════════════════════
 
     @Override
+    @Transactional(readOnly = true)
     public AccountResponseDto getAccount(UUID accountId, String userEmail) {
 
         Account account = accountRepository.findActiveById(accountId)
@@ -113,6 +129,7 @@ public class AccountService implements IAccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AccountResponseDto getAccountByCode(String accountCode, String userEmail) {
 
         Account account = accountRepository.findActiveAccountByAccountCode(accountCode)
@@ -128,6 +145,7 @@ public class AccountService implements IAccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AccountResponseDto> getMyAccounts(String userEmail) {
 
         log.info("Retrieving all accounts for user {}", userEmail);
@@ -173,6 +191,14 @@ public class AccountService implements IAccountService {
                 )
         );
 
+        outboxEventRepository.save(new OutboxEvent(
+                "Account",
+                savedAccount.getId().toString(),
+                "AccountUpdated",
+                buildPayload(savedAccount),
+                KafkaTopic.ACCOUNT_EVENTS
+        ));
+
         log.info("Account {} updated by user {}", accountCode, userEmail);
 
         return mapper.toDto(savedAccount);
@@ -186,7 +212,7 @@ public class AccountService implements IAccountService {
     @Transactional
     public void closeAccount(UUID accountId, String userEmail) {
 
-        Account account = accountRepository.findActiveById(accountId)
+        Account account = accountRepository.findActiveByIdWithEnvelopes(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
         User user = userService.getEntityUserByEmail(userEmail);
@@ -248,6 +274,14 @@ public class AccountService implements IAccountService {
                 )
         );
 
+        outboxEventRepository.save(new OutboxEvent(
+                "Account",
+                accountId.toString(),
+                "AccountClosed",
+                buildPayload(account),
+                KafkaTopic.ACCOUNT_EVENTS
+        ));
+
         log.info("Account {} closed by user {}", account.getAccountCode(), userEmail);
     }
 
@@ -287,6 +321,14 @@ public class AccountService implements IAccountService {
                         new AuditLogDetail("newValues", status.toString())
                 )
         );
+
+        outboxEventRepository.save(new OutboxEvent(
+                "Account",
+                accountId.toString(),
+                "AccountStatusChanged",
+                buildPayload(savedAccount),
+                KafkaTopic.ACCOUNT_EVENTS
+        ));
 
         log.warn("Account {} status changed to {} by admin {}",
                 account.getAccountCode(), status, adminEmail);
@@ -359,12 +401,14 @@ public class AccountService implements IAccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Account getAccountById(UUID accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Account findAccountWithUserByAccountCode(String accountCode) {
         return accountRepository.findAccountWithUser(accountCode)
                 .orElseThrow(() -> new AccountNotFoundException(accountCode));
@@ -377,8 +421,10 @@ public class AccountService implements IAccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BigDecimal getUnassignedBalance(UUID accountId) {
-        Account account = getAccountById(accountId);
+        Account account = accountRepository.findActiveByIdWithEnvelopes(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
         BigDecimal envelopeTotal = getEnvelopeTotal(account);
 
@@ -388,6 +434,20 @@ public class AccountService implements IAccountService {
     // ══════════════════════════════════════════════════════════
     //  MÉTODOS PRIVADOS
     // ══════════════════════════════════════════════════════════
+
+    private String buildPayload(Account account) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "accountId", account.getId().toString(),
+                    "accountCode", account.getAccountCode(),
+                    "accountType", account.getAccountType(),
+                    "status", account.getStatus().toString(),
+                    "balance", account.getBalance()
+            ));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize event payload", e);
+        }
+    }
 
     private void validateOwnership(Account account, User user, AuditAction auditAction) {
 

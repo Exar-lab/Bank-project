@@ -7,6 +7,35 @@ spring:
     username: ${DB_USERNAME}
 
 # =============================================
+# Kafka
+# =============================================
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+
+# =============================================
+# Flyway
+# =============================================
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+# =============================================
+# Scheduling
+# =============================================
+  task:
+    scheduling:
+      enabled: true
+
+# =============================================
 # Jasypt - Encriptación
 # =============================================
 jasypt:

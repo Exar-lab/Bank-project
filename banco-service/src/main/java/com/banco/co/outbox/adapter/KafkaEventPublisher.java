@@ -1,0 +1,53 @@
+package com.banco.co.outbox.adapter;
+
+import com.banco.co.outbox.model.OutboxEvent;
+import com.banco.co.outbox.repository.IOutboxEventRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.ExecutionException;
+
+@Service
+public class KafkaEventPublisher {
+
+    private static final Logger log = LoggerFactory.getLogger(KafkaEventPublisher.class);
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final IOutboxEventRepository outboxEventRepository;
+
+    public KafkaEventPublisher(KafkaTemplate<String, String> kafkaTemplate,
+                                IOutboxEventRepository outboxEventRepository) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.outboxEventRepository = outboxEventRepository;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void publish(OutboxEvent event) {
+        try {
+            kafkaTemplate.send(
+                event.getKafkaTopic().getTopicName(),
+                event.getAggregateId(),
+                event.getPayload()
+            ).get(); // bloquea hasta confirmar — lanza ExecutionException ante fallo del broker
+            event.markAsPublished();
+            outboxEventRepository.save(event);
+            log.info("Published Kafka event: type={}, aggregateId={}, topic={}",
+                    event.getEventType(), event.getAggregateId(), event.getKafkaTopic().getTopicName());
+        } catch (ExecutionException e) {
+            event.markAsFailed();
+            outboxEventRepository.save(event);
+            log.error("Failed to publish Kafka event: type={}, aggregateId={}, error={}",
+                     event.getEventType(), event.getAggregateId(), e.getCause().getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            event.markAsFailed();
+            outboxEventRepository.save(event);
+            log.error("Kafka publish interrupted: type={}, aggregateId={}",
+                     event.getEventType(), event.getAggregateId());
+        }
+    }
+}
