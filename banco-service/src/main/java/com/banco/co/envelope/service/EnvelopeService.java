@@ -40,7 +40,7 @@ public class EnvelopeService implements IEnvelopeService {
     private final IUserService userService;
     private final IEnvelopeMapper mapper;
     private final IAuditLogService auditLogService;
-    private final IOutboxEventPort outboxEventRepository;
+    private final IOutboxEventPort outboxEventPort;
     private final ObjectMapper objectMapper;
 
     // ══════════════════════════════════════════════════════════
@@ -82,7 +82,7 @@ public class EnvelopeService implements IEnvelopeService {
 
         Envelope savedEnvelope = repository.save(envelope);
 
-        outboxEventRepository.save(new OutboxEvent(
+        outboxEventPort.save(new OutboxEvent(
                 "Envelope",
                 savedEnvelope.getId().toString(),
                 "EnvelopeCreated",
@@ -249,7 +249,7 @@ public class EnvelopeService implements IEnvelopeService {
 
         String newValues = mapper.toJsonString(savedEnvelope);
 
-        outboxEventRepository.save(new OutboxEvent(
+        outboxEventPort.save(new OutboxEvent(
                 "Envelope",
                 savedEnvelope.getId().toString(),
                 "EnvelopeUpdated",
@@ -342,7 +342,7 @@ public class EnvelopeService implements IEnvelopeService {
             Envelope savedEnvelope = repository.save(envelope);
             String newValues = mapper.toJsonString(savedEnvelope);
 
-            outboxEventRepository.save(new OutboxEvent(
+            outboxEventPort.save(new OutboxEvent(
                     "Envelope",
                     savedEnvelope.getId().toString(),
                     "EnvelopeDeposited",
@@ -417,7 +417,7 @@ public class EnvelopeService implements IEnvelopeService {
             Envelope savedEnvelope = repository.save(envelope);
             String newValues = mapper.toJsonString(savedEnvelope);
 
-            outboxEventRepository.save(new OutboxEvent(
+            outboxEventPort.save(new OutboxEvent(
                     "Envelope",
                     savedEnvelope.getId().toString(),
                     "EnvelopeWithdrawn",
@@ -496,7 +496,7 @@ public class EnvelopeService implements IEnvelopeService {
         repository.save(envelope);
 
         try {
-            outboxEventRepository.save(new OutboxEvent(
+            outboxEventPort.save(new OutboxEvent(
                     "Envelope",
                     envelope.getId().toString(),
                     "EnvelopeDeleted",

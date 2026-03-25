@@ -54,7 +54,7 @@ public class UserService implements IUserService {
         private final ICustomerMapper customerMapper;
         private final IEmployeeMapper employeeMapper;
         private final IAuditLogService auditLogService;
-        private final IOutboxEventPort outboxEventRepository;
+        private final IOutboxEventPort outboxEventPort;
         private final ObjectMapper objectMapper;
 
         // ══════════════════════════════════════════════════════════
@@ -595,7 +595,7 @@ public class UserService implements IUserService {
 
         private void publishUserEvent(String aggregateId, String eventType, Map<String, Object> payloadData) {
                 try {
-                        outboxEventRepository.save(new OutboxEvent(
+                        outboxEventPort.save(new OutboxEvent(
                                 "User", aggregateId, eventType,
                                 objectMapper.writeValueAsString(payloadData),
                                 KafkaTopic.USER_EVENTS

@@ -55,7 +55,7 @@ public class TransactionService implements ITransactionService{
     private final IAuditLogService auditLogService;
     private final ITransactionMapper transactionMapper;
     private final ITransactionMetadataEnricher transactionMetadataEnricher;
-    private final IOutboxEventPort outboxEventRepository;
+    private final IOutboxEventPort outboxEventPort;
     private final ObjectMapper objectMapper;
     @Transactional
     @Override
@@ -148,24 +148,13 @@ public class TransactionService implements ITransactionService{
         );
 
         // 16. Publicar evento al outbox (misma transacción DB)
-        try {
-            String payload = objectMapper.writeValueAsString(Map.of(
-                    "transactionId", savedTransaction.getId().toString(),
-                    "fromAccount", fromAccount.getAccountCode(),
-                    "toAccount", toAccount.getAccountCode(),
-                    "amount", dto.amount(),
-                    "currency", savedTransaction.getCurrency()
-            ));
-            outboxEventRepository.save(new OutboxEvent(
-                    "Transaction",
-                    savedTransaction.getId().toString(),
-                    "TransactionCompleted",
-                    payload,
-                    KafkaTopic.TRANSACTION_EVENTS
-            ));
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize event payload", e);
-        }
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompleted",
+                buildTransactionPayload(savedTransaction, fromAccount, toAccount, dto.amount()),
+                KafkaTopic.TRANSACTION_EVENTS
+        ));
 
         log.info("Transfer completed: {} from {} to {}",
                 dto.amount(), fromAccount.getAccountCode(), toAccount.getAccountCode());
@@ -266,5 +255,23 @@ public class TransactionService implements ITransactionService{
     @Override
     public void flagAsFraud(UUID transactionId, BigDecimal fraudScore, String reason, String analystEmail) {
 
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MÉTODOS PRIVADOS
+    // ══════════════════════════════════════════════════════════
+
+    private String buildTransactionPayload(Transaction transaction, Account fromAccount, Account toAccount, BigDecimal amount) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "transactionId", transaction.getId().toString(),
+                    "fromAccount", fromAccount.getAccountCode(),
+                    "toAccount", toAccount.getAccountCode(),
+                    "amount", amount,
+                    "currency", transaction.getCurrency()
+            ));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize event payload", e);
+        }
     }
 }

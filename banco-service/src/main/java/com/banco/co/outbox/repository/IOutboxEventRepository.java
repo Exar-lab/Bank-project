@@ -22,6 +22,6 @@ public interface IOutboxEventRepository extends JpaRepository<OutboxEvent, Long>
 
     @Modifying
     @Transactional
-    @Query("UPDATE OutboxEvent e SET e.status = com.banco.co.outbox.enums.OutboxStatus.PROCESSING WHERE e.id IN :ids")
+    @Query("UPDATE OutboxEvent e SET e.status = com.banco.co.outbox.enums.OutboxStatus.PROCESSING WHERE e.id IN :ids AND e.status IN (com.banco.co.outbox.enums.OutboxStatus.PENDING, com.banco.co.outbox.enums.OutboxStatus.FAILED)")
     void claimForProcessing(@Param("ids") List<Long> ids);
 }

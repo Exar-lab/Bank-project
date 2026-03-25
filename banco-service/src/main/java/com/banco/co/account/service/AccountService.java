@@ -40,7 +40,7 @@ public class AccountService implements IAccountService {
     private final IUserService userService;
     private final IAuditLogService auditLogService;
     private final IAccountMapper mapper;
-    private final IOutboxEventPort outboxEventRepository;
+    private final IOutboxEventPort outboxEventPort;
     private final ObjectMapper objectMapper;
 
     // ══════════════════════════════════════════════════════════
@@ -95,7 +95,7 @@ public class AccountService implements IAccountService {
                 )
         );
 
-        outboxEventRepository.save(new OutboxEvent(
+        outboxEventPort.save(new OutboxEvent(
                 "Account",
                 savedAccount.getId().toString(),
                 "AccountCreated",
@@ -191,7 +191,7 @@ public class AccountService implements IAccountService {
                 )
         );
 
-        outboxEventRepository.save(new OutboxEvent(
+        outboxEventPort.save(new OutboxEvent(
                 "Account",
                 savedAccount.getId().toString(),
                 "AccountUpdated",
@@ -274,7 +274,7 @@ public class AccountService implements IAccountService {
                 )
         );
 
-        outboxEventRepository.save(new OutboxEvent(
+        outboxEventPort.save(new OutboxEvent(
                 "Account",
                 accountId.toString(),
                 "AccountClosed",
@@ -322,7 +322,7 @@ public class AccountService implements IAccountService {
                 )
         );
 
-        outboxEventRepository.save(new OutboxEvent(
+        outboxEventPort.save(new OutboxEvent(
                 "Account",
                 accountId.toString(),
                 "AccountStatusChanged",
@@ -367,6 +367,14 @@ public class AccountService implements IAccountService {
                         new AuditLogDetail("balance", account.getBalance())
                 )
         );
+
+        outboxEventPort.save(new OutboxEvent(
+                "Account",
+                accountId.toString(),
+                "AccountClosedByAdmin",
+                buildPayload(account),
+                KafkaTopic.ACCOUNT_EVENTS
+        ));
 
         log.warn("Account {} closed by admin {}", account.getAccountCode(), adminEmail);
     }
