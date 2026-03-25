@@ -73,3 +73,27 @@
 🚩 Stack trace exposed in HTTP response body
 🚩 `@Entity` outside `{feature}/model/`
 🚩 Business logic in `@RestController`
+
+---
+
+## SDD Methodology
+
+For substantial features (>2 hours work), use Spec-Driven Development:
+
+```
+/sdd-new feature-name
+```
+
+Phases in order:
+1. **Explore** → Understand codebase and problem
+2. **Propose** → Scope, effort, approach
+3. **Spec** → Requirements + scenarios
+4. **Design** → Architecture decisions
+5. **Tasks** → Implementation checklist
+6. **Apply** → Code implementation
+7. **Verify** → All specs met + tests pass
+8. **Archive** → Persistent record
+
+Artifacts are stored in Engram with topic keys: `sdd/{change-name}/{phase}`
+
+Build agents only start after Planning delivers spec + tasks. Test Agent and Security Agent always run after Build.
