@@ -539,7 +539,7 @@ public class EnvelopeService implements IEnvelopeService {
     @Override
     @Transactional(readOnly = true)
     public Envelope findActiveWithAccountByCode(String envelopeCode) {
-        return repository.findActiveByAccountCodeWithAccount(envelopeCode)
+        return repository.findActiveByEnvelopeCodeWithAccount(envelopeCode)
                 .orElseThrow(() -> new EnvelopeNotFoundException(envelopeCode));
     }
 

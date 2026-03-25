@@ -40,8 +40,11 @@ public class KafkaEventPublisher {
         } catch (ExecutionException e) {
             event.markAsFailed();
             outboxEventRepository.save(event);
+            String errorMessage = (e.getCause() != null && e.getCause().getMessage() != null)
+                    ? e.getCause().getMessage()
+                    : (e.getMessage() != null ? e.getMessage() : "Unknown execution error");
             log.error("Failed to publish Kafka event: type={}, aggregateId={}, error={}",
-                     event.getEventType(), event.getAggregateId(), e.getCause().getMessage());
+                     event.getEventType(), event.getAggregateId(), errorMessage, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             event.markAsFailed();

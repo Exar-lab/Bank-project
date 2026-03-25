@@ -48,7 +48,7 @@ public interface IAccountRepository extends JpaRepository<Account, UUID> {
     @Transactional(readOnly = true)
     Optional<Account> findActiveById(@Param("id") UUID accountId);
 
-    @Query("SELECT a FROM Account a LEFT JOIN FETCH a.envelopes WHERE a.id = :id AND a.status = 'ACTIVE'")
+    @Query("SELECT DISTINCT a FROM Account a LEFT JOIN FETCH a.envelopes WHERE a.id = :id AND a.status = 'ACTIVE'")
     @Transactional(readOnly = true)
     Optional<Account> findActiveByIdWithEnvelopes(@Param("id") UUID id);
 

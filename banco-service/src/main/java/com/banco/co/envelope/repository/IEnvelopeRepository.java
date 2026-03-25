@@ -72,7 +72,7 @@ public interface IEnvelopeRepository extends JpaRepository<Envelope, UUID> {
             "LEFT JOIN FETCH e.account a " +
             "WHERE e.envelopeCode = :envelopeCode AND e.status = 'ACTIVE'")
     @Transactional(readOnly = true)
-    Optional<Envelope> findActiveByAccountCodeWithAccount(@Param("envelopeCode") String envelopeCode);
+    Optional<Envelope> findActiveByEnvelopeCodeWithAccount(@Param("envelopeCode") String envelopeCode);
 
     @Query("SELECT e FROM Envelope e " +
             "LEFT JOIN FETCH e.account a " +

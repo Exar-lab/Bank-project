@@ -9,6 +9,5 @@ CREATE TABLE IF NOT EXISTS outbox_events (
     created_at     DATETIME(6)    NOT NULL,
     published_at   DATETIME(6)    NULL,
     PRIMARY KEY (id),
-    INDEX idx_outbox_status (status),
-    INDEX idx_outbox_created (created_at)
+    INDEX idx_outbox_status_created (status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
