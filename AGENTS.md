@@ -1,5 +1,9 @@
 # AGENTS.md — Banco-Service Code Review Rules
 
+## Response Format (REQUIRED)
+
+Start EVERY response with `STATUS: PASSED` or `STATUS: FAILED` on the very first line, then provide the review details.
+
 ## Project Context
 
 **Project**: banco-service
