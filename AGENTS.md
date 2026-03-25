@@ -61,6 +61,23 @@
 
 ---
 
+## Validation
+
+- Use `@Validated` on `@RestController` classes
+- Custom `@Constraint` annotations for domain-level validation
+- Return HTTP 400 with error details in response body — never expose stack traces
+
+---
+
+## Git & Commits
+
+- **Conventional Commits**: `type(scope): subject` — lowercase, imperative, no period
+  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+  - Scope: layer (`domain`, `infrastructure`, etc.) or feature (`account`, `transaction`, `security`)
+- **No AI attribution**: Never add "Co-Authored-By: AI/Claude" to commits
+
+---
+
 ## Red Flags — Block on Any of These
 
 🚩 `@Autowired` on fields
