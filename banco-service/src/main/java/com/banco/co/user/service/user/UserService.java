@@ -466,6 +466,13 @@ public class UserService implements IUserService {
                                 )
                 );
 
+                publishUserEvent(userId.toString(), "UserUpdatedByAdmin", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail,
+                                "oldValues", oldValues,
+                                "newValues", newValues
+                ));
+
                 return customerMapper.toDto(user);
         }
 
@@ -497,6 +504,12 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("reason", reason)
                                 ));
 
+                publishUserEvent(userId.toString(), "UserSuspended", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail,
+                                "reason", reason
+                ));
+
                 log.warn("User {} suspended by admin {}. Reason: {}",
                                 user.getEmail(), adminEmail, reason);
         }
@@ -527,6 +540,11 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("adminEmail", adminEmail),
                                         new AuditLogDetail("userEmail", user.getEmail())
                                 ));
+
+                publishUserEvent(userId.toString(), "UserActivated", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail
+                ));
 
                 log.info("User {} activated by admin {}", user.getEmail(), adminEmail);
         }
@@ -563,6 +581,13 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("newValues", status.toString())
                                 )
                 );
+
+                publishUserEvent(userId.toString(), "UserStatusChanged", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail,
+                                "oldStatus", oldStatus.toString(),
+                                "newStatus", status.toString()
+                ));
 
                 log.info("User {} status changed from {} to {} by admin {}",
                                 user.getEmail(), oldStatus, status, adminEmail);
