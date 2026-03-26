@@ -1,2 +1,5 @@
 # Claude local settings (machine-specific, never commit)
 .claude/settings.local.json
+
+# Local environment overrides — never commit secrets
+.env

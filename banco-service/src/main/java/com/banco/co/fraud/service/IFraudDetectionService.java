@@ -1,5 +1,8 @@
 package com.banco.co.fraud.service;
 
+import com.banco.co.fraud.dto.TransactionFraudContext;
+import com.banco.co.fraud.enums.FraudAnalysisResult;
+
 public interface IFraudDetectionService {
-    void analyze();
+    FraudAnalysisResult analyze(TransactionFraudContext context);
 }

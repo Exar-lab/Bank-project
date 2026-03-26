@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -99,7 +100,7 @@ public class AccountService implements IAccountService {
                 "Account",
                 savedAccount.getId().toString(),
                 "AccountCreated",
-                buildPayload(savedAccount),
+                buildPayload(savedAccount, "AccountCreated"),
                 KafkaTopic.ACCOUNT_EVENTS
         ));
 
@@ -195,7 +196,7 @@ public class AccountService implements IAccountService {
                 "Account",
                 savedAccount.getId().toString(),
                 "AccountUpdated",
-                buildPayload(savedAccount),
+                buildPayload(savedAccount, "AccountUpdated"),
                 KafkaTopic.ACCOUNT_EVENTS
         ));
 
@@ -278,7 +279,7 @@ public class AccountService implements IAccountService {
                 "Account",
                 accountId.toString(),
                 "AccountClosed",
-                buildPayload(account),
+                buildPayload(account, "AccountClosed"),
                 KafkaTopic.ACCOUNT_EVENTS
         ));
 
@@ -326,7 +327,7 @@ public class AccountService implements IAccountService {
                 "Account",
                 accountId.toString(),
                 "AccountStatusChanged",
-                buildPayload(savedAccount),
+                buildPayload(savedAccount, "AccountStatusChanged"),
                 KafkaTopic.ACCOUNT_EVENTS
         ));
 
@@ -372,7 +373,7 @@ public class AccountService implements IAccountService {
                 "Account",
                 accountId.toString(),
                 "AccountClosedByAdmin",
-                buildPayload(account),
+                buildPayload(account, "AccountClosedByAdmin"),
                 KafkaTopic.ACCOUNT_EVENTS
         ));
 
@@ -443,15 +444,16 @@ public class AccountService implements IAccountService {
     //  MÉTODOS PRIVADOS
     // ══════════════════════════════════════════════════════════
 
-    private String buildPayload(Account account) {
+    private String buildPayload(Account account, String eventType) {
         try {
-            return objectMapper.writeValueAsString(Map.of(
-                    "accountId", account.getId().toString(),
-                    "accountCode", account.getAccountCode(),
-                    "accountType", account.getAccountType(),
-                    "status", account.getStatus().toString(),
-                    "balance", account.getBalance()
-            ));
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("eventType", eventType);
+            payload.put("accountId", account.getId().toString());
+            payload.put("accountCode", account.getAccountCode());
+            payload.put("accountType", account.getAccountType());
+            payload.put("status", account.getStatus().toString());
+            payload.put("balance", account.getBalance());
+            return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize event payload", e);
         }

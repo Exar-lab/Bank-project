@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +137,8 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
         envelope.deposit(contributionAmount);
 
         // 5. Verificar si alcanzó la meta
-        if (envelope.hasReachedGoal() && envelope.getCompletedAt() == null) {
+        boolean goalJustReached = envelope.hasReachedGoal() && envelope.getCompletedAt() == null;
+        if (goalJustReached) {
             envelope.setCompletedAt(LocalDateTime.now());
             log.info("Envelope {} reached goal through auto-contribution!",
                     envelope.getEnvelopeCode());
@@ -157,16 +159,16 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
                 "Envelope",
                 envelope.getId().toString(),
                 "EnvelopeAutoContributed",
-                buildAutoContributionPayload(envelope, contributionAmount),
+                buildAutoContributionPayload(envelope, contributionAmount, "EnvelopeAutoContributed"),
                 KafkaTopic.ENVELOPE_EVENTS
         ));
 
-        if (envelope.hasReachedGoal()) {
+        if (goalJustReached) {
             outboxEventPort.save(new OutboxEvent(
                     "Envelope",
                     envelope.getId().toString(),
                     "EnvelopeGoalReached",
-                    buildAutoContributionPayload(envelope, contributionAmount),
+                    buildAutoContributionPayload(envelope, contributionAmount, "EnvelopeGoalReached"),
                     KafkaTopic.ENVELOPE_EVENTS
             ));
         }
@@ -194,9 +196,10 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
     /**
      * Construye el payload JSON para eventos de auto-contribución
      */
-    private String buildAutoContributionPayload(Envelope envelope, BigDecimal amount) {
+    private String buildAutoContributionPayload(Envelope envelope, BigDecimal amount, String eventType) {
         try {
-            Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("eventType", eventType);
             payload.put("envelopeId", envelope.getId().toString());
             payload.put("envelopeCode", envelope.getEnvelopeCode());
             payload.put("amount", amount);

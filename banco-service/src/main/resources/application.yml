@@ -19,6 +19,12 @@ spring:
       properties:
         max.in.flight.requests.per.connection: 1
         enable.idempotence: true
+    consumer:
+      group-id: banco-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
 
 # =============================================
 # Flyway
@@ -53,3 +59,11 @@ security:
       expiration-minutes: 15  # Access token corto
     refresh-token:
       expiration-days: 30     # Refresh token largo
+
+# =============================================
+# Fraud Detection
+# =============================================
+fraud:
+  detection:
+    suspicious-threshold: 10000000
+    blocked-threshold: 50000000
