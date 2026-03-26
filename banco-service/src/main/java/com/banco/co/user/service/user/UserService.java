@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -620,9 +621,12 @@ public class UserService implements IUserService {
 
         private void publishUserEvent(String aggregateId, String eventType, Map<String, Object> payloadData) {
                 try {
+                        Map<String, Object> payload = new HashMap<>();
+                        payload.put("eventType", eventType);
+                        payload.putAll(payloadData);
                         outboxEventPort.save(new OutboxEvent(
                                 "User", aggregateId, eventType,
-                                objectMapper.writeValueAsString(payloadData),
+                                objectMapper.writeValueAsString(payload),
                                 KafkaTopic.USER_EVENTS
                         ));
                 } catch (JsonProcessingException e) {

@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 @RequiredArgsConstructor
@@ -86,7 +87,7 @@ public class EnvelopeService implements IEnvelopeService {
                 "Envelope",
                 savedEnvelope.getId().toString(),
                 "EnvelopeCreated",
-                buildEnvelopePayload(savedEnvelope),
+                buildEnvelopePayload(savedEnvelope, "EnvelopeCreated"),
                 KafkaTopic.ENVELOPE_EVENTS
         ));
 
@@ -253,7 +254,7 @@ public class EnvelopeService implements IEnvelopeService {
                 "Envelope",
                 savedEnvelope.getId().toString(),
                 "EnvelopeUpdated",
-                buildEnvelopePayload(savedEnvelope),
+                buildEnvelopePayload(savedEnvelope, "EnvelopeUpdated"),
                 KafkaTopic.ENVELOPE_EVENTS
         ));
 
@@ -332,11 +333,11 @@ public class EnvelopeService implements IEnvelopeService {
 
             envelope.deposit(dto.amount());
             // Verificar si alcanzó la meta
-            if (envelope.hasReachedGoal() && envelope.getCompletedAt() == null) { // Poner método
+            boolean goalReached = envelope.hasReachedGoal() && envelope.getCompletedAt() == null;
+            if (goalReached) {
                 envelope.setCompletedAt(LocalDateTime.now());
                 envelope.setStatus(EnvelopeStatus.COMPLETED);
                 log.info("Envelope {} reached goal!", envelope.getEnvelopeCode());
-                // Agregar enviar notificación
             }
             account.depositFromEnvelope(dto.amount());
             Envelope savedEnvelope = repository.save(envelope);
@@ -346,9 +347,19 @@ public class EnvelopeService implements IEnvelopeService {
                     "Envelope",
                     savedEnvelope.getId().toString(),
                     "EnvelopeDeposited",
-                    buildEnvelopePayload(savedEnvelope),
+                    buildEnvelopePayload(savedEnvelope, "EnvelopeDeposited"),
                     KafkaTopic.ENVELOPE_EVENTS
             ));
+
+            if (goalReached) {
+                outboxEventPort.save(new OutboxEvent(
+                        "Envelope",
+                        savedEnvelope.getId().toString(),
+                        "EnvelopeGoalReached",
+                        buildEnvelopePayload(savedEnvelope, "EnvelopeGoalReached"),
+                        KafkaTopic.ENVELOPE_EVENTS
+                ));
+            }
 
             auditLogService.logSuccess(
                     user,
@@ -421,7 +432,7 @@ public class EnvelopeService implements IEnvelopeService {
                     "Envelope",
                     savedEnvelope.getId().toString(),
                     "EnvelopeWithdrawn",
-                    buildEnvelopePayload(savedEnvelope),
+                    buildEnvelopePayload(savedEnvelope, "EnvelopeWithdrawn"),
                     KafkaTopic.ENVELOPE_EVENTS
             ));
 
@@ -496,14 +507,15 @@ public class EnvelopeService implements IEnvelopeService {
         repository.save(envelope);
 
         try {
+            Map<String, Object> deletedPayload = new HashMap<>();
+            deletedPayload.put("eventType", "EnvelopeDeleted");
+            deletedPayload.put("envelopeId", envelope.getId());
+            deletedPayload.put("envelopeCode", envelope.getEnvelopeCode());
             outboxEventPort.save(new OutboxEvent(
                     "Envelope",
                     envelope.getId().toString(),
                     "EnvelopeDeleted",
-                    objectMapper.writeValueAsString(Map.of(
-                            "envelopeId", envelope.getId(),
-                            "envelopeCode", envelope.getEnvelopeCode()
-                    )),
+                    objectMapper.writeValueAsString(deletedPayload),
                     KafkaTopic.ENVELOPE_EVENTS
             ));
         } catch (JsonProcessingException e) {
@@ -543,16 +555,17 @@ public class EnvelopeService implements IEnvelopeService {
                 .orElseThrow(() -> new EnvelopeNotFoundException(envelopeCode));
     }
 
-    private String buildEnvelopePayload(Envelope envelope) {
+    private String buildEnvelopePayload(Envelope envelope, String eventType) {
         try {
-            return objectMapper.writeValueAsString(Map.of(
-                    "envelopeId", envelope.getId().toString(),
-                    "envelopeCode", envelope.getEnvelopeCode(),
-                    "name", envelope.getName(),
-                    "type", envelope.getType().name(),
-                    "status", envelope.getStatus().name(),
-                    "balance", envelope.getBalance()
-            ));
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("eventType", eventType);
+            payload.put("envelopeId", envelope.getId().toString());
+            payload.put("envelopeCode", envelope.getEnvelopeCode());
+            payload.put("name", envelope.getName());
+            payload.put("type", envelope.getType().name());
+            payload.put("status", envelope.getStatus().name());
+            payload.put("balance", envelope.getBalance());
+            return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize event payload", e);
         }

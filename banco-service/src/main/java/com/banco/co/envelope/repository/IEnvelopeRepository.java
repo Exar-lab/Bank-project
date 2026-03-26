@@ -105,7 +105,7 @@ public interface IEnvelopeRepository extends JpaRepository<Envelope, UUID> {
     //  BÚSQUEDAS PARA SCHEDULED TASKS
     // ══════════════════════════════════════════════════════════
 
-    @Query("SELECT e FROM Envelope e LEFT JOIN FETCH e.account a WHERE " +
+    @Query("SELECT e FROM Envelope e LEFT JOIN FETCH e.account a LEFT JOIN FETCH a.user WHERE " +
             "e.autoContribute = true AND " +
             "e.nextContributionDate <= :now AND " +
             "e.status = 'ACTIVE'")

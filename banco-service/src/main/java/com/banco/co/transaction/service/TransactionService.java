@@ -42,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -187,26 +188,31 @@ public class TransactionService implements ITransactionService{
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Page<TransactionResponseDto> getMyTransactions(String userEmail, TransactionFiltersDto filters, Pageable pageable) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Transactional(readOnly = true)
     @Override
     public TransactionResponseDto getMyTransaction(UUID transactionId, String userEmail) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Page<TransactionResponseDto> getAccountTransactions(String accountCode, String userEmail, TransactionFiltersDto filters, Pageable pageable) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TransactionResponseDto> getTransactionsByCategory(TransactionCategory category, String userEmail) {
         return List.of();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public CategorySummaryDto getCategorySummary(String userEmail, LocalDateTime startDate, LocalDateTime endDate) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -227,11 +233,13 @@ public class TransactionService implements ITransactionService{
 
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Page<TransactionResponseDto> getAllTransactions(TransactionFiltersDto filters, Pageable pageable, String adminEmail) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TransactionResponseDto> getSuspiciousTransactions(String analystEmail) {
         return List.of();
@@ -263,13 +271,14 @@ public class TransactionService implements ITransactionService{
 
     private String buildTransactionPayload(Transaction transaction, Account fromAccount, Account toAccount, BigDecimal amount) {
         try {
-            return objectMapper.writeValueAsString(Map.of(
-                    "transactionId", transaction.getId().toString(),
-                    "fromAccount", fromAccount.getAccountCode(),
-                    "toAccount", toAccount.getAccountCode(),
-                    "amount", amount,
-                    "currency", transaction.getCurrency()
-            ));
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("eventType", "TransactionCompleted");
+            payload.put("transactionId", transaction.getId().toString());
+            payload.put("fromAccount", fromAccount.getAccountCode());
+            payload.put("toAccount", toAccount.getAccountCode());
+            payload.put("amount", amount);
+            payload.put("currency", transaction.getCurrency());
+            return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize event payload", e);
         }
