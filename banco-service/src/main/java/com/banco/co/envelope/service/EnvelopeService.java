@@ -14,8 +14,13 @@ import com.banco.co.envelope.mapper.IEnvelopeMapper;
 import com.banco.co.envelope.model.Envelope;
 import com.banco.co.envelope.repository.IEnvelopeRepository;
 import com.banco.co.exception.authentication.UnauthorizedException;
+import com.banco.co.outbox.enums.KafkaTopic;
+import com.banco.co.outbox.model.OutboxEvent;
+import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +40,8 @@ public class EnvelopeService implements IEnvelopeService {
     private final IUserService userService;
     private final IEnvelopeMapper mapper;
     private final IAuditLogService auditLogService;
+    private final IOutboxEventPort outboxEventPort;
+    private final ObjectMapper objectMapper;
 
     // ══════════════════════════════════════════════════════════
     //  CREAR ENVELOPE
@@ -75,6 +82,14 @@ public class EnvelopeService implements IEnvelopeService {
 
         Envelope savedEnvelope = repository.save(envelope);
 
+        outboxEventPort.save(new OutboxEvent(
+                "Envelope",
+                savedEnvelope.getId().toString(),
+                "EnvelopeCreated",
+                buildEnvelopePayload(savedEnvelope),
+                KafkaTopic.ENVELOPE_EVENTS
+        ));
+
         auditLogService.logSuccess(
                 user,
                 AuditAction.ENVELOPE_CREATED,
@@ -98,6 +113,7 @@ public class EnvelopeService implements IEnvelopeService {
     // ══════════════════════════════════════════════════════════
 
     @Override
+    @Transactional(readOnly = true)
     public EnvelopeResponseDto getActiveEnvelope(String envelopeCode, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
         Envelope envelope = findActiveByEnvelopeCode(envelopeCode);
@@ -108,6 +124,7 @@ public class EnvelopeService implements IEnvelopeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> getMyEnvelopes(String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
 
@@ -120,6 +137,7 @@ public class EnvelopeService implements IEnvelopeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> getActiveAllByAccountCode(String accountCode, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
         Account account = accountService.findAccountWithUserByAccountCode(accountCode);
@@ -129,7 +147,7 @@ public class EnvelopeService implements IEnvelopeService {
             throw new UnauthorizedException("You don't own this account");
         }
 
-        List<Envelope> envelopes = repository.findActiveByAccountCode(accountCode);
+        List<Envelope> envelopes = repository.findAllActiveByAccountCodeWithAccount(accountCode);
 
         return envelopes.stream()
                 .map(mapper::toDto)
@@ -137,32 +155,31 @@ public class EnvelopeService implements IEnvelopeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> findAllByStatus(EnvelopeStatus status, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
 
-        // Filtrar solo envelopes del usuario
-        List<Envelope> envelopes = repository.findAllByStatus(status);
+        List<Envelope> envelopes = repository.findByStatusAndUserId(status, user.getId());
 
         return envelopes.stream()
-                .filter(e -> e.getAccount().getUser().getId().equals(user.getId()))
                 .map(mapper::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> findAllActiveByType(EnvelopeType type, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
 
-        List<Envelope> envelopes = repository.findActiveByType(type);
+        List<Envelope> envelopes = repository.findActiveByTypeAndUserId(type, user.getId());
 
-        // Filtrar solo envelopes del usuario
         return envelopes.stream()
-                .filter(e -> e.getAccount().getUser().getId().equals(user.getId()))
                 .map(mapper::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> findAllByStatusAndAccountCode(
             EnvelopeStatus status,
             String accountCode,
@@ -185,6 +202,7 @@ public class EnvelopeService implements IEnvelopeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> getActiveByCreatedAfter(
             LocalDateTime createdAfter,
             String accountCode,
@@ -230,6 +248,14 @@ public class EnvelopeService implements IEnvelopeService {
         Envelope savedEnvelope = repository.save(envelope);
 
         String newValues = mapper.toJsonString(savedEnvelope);
+
+        outboxEventPort.save(new OutboxEvent(
+                "Envelope",
+                savedEnvelope.getId().toString(),
+                "EnvelopeUpdated",
+                buildEnvelopePayload(savedEnvelope),
+                KafkaTopic.ENVELOPE_EVENTS
+        ));
 
         auditLogService.logSuccess(
                 user,
@@ -315,6 +341,15 @@ public class EnvelopeService implements IEnvelopeService {
             account.depositFromEnvelope(dto.amount());
             Envelope savedEnvelope = repository.save(envelope);
             String newValues = mapper.toJsonString(savedEnvelope);
+
+            outboxEventPort.save(new OutboxEvent(
+                    "Envelope",
+                    savedEnvelope.getId().toString(),
+                    "EnvelopeDeposited",
+                    buildEnvelopePayload(savedEnvelope),
+                    KafkaTopic.ENVELOPE_EVENTS
+            ));
+
             auditLogService.logSuccess(
                     user,
                     AuditAction.ENVELOPE_DEPOSIT,
@@ -333,10 +368,10 @@ public class EnvelopeService implements IEnvelopeService {
             log.info("Deposited {} to envelope {}", dto.amount(), envelope.getEnvelopeCode());
 
             return mapper.toDto(savedEnvelope);
-        }catch (EnvelopeLockedException e) {
+        } catch (EnvelopeLockedException e) {
             auditLogService.logFailure(
                     user,
-                    AuditAction.ENVELOPE_WITHDRAWAL,
+                    AuditAction.ENVELOPE_DEPOSIT,
                     AuditEntityType.ENVELOPE,
                     List.of(
                             new AuditLogDetail("message", "Transaction failed: Envelope is locked"),
@@ -381,6 +416,14 @@ public class EnvelopeService implements IEnvelopeService {
 
             Envelope savedEnvelope = repository.save(envelope);
             String newValues = mapper.toJsonString(savedEnvelope);
+
+            outboxEventPort.save(new OutboxEvent(
+                    "Envelope",
+                    savedEnvelope.getId().toString(),
+                    "EnvelopeWithdrawn",
+                    buildEnvelopePayload(savedEnvelope),
+                    KafkaTopic.ENVELOPE_EVENTS
+            ));
 
             auditLogService.logSuccess(
                     user,
@@ -452,6 +495,21 @@ public class EnvelopeService implements IEnvelopeService {
         envelope.setStatus(EnvelopeStatus.DELETED);
         repository.save(envelope);
 
+        try {
+            outboxEventPort.save(new OutboxEvent(
+                    "Envelope",
+                    envelope.getId().toString(),
+                    "EnvelopeDeleted",
+                    objectMapper.writeValueAsString(Map.of(
+                            "envelopeId", envelope.getId(),
+                            "envelopeCode", envelope.getEnvelopeCode()
+                    )),
+                    KafkaTopic.ENVELOPE_EVENTS
+            ));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize event payload", e);
+        }
+
         auditLogService.logSuccess(
                 user,
                 AuditAction.ENVELOPE_DELETED,
@@ -472,15 +530,32 @@ public class EnvelopeService implements IEnvelopeService {
     // ══════════════════════════════════════════════════════════
 
     @Override
+    @Transactional(readOnly = true)
     public Envelope findActiveByEnvelopeCode(String envelopeCode) {
         return repository.findActiveByEnvelopeCode(envelopeCode)
                 .orElseThrow(() -> new EnvelopeNotFoundException(envelopeCode));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Envelope findActiveWithAccountByCode(String envelopeCode) {
-        return repository.findActiveByAccountCodeWithAccount(envelopeCode)
+        return repository.findActiveByEnvelopeCodeWithAccount(envelopeCode)
                 .orElseThrow(() -> new EnvelopeNotFoundException(envelopeCode));
+    }
+
+    private String buildEnvelopePayload(Envelope envelope) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "envelopeId", envelope.getId().toString(),
+                    "envelopeCode", envelope.getEnvelopeCode(),
+                    "name", envelope.getName(),
+                    "type", envelope.getType().name(),
+                    "status", envelope.getStatus().name(),
+                    "balance", envelope.getBalance()
+            ));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize event payload", e);
+        }
     }
 
     private void validateOwnership(Envelope envelope, User user,AuditAction auditAction) {

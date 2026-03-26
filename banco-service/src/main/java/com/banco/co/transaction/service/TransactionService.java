@@ -25,16 +25,21 @@ import com.banco.co.transaction.exception.transaction.TransactionInvalidExceptio
 import com.banco.co.transaction.mapper.ITransactionMapper;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.transaction.model.Transaction;
+import com.banco.co.outbox.enums.KafkaTopic;
+import com.banco.co.outbox.model.OutboxEvent;
+import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.awt.print.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,6 +55,9 @@ public class TransactionService implements ITransactionService{
     private final IAuditLogService auditLogService;
     private final ITransactionMapper transactionMapper;
     private final ITransactionMetadataEnricher transactionMetadataEnricher;
+    private final IOutboxEventPort outboxEventPort;
+    private final ObjectMapper objectMapper;
+    @Transactional
     @Override
     public TransactionResponseDto transfer(TransferRequestDto dto, String userEmail, HttpServletRequest request) {
         // 1. Validar usuario
@@ -139,6 +147,15 @@ public class TransactionService implements ITransactionService{
                 )
         );
 
+        // 16. Publicar evento al outbox (misma transacción DB)
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompleted",
+                buildTransactionPayload(savedTransaction, fromAccount, toAccount, dto.amount()),
+                KafkaTopic.TRANSACTION_EVENTS
+        ));
+
         log.info("Transfer completed: {} from {} to {}",
                 dto.amount(), fromAccount.getAccountCode(), toAccount.getAccountCode());
 
@@ -147,42 +164,42 @@ public class TransactionService implements ITransactionService{
 
     @Override
     public TransactionResponseDto payment(PaymentRequestDto dto, String userEmail, HttpServletRequest request) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, HttpServletRequest request) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public TransactionResponseDto cashDeposit(CashDepositRequestDto dto, String employeeEmail, HttpServletRequest request) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public TransactionResponseDto cashWithdrawal(CashWithdrawalRequestDto dto, String employeeEmail, HttpServletRequest request) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public TransactionResponseDto checkDeposit(CheckDepositRequestDto dto, String employeeEmail, HttpServletRequest request) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Page<TransactionResponseDto> getMyTransactions(String userEmail, TransactionFiltersDto filters, Pageable pageable) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public TransactionResponseDto getMyTransaction(UUID transactionId, String userEmail) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Page<TransactionResponseDto> getAccountTransactions(String accountCode, String userEmail, TransactionFiltersDto filters, Pageable pageable) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
@@ -192,12 +209,12 @@ public class TransactionService implements ITransactionService{
 
     @Override
     public CategorySummaryDto getCategorySummary(String userEmail, LocalDateTime startDate, LocalDateTime endDate) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public TransactionResponseDto scheduleTransfer(ScheduledTransferRequestDto dto, String userEmail, HttpServletRequest request) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
@@ -212,7 +229,7 @@ public class TransactionService implements ITransactionService{
 
     @Override
     public Page<TransactionResponseDto> getAllTransactions(TransactionFiltersDto filters, Pageable pageable, String adminEmail) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
@@ -222,7 +239,7 @@ public class TransactionService implements ITransactionService{
 
     @Override
     public TransactionResponseDto approveTransaction(UUID transactionId, String adminEmail) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
@@ -232,11 +249,29 @@ public class TransactionService implements ITransactionService{
 
     @Override
     public TransactionResponseDto reverseTransaction(UUID transactionId, String reason, String adminEmail) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
-    public void flagAsFreud(UUID transactionId, BigDecimal fraudScore, String reason, String analystEmail) {
+    public void flagAsFraud(UUID transactionId, BigDecimal fraudScore, String reason, String analystEmail) {
 
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MÉTODOS PRIVADOS
+    // ══════════════════════════════════════════════════════════
+
+    private String buildTransactionPayload(Transaction transaction, Account fromAccount, Account toAccount, BigDecimal amount) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "transactionId", transaction.getId().toString(),
+                    "fromAccount", fromAccount.getAccountCode(),
+                    "toAccount", toAccount.getAccountCode(),
+                    "amount", amount,
+                    "currency", transaction.getCurrency()
+            ));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize event payload", e);
+        }
     }
 }

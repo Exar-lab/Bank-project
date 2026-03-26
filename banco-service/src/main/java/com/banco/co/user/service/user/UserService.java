@@ -24,7 +24,12 @@ import com.banco.co.user.mapper.costumer.ICustomerMapper;
 import com.banco.co.user.mapper.employee.IEmployeeMapper;
 import com.banco.co.user.model.User;
 import com.banco.co.user.model.UserCredential;
+import com.banco.co.outbox.enums.KafkaTopic;
+import com.banco.co.outbox.model.OutboxEvent;
+import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.user.repository.IUserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -49,6 +54,8 @@ public class UserService implements IUserService {
         private final ICustomerMapper customerMapper;
         private final IEmployeeMapper employeeMapper;
         private final IAuditLogService auditLogService;
+        private final IOutboxEventPort outboxEventPort;
+        private final ObjectMapper objectMapper;
 
         // ══════════════════════════════════════════════════════════
         // AUTO-REGISTRO PÚBLICO (Cliente)
@@ -123,6 +130,12 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("message", "User registered successfully"),
                                         new AuditLogDetail("email", savedUser.getEmail())
                                 ));
+
+                publishUserEvent(savedUser.getId().toString(), "UserCreated", Map.of(
+                        "userId", savedUser.getId().toString(),
+                        "email", savedUser.getEmail(),
+                        "userCode", savedUser.getUserCode()
+                ));
 
                 return customerMapper.toDto(savedUser);
         }
@@ -230,6 +243,12 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("role", dto.role())
                                 ));
 
+                publishUserEvent(savedUser.getId().toString(), "EmployeeCreated", Map.of(
+                        "userId", savedUser.getId().toString(),
+                        "email", savedUser.getEmail(),
+                        "role", dto.role().name()
+                ));
+
                 return employeeMapper.toDto(savedUser);
         }
 
@@ -240,6 +259,7 @@ public class UserService implements IUserService {
         /**
          * Obtener perfil del usuario autenticado
          */
+        @Transactional(readOnly = true)
         @Override
         public CustomerResponseDto findUserByEmail(String email) {
                 User user = getEntityUserByEmail(email);
@@ -279,6 +299,11 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("newValues", newValues)
                                 )
                 );
+
+                publishUserEvent(user.getId().toString(), "UserUpdated", Map.of(
+                        "userId", user.getId().toString(),
+                        "email", user.getEmail()
+                ));
 
                 return customerMapper.toDto(user);
         }
@@ -335,6 +360,13 @@ public class UserService implements IUserService {
                                 List.of(
                                         new AuditLogDetail("message", "Password changed successfully")
                                 ));
+
+                // SECURITY: payload must NOT contain password, hash, or any credential
+                publishUserEvent(user.getId().toString(), "PasswordChanged", Map.of(
+                        "userId", user.getId().toString(),
+                        "email", user.getEmail(),
+                        "passwordChanged", true
+                ));
         }
 
         /**
@@ -359,6 +391,11 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("message", "User deleted account"),
                                         new AuditLogDetail("email", user.getEmail())
                                 ));
+
+                publishUserEvent(user.getId().toString(), "UserDeleted", Map.of(
+                        "userId", user.getId().toString(),
+                        "email", user.getEmail()
+                ));
         }
 
         // ══════════════════════════════════════════════════════════
@@ -368,6 +405,7 @@ public class UserService implements IUserService {
         /**
          * Admin obtiene usuario por ID (cualquier usuario)
          */
+        @Transactional(readOnly = true)
         @Override
         public CustomerResponseDto getUserById(UUID userId, String adminEmail) {
                 User admin = getEntityUserByEmail(adminEmail);
@@ -428,6 +466,13 @@ public class UserService implements IUserService {
                                 )
                 );
 
+                publishUserEvent(userId.toString(), "UserUpdatedByAdmin", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail,
+                                "oldValues", oldValues,
+                                "newValues", newValues
+                ));
+
                 return customerMapper.toDto(user);
         }
 
@@ -459,6 +504,12 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("reason", reason)
                                 ));
 
+                publishUserEvent(userId.toString(), "UserSuspended", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail,
+                                "reason", reason
+                ));
+
                 log.warn("User {} suspended by admin {}. Reason: {}",
                                 user.getEmail(), adminEmail, reason);
         }
@@ -489,6 +540,11 @@ public class UserService implements IUserService {
                                         new AuditLogDetail("adminEmail", adminEmail),
                                         new AuditLogDetail("userEmail", user.getEmail())
                                 ));
+
+                publishUserEvent(userId.toString(), "UserActivated", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail
+                ));
 
                 log.info("User {} activated by admin {}", user.getEmail(), adminEmail);
         }
@@ -526,6 +582,13 @@ public class UserService implements IUserService {
                                 )
                 );
 
+                publishUserEvent(userId.toString(), "UserStatusChanged", Map.of(
+                                "userId", userId.toString(),
+                                "adminEmail", adminEmail,
+                                "oldStatus", oldStatus.toString(),
+                                "newStatus", status.toString()
+                ));
+
                 log.info("User {} status changed from {} to {} by admin {}",
                                 user.getEmail(), oldStatus, status, adminEmail);
 
@@ -535,11 +598,13 @@ public class UserService implements IUserService {
         // ══════════════════════════════════════════════════════════
         // MÉTODOS AUXILIARES
         // ══════════════════════════════════════════════════════════
+        @Transactional(readOnly = true)
         @Override
         public User getEntityUserByEmail(String email) {
                 return userRepository.findActiveByEmail(email)
                                 .orElseThrow(() -> new UserNotFoundException(email));
         }
+        @Transactional(readOnly = true)
         @Override
         public User getEntityUserByDocumentNumber(String documentNumber) {
                 return userRepository.findActiveByDocumentNumber(documentNumber)
@@ -551,6 +616,18 @@ public class UserService implements IUserService {
                                 .map(Role::getName)
                                 .max(Comparator.comparingInt(SystemRole::getPrivilegeLevel))
                                 .orElse(SystemRole.CUSTOMER_BASIC);
+        }
+
+        private void publishUserEvent(String aggregateId, String eventType, Map<String, Object> payloadData) {
+                try {
+                        outboxEventPort.save(new OutboxEvent(
+                                "User", aggregateId, eventType,
+                                objectMapper.writeValueAsString(payloadData),
+                                KafkaTopic.USER_EVENTS
+                        ));
+                } catch (JsonProcessingException e) {
+                        throw new IllegalStateException("Failed to serialize event payload", e);
+                }
         }
 
         private void validateAdminCanModifyUser(User admin, User target) {

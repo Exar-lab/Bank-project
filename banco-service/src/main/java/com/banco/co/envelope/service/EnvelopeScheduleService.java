@@ -9,6 +9,11 @@ import com.banco.co.envelope.enums.AutoContributeFrequency;
 import com.banco.co.envelope.enums.EnvelopeStatus;
 import com.banco.co.envelope.model.Envelope;
 import com.banco.co.envelope.repository.IEnvelopeRepository;
+import com.banco.co.outbox.enums.KafkaTopic;
+import com.banco.co.outbox.model.OutboxEvent;
+import com.banco.co.outbox.port.IOutboxEventPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +32,8 @@ import java.util.Map;
 public class EnvelopeScheduleService implements IEnvelopeScheduleService {
     private final IEnvelopeRepository envelopeRepository;
     private final IAuditLogService auditLogService;
+    private final IOutboxEventPort outboxEventPort;
+    private final ObjectMapper objectMapper;
 
     /**
      * Ejecuta auto-contribuciones pendientes
@@ -145,6 +152,25 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
         // 7. Guardar cambios
         envelopeRepository.save(envelope);
 
+        // 8. Publicar evento de auto-contribución en el outbox (misma transacción)
+        outboxEventPort.save(new OutboxEvent(
+                "Envelope",
+                envelope.getId().toString(),
+                "EnvelopeAutoContributed",
+                buildAutoContributionPayload(envelope, contributionAmount),
+                KafkaTopic.ENVELOPE_EVENTS
+        ));
+
+        if (envelope.hasReachedGoal()) {
+            outboxEventPort.save(new OutboxEvent(
+                    "Envelope",
+                    envelope.getId().toString(),
+                    "EnvelopeGoalReached",
+                    buildAutoContributionPayload(envelope, contributionAmount),
+                    KafkaTopic.ENVELOPE_EVENTS
+            ));
+        }
+
         auditLogService.logSuccess(
                 account.getUser(),
                 AuditAction.ENVELOPE_AUTO_CONTRIBUTION_PROCESSED,
@@ -163,6 +189,25 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
                         "New balance: {}, Next: {}",
                 envelope.getEnvelopeCode(), contributionAmount,
                 envelope.getBalance(), nextDate);
+    }
+
+    /**
+     * Construye el payload JSON para eventos de auto-contribución
+     */
+    private String buildAutoContributionPayload(Envelope envelope, BigDecimal amount) {
+        try {
+            Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("envelopeId", envelope.getId().toString());
+            payload.put("envelopeCode", envelope.getEnvelopeCode());
+            payload.put("amount", amount);
+            payload.put("accountCode", envelope.getAccount().getAccountCode());
+            if (envelope.getTargetAmount() != null) {
+                payload.put("goalAmount", envelope.getTargetAmount());
+            }
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize auto-contribution event payload", e);
+        }
     }
 
     /**

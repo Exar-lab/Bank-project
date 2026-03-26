@@ -1,190 +1,120 @@
 # AGENTS.md — Banco-Service Code Review Rules
 
+## Response Format (REQUIRED)
+
+Start EVERY response with `STATUS: PASSED` or `STATUS: FAILED` on the very first line, then provide the review details.
+
 ## Project Context
 
-**Project**: banco-service  
-**Language**: Java 21+  
-**Framework**: Spring Boot 3.x/4.x  
-**Architecture**: Hexagonal (Ports & Adapters) + DDD + Screaming Architecture (feature-first)  
-**Database**: MySQL  
-**Messaging**: Kafka (async event publishing)  
-**Testing**: JUnit 5 + Mockito + Testcontainers  
+**Project**: banco-service
+**Language**: Java 21+
+**Framework**: Spring Boot 3.x/4.x
+**Architecture**: Hexagonal (Ports & Adapters) + DDD + Screaming Architecture (feature-first)
+**Database**: MySQL
+**Messaging**: Kafka (async event publishing)
+**Testing**: JUnit 5 + Mockito + Testcontainers
 
 ---
 
 ## Core Rules (Non-Negotiable)
 
-### Java
-
 - **Records for DTOs**: All value objects MUST be `record`, never `@Data` or mutable classes
 - **Constructor Injection**: Spring beans use constructor-only DI, no `@Autowired` on fields
-- **Optional Handling**: Use `Optional` for nullability; NEVER call `.get()` without `isPresent()` check
-- **Abstract Exceptions**: Exception hierarchies MUST use `abstract` classes (e.g., `public abstract class BankingException extends RuntimeException { }` under `com.banco.co.exception`)
-- **Package Naming**: All code under `com.banco.co.*`
-- **Annotations**: Use only javax/jakarta (Spring 6+), never com.sun or internal APIs
+- **Optional Handling**: NEVER call `.get()` without `isPresent()` check — always use `orElseThrow` or `orElse`
+- **Abstract Exceptions**: Exception hierarchies MUST use `abstract` classes extending `RuntimeException`
+- **Package Naming**: Feature-first under `com.banco.co.{feature}.*` — never global roots like `com.banco.co.services.*`
 
-### Package Organization (Screaming Architecture)
+---
 
-- **Feature-First Root**: Organize by feature under `com.banco.co.{feature}.*`, not by global layer roots
-- **Current Main Features**: `account`, `transaction`, `envelope`, `user`, `card`, `role`, `permission`, `fraud`, `auditLog`, `security`, `exception` (plus supporting packages such as `utils`)
-- **Layering Is Conceptual + Local to Feature**: Domain/Application/Infrastructure/Presentation are preserved as responsibilities, but materialized inside each feature via subpackages (for example `model`, `service`, `repository`, `controller`, `dto`, `mapper`, `exception`, `handler`)
-- **Avoid Fake Paths**: Do not document or assume root packages like `com.banco.co.domain.*`, `com.banco.co.application.*`, `com.banco.co.infrastructure.*`, `com.banco.co.presentation.*` unless they are explicitly created in code
+## Architecture Layers
 
-### Architecture Layers
+| Layer | Allowed | Forbidden |
+|-------|---------|-----------|
+| **Domain** (`model/`, `enums/`, `exception/`) | Business logic, @Entity, enums, abstract exceptions | @Service, @RestController |
+| **Application** (`service/`, `dto/`, `mapper/`) | Use cases, record DTOs, MapStruct mappers | @Entity, @RestController, JPA queries |
+| **Infrastructure** (`repository/`, `config/`, `adapter/`) | JPA repos, Kafka publishers, security config | Business logic, DTOs |
+| **Presentation** (`controller/`, `handler/`) | REST endpoints, HTTP mapping | Business logic, JPA queries |
 
-| Layer | Rules | Examples |
-|-------|-------|----------|
-| **Domain** | Business logic + JPA entities in `model/`, enums in `enums/`, exception hierarchy in `exception/` | `com.banco.co.account.model.Account` (@Entity), `com.banco.co.card.exception.card.CardException` |
-| **Application** | Orchestrates domain, DTOs, mappers | `com.banco.co.account.service.AccountService`, `com.banco.co.user.dto.*`, `com.banco.co.account.mapper.*` |
-| **Infrastructure** | Repository impls, external adapters, persistence/security config | `com.banco.co.account.repository.*`, `com.banco.co.security.config.*` |
-| **Presentation** | REST endpoints, exception handlers, request/response mapping | `com.banco.co.{feature}.controller.*`, `com.banco.co.{feature}.handler.*` |
+---
 
-Layer boundaries remain mandatory, but package layout is feature-first.
+## Spring Data JPA
 
-### Multi-Agent Operating Model
+- Use `@Query` with explicit `JOIN FETCH` to prevent N+1 queries
+- Add `SELECT DISTINCT` when fetch-joining collections to avoid `IncorrectResultSizeDataAccessException`
+- Always add `@Transactional(readOnly = true)` on query methods
+- Repositories return `Optional<T>`, never `null`
 
-This repository follows an **8-agent model in 3 categories**. Activation and ownership are explicit to protect hexagonal boundaries and feature-first structure.
+---
 
-| Category | Agent | Activate When | Main Tasks / Output | Boundaries |
-|----------|-------|---------------|---------------------|------------|
-| **Planning** | **Planning Agent** | A new feature, refactor, or architectural decision starts | Produces SDD artifacts: proposal, spec, design, tasks | Does not write production code |
-| **Build** | **Domain Agent** | Domain rules, value objects, enums, or domain exceptions change | Updates domain model and abstract exception hierarchies | Touches only `com.banco.co.{feature}.model`, `com.banco.co.{feature}.enums`, `com.banco.co.{feature}.exception`; no @Service/@RestController |
-| **Build** | **Application Agent** | Use-case orchestration, DTO mapping, or service flow changes | Implements application services, record DTOs, mappers | Touches only `com.banco.co.{feature}.service`, `com.banco.co.{feature}.dto`, `com.banco.co.{feature}.mapper`; no entities/repositories/controllers |
-| **Build** | **Infrastructure Agent** | Persistence, external adapters, messaging, or security config changes | Implements repositories/adapters and infrastructure configuration | Touches `com.banco.co.{feature}.repository` plus explicit infrastructure packages like `com.banco.co.security.config`; no domain business decisions |
-| **Build** | **Presentation Agent** | REST contract, validation entrypoints, or error handling at API layer changes | Implements controllers and HTTP exception handlers | Touches only `com.banco.co.{feature}.controller`, `com.banco.co.{feature}.handler`; no domain logic or JPA query logic |
-| **QA+Security** | **Test Agent** | After any Build change | Adds/updates unit/integration tests and validates coverage targets by layer | Cross-cutting; tests all layers but does not redefine architecture ownership |
-| **QA+Security** | **Security Agent** | Any auth, endpoint, sensitive-data, or access-control change | Performs security review and hardening (JWT, RBAC, validation, secret handling) | Cross-cutting; enforces security controls without changing functional scope |
+## Spring Security
 
-Operational notes:
-- Keep ownership **feature-first** under `com.banco.co.{feature}.*`; do not introduce or document fake global roots (`com.banco.co.domain.*`, `com.banco.co.application.*`, etc.) unless they are explicitly created.
-- If a task spans multiple layers, split work by agent instead of allowing one agent to cross boundaries.
+- JWT in `Authorization: Bearer <token>` header
+- `SecurityFilterChain` bean only — never `WebSecurityConfigurerAdapter`
+- `@PreAuthorize` on all endpoints requiring a specific role
+- No secrets, passwords, or tokens in logs or code
 
-### Spring Data JPA
+---
 
-- Use `@Query` with explicit joins to prevent N+1 queries
-- Use DTO projections (interfaces or `new` constructor syntax) for read queries
-- Always add `@Transactional(readOnly = true)` for queries
-- Repositories return `Optional<T>`, never throw `EntityNotFoundException`
+## Testing
 
-### Spring Security / OAuth2
+- **Domain**: 90%+ coverage, NO mocks
+- **Application**: 85%+ coverage, mock ports only
+- **Infrastructure**: 70%+ coverage, Testcontainers (no mocked Kafka)
+- **Presentation**: 75%+ coverage, @WebMvcTest
+- Naming: `test<Method>_<Condition>_<Expected>`
 
-- JWT tokens in Authorization header: `Bearer <token>`
-- `SecurityFilterChain` bean for custom filters (not `WebSecurityConfigurerAdapter`)
-- RBAC via `@PreAuthorize("hasRole('ADMIN')")` on endpoints
-- OAuth2ResourceServerConfigurer for JWT validation
+---
 
-### Validation
+## Validation
 
 - Use `@Validated` on `@RestController` classes
 - Custom `@Constraint` annotations for domain-level validation
-- Validation groups for multi-stage validation
-- Return HTTP 400 (Bad Request) with error details in response body
+- Return HTTP 400 with error details in response body — never expose stack traces
 
-### Testing
+---
 
-- **Domain layer**: 90%+ coverage, NO mocks
-- **Application layer**: 85%+ coverage, mock ports only
-- **Infrastructure layer**: 70%+ coverage with Testcontainers
-- Unit test naming: `test<Method><Condition><Expected>` (e.g., `testWithdraw_InsufficientFunds_ThrowsException`)
-- Integration test naming: `test<Scenario>_<Expected>`
+## Git & Commits
 
-### Git & Commits
-
-- **Conventional Commits**: `type(scope): subject`
+- **Conventional Commits**: `type(scope): subject` — lowercase, imperative, no period
   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-  - Scope: `domain`, `application`, `infrastructure`, `presentation`, or affected feature (`account`, `transaction`, `security`, etc.)
-  - Subject: lowercase, no period, imperative mood
-- **PR Title**: `feat(scope): description` (same format as commit)
-- **No AI Attribution**: Never add "Co-Authored-By: AI/Claude"
+  - Scope: layer (`domain`, `infrastructure`, etc.) or feature (`account`, `transaction`, `security`)
+- **No AI attribution**: Never add "Co-Authored-By: AI/Claude" to commits
 
 ---
 
-## Code Review Checklist
+## Red Flags — Block on Any of These
 
-### Before Merge
-
-- [ ] All tests pass locally
-- [ ] Code follows package naming `com.banco.co.*`
-- [ ] Package structure follows feature-first convention `com.banco.co.{feature}.*`
-- [ ] DTOs are Records (not classes)
-- [ ] No `@Autowired` on fields (constructor injection only)
-- [ ] No `.get()` on Optional without `isPresent()`
-- [ ] No hardcoded secrets (API keys, passwords)
-- [ ] JPA queries use projections to avoid N+1
-- [ ] Exception handling uses abstract classes
-- [ ] Commit message is conventional format
-- [ ] Code coverage meets minimum (see testing section)
-
-### Red Flags
-
-🚩 `@Autowired` on fields → Forces field injection, untestable  
-🚩 Mutable DTOs (`@Data`, setters) → Use Records  
-🚩 `Optional.get()` without guard → NPE in production  
-🚩 N+1 queries → Always use joins or projections  
-🚩 Non-abstract exception hierarchies → Use abstract class hierarchies extending RuntimeException  
-🚩 No @Transactional(readOnly=true) on queries → Unnecessary write overhead  
-
----
-
-## GGA (Gentleman Guardian Angel) Integration
-
-This project uses **GGA v2.7.3** for AI-assisted code review. When running:
-
-```bash
-gga run
-```
-
-GGA will enforce:
-1. All rules above
-2. SOLID principles
-3. Clean code formatting
-4. Security best practices (no secrets in code)
-5. Performance (N+1 detection, etc.)
-
-If GGA blocks commit, fix issues and retry. Never use `--no-verify`.
-
----
-
-## Skill References
-
-When developing new features, reference:
-
-| Need | Skill |
-|------|-------|
-| Query with JPA | `.claude/skills/jpa-patterns/SKILL.md` |
-| Map DTO from entity | `.claude/skills/spring-boot-patterns/SKILL.md` |
-| Implement OAuth2 / JWT | `.claude/skills/spring-boot-patterns/SKILL.md` |
-| Add validation | `.claude/skills/spring-boot-patterns/SKILL.md` |
-| Write tests | `.claude/skills/java-code-review/SKILL.md` |
-| **Find which skill to use** | `.claude/skills/README.md` ⭐ |
+🚩 `@Autowired` on fields
+🚩 Mutable DTO (`@Data`, setters) — use Records
+🚩 `Optional.get()` without guard
+🚩 N+1 query (lazy load inside loop, missing JOIN FETCH)
+🚩 Non-abstract exception base class
+🚩 Missing `@Transactional(readOnly = true)` on read methods
+🚩 Hardcoded secret or password in source
+🚩 Stack trace exposed in HTTP response body
+🚩 `@Entity` outside `{feature}/model/`
+🚩 Business logic in `@RestController`
 
 ---
 
 ## SDD Methodology
 
-For substantial features (>2 hours work):
+For substantial features (>2 hours work), use Spec-Driven Development:
 
-```bash
+```
 /sdd-new feature-name
 ```
 
-This triggers:
-1. **Exploration** → Understand problem
-2. **Proposal** → Scope, effort, approach
-3. **Specification** → Requirements + scenarios
+Phases in order:
+1. **Explore** → Understand codebase and problem
+2. **Propose** → Scope, effort, approach
+3. **Spec** → Requirements + scenarios
 4. **Design** → Architecture decisions
 5. **Tasks** → Implementation checklist
-6. **Implementation** → Code with SDD tracking
-7. **Verification** → All specs met + tests pass
-8. **Archive** → Persistent record for Release Please
+6. **Apply** → Code implementation
+7. **Verify** → All specs met + tests pass
+8. **Archive** → Persistent record
 
-See `.claude/skills/README.md` for full skill index and workflow.
+Artifacts are stored in Engram with topic keys: `sdd/{change-name}/{phase}`
 
----
-
-## Questions?
-
-- Architecture decisions → Check `claude.md` (agent/layer responsibilities)
-- How to X → Check `.claude/skills/README.md`
-- SDD methodology → See `/sdd-explore` or `/sdd-new`
-- Code review rules → This file (AGENTS.md)
+Build agents only start after Planning delivers spec + tasks. Test Agent and Security Agent always run after Build.

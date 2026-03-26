@@ -14,7 +14,7 @@ import com.banco.co.transaction.enums.TransactionCategory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 
-import java.awt.print.Pageable;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -205,7 +205,7 @@ public interface ITransactionService {
     /**
      * Marcar transacción como fraudulenta
      */
-    void flagAsFreud(
+    void flagAsFraud(
             UUID transactionId,
             BigDecimal fraudScore,
             String reason,
