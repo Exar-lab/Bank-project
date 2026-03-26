@@ -565,6 +565,9 @@ public class EnvelopeService implements IEnvelopeService {
             payload.put("type", envelope.getType().name());
             payload.put("status", envelope.getStatus().name());
             payload.put("balance", envelope.getBalance());
+            if (EnvelopeType.GOAL.equals(envelope.getType())) {
+                payload.put("goalAmount", envelope.getTargetAmount());
+            }
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize event payload", e);

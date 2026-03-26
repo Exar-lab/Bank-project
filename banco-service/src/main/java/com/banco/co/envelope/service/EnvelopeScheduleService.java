@@ -137,7 +137,8 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
         envelope.deposit(contributionAmount);
 
         // 5. Verificar si alcanzó la meta
-        if (envelope.hasReachedGoal() && envelope.getCompletedAt() == null) {
+        boolean goalJustReached = envelope.hasReachedGoal() && envelope.getCompletedAt() == null;
+        if (goalJustReached) {
             envelope.setCompletedAt(LocalDateTime.now());
             log.info("Envelope {} reached goal through auto-contribution!",
                     envelope.getEnvelopeCode());
@@ -162,7 +163,7 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
                 KafkaTopic.ENVELOPE_EVENTS
         ));
 
-        if (envelope.hasReachedGoal()) {
+        if (goalJustReached) {
             outboxEventPort.save(new OutboxEvent(
                     "Envelope",
                     envelope.getId().toString(),

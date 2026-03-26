@@ -9,11 +9,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,23 +24,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @EmbeddedKafka(
         partitions = 1,
-        topics = {"banco.envelope.events"},
-        brokerProperties = {
-                "listeners=PLAINTEXT://localhost:9094",
-                "port=9094"
-        }
+        topics = {"banco.envelope.events"}
 )
 @DirtiesContext
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class NotificationConsumerIntegrationTest {
 
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     private ListAppender<ILoggingEvent> listAppender;
     private Logger notificationLogger;
+
+    NotificationConsumerIntegrationTest(KafkaTemplate<String, String> kafkaTemplate,
+                                        ObjectMapper objectMapper) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @BeforeEach
     void setUp() {

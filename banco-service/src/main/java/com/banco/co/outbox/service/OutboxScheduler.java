@@ -37,7 +37,12 @@ public class OutboxScheduler {
         List<Long> ids = retryable.stream().map(OutboxEvent::getId).toList();
         outboxEventRepository.claimForProcessing(ids);
 
-        log.debug("Processing {} outbox events", retryable.size());
-        retryable.forEach(kafkaEventPublisher::publish);
+        // Re-query only the rows this instance actually claimed (TOCTOU safety).
+        // Another instance may have claimed some of these ids between the SELECT and UPDATE above.
+        List<OutboxEvent> claimed = outboxEventRepository.findClaimedForProcessing(ids);
+        if (claimed.isEmpty()) return;
+
+        log.debug("Processing {} outbox events", claimed.size());
+        claimed.forEach(kafkaEventPublisher::publish);
     }
 }

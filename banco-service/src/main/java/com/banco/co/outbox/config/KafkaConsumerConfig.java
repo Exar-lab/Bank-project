@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 
@@ -44,6 +45,10 @@ public class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(defaultErrorHandler());
+        // Commit offsets after each record is processed successfully.
+        // ENABLE_AUTO_COMMIT_CONFIG=false requires an explicit AckMode; without it Spring
+        // falls back to BATCH mode which still auto-commits at the container level.
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
         return factory;
     }
 

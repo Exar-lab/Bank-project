@@ -5,11 +5,11 @@ import com.banco.co.fraud.enums.FraudAnalysisResult;
 import com.banco.co.fraud.service.IFraudDetectionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
@@ -25,23 +25,23 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @EmbeddedKafka(
         partitions = 1,
-        topics = {"banco.transaction.events"},
-        brokerProperties = {
-                "listeners=PLAINTEXT://localhost:9093",
-                "port=9093"
-        }
+        topics = {"banco.transaction.events"}
 )
 @DirtiesContext
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class FraudDetectionConsumerIntegrationTest {
 
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @MockitoBean
     private IFraudDetectionService fraudDetectionService;
+
+    FraudDetectionConsumerIntegrationTest(KafkaTemplate<String, String> kafkaTemplate,
+                                          ObjectMapper objectMapper) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Test
     void testConsume_TransactionCompletedEvent_CallsFraudAnalysis() throws Exception {
