@@ -22,6 +22,7 @@ import com.banco.co.transaction.enums.TransactionChannel;
 import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.enums.TransactionType;
 import com.banco.co.transaction.exception.transaction.TransactionInvalidException;
+import com.banco.co.transaction.exception.transaction.TransactionNotFoundException;
 import com.banco.co.transaction.mapper.ITransactionMapper;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.transaction.model.Transaction;
@@ -42,10 +43,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -191,31 +194,99 @@ public class TransactionService implements ITransactionService{
     @Transactional(readOnly = true)
     @Override
     public Page<TransactionResponseDto> getMyTransactions(String userEmail, TransactionFiltersDto filters, Pageable pageable) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        User user = userService.getEntityUserByEmail(userEmail);
+        return transactionRepository.findUserTransactions(
+                user.getId(),
+                filters.type(),
+                filters.status(),
+                filters.category(),
+                filters.startDate(),
+                filters.endDate(),
+                pageable
+        ).map(transactionMapper::toDto);
     }
 
     @Transactional(readOnly = true)
     @Override
     public TransactionResponseDto getMyTransaction(UUID transactionId, String userEmail) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Transaction transaction = transactionRepository.findByIdWithAccounts(transactionId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId.toString()));
+
+        boolean isOwner = isTransactionOwner(transaction, userEmail);
+        if (!isOwner) {
+            throw new UnauthorizedException("You don't have access to this transaction");
+        }
+
+        return transactionMapper.toDto(transaction);
     }
 
     @Transactional(readOnly = true)
     @Override
     public Page<TransactionResponseDto> getAccountTransactions(String accountCode, String userEmail, TransactionFiltersDto filters, Pageable pageable) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+
+        if (!account.getUser().getEmail().equals(userEmail)) {
+            throw new UnauthorizedException("You don't own this account");
+        }
+
+        return transactionRepository.findAccountTransactionsByUser(
+                accountCode,
+                account.getUser().getId(),
+                filters.type(),
+                filters.status(),
+                filters.category(),
+                filters.startDate(),
+                filters.endDate(),
+                pageable
+        ).map(transactionMapper::toDto);
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<TransactionResponseDto> getTransactionsByCategory(TransactionCategory category, String userEmail) {
-        return List.of();
+        User user = userService.getEntityUserByEmail(userEmail);
+        return transactionRepository.findByCategoryAndUser(category, user.getId())
+                .stream()
+                .map(transactionMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     @Override
     public CategorySummaryDto getCategorySummary(String userEmail, LocalDateTime startDate, LocalDateTime endDate) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        User user = userService.getEntityUserByEmail(userEmail);
+
+        List<Transaction> completedTransactions = transactionRepository.findUserTransactions(
+                user.getId(),
+                null,
+                TransactionStatus.COMPLETED,
+                null,
+                startDate,
+                endDate,
+                Pageable.unpaged()
+        ).getContent();
+
+        Map<TransactionCategory, BigDecimal> totalByCategory = completedTransactions.stream()
+                .filter(t -> t.getCategory() != null)
+                .collect(Collectors.groupingBy(
+                        Transaction::getCategory,
+                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)
+                ));
+
+        BigDecimal totalSpent = totalByCategory.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        TransactionCategory topCategory = totalByCategory.entrySet().stream()
+                .max(Comparator.comparing(Map.Entry::getValue))
+                .map(Map.Entry::getKey)
+                .orElse(null);
+
+        return new CategorySummaryDto(
+                totalByCategory,
+                totalSpent,
+                topCategory,
+                completedTransactions.size()
+        );
     }
 
     @Override
@@ -268,6 +339,14 @@ public class TransactionService implements ITransactionService{
     // ══════════════════════════════════════════════════════════
     //  MÉTODOS PRIVADOS
     // ══════════════════════════════════════════════════════════
+
+    private boolean isTransactionOwner(Transaction transaction, String userEmail) {
+        boolean isFromOwner = transaction.getFromAccount() != null
+                && transaction.getFromAccount().getUser().getEmail().equals(userEmail);
+        boolean isToOwner = transaction.getToAccount() != null
+                && transaction.getToAccount().getUser().getEmail().equals(userEmail);
+        return isFromOwner || isToOwner;
+    }
 
     private String buildTransactionPayload(Transaction transaction, Account fromAccount, Account toAccount, BigDecimal amount) {
         try {
