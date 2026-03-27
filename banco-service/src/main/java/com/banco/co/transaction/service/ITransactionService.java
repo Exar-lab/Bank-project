@@ -10,8 +10,8 @@ import com.banco.co.transaction.dto.movement.CheckDepositRequestDto;
 import com.banco.co.transaction.dto.movement.TransferRequestDto;
 import com.banco.co.transaction.dto.payment.PaymentRequestDto;
 import com.banco.co.transaction.dto.payment.ServicePaymentRequestDto;
+import com.banco.co.transaction.dto.TransactionRequestMetadataDto;
 import com.banco.co.transaction.enums.TransactionCategory;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ public interface ITransactionService {
     TransactionResponseDto transfer(
             TransferRequestDto dto,
             String userEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     /**
@@ -42,7 +42,7 @@ public interface ITransactionService {
     TransactionResponseDto payment(
             PaymentRequestDto dto,
             String userEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     /**
@@ -51,7 +51,7 @@ public interface ITransactionService {
     TransactionResponseDto payService(
             ServicePaymentRequestDto dto,
             String userEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     // ══════════════════════════════════════════════════════════
@@ -65,7 +65,7 @@ public interface ITransactionService {
     TransactionResponseDto cashDeposit(
             CashDepositRequestDto dto,
             String employeeEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     /**
@@ -75,7 +75,7 @@ public interface ITransactionService {
     TransactionResponseDto cashWithdrawal(
             CashWithdrawalRequestDto dto,
             String employeeEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     /**
@@ -84,7 +84,7 @@ public interface ITransactionService {
     TransactionResponseDto checkDeposit(
             CheckDepositRequestDto dto,
             String employeeEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     // ══════════════════════════════════════════════════════════
@@ -145,7 +145,7 @@ public interface ITransactionService {
     TransactionResponseDto scheduleTransfer(
             ScheduledTransferRequestDto dto,
             String userEmail,
-            HttpServletRequest request
+            TransactionRequestMetadataDto metadata
     );
 
     /**
