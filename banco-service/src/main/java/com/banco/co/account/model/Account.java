@@ -1,8 +1,9 @@
 package com.banco.co.account.model;
 
+import com.banco.co.account.exception.account.AccountBlockedFundsException;
 import com.banco.co.account.exception.account.AccountInsufficientFundsException;
+import com.banco.co.account.exception.account.AccountInvalidAmountException;
 import com.banco.co.account.exception.account.AccountMaxWithdrawExceededException;
-import com.banco.co.transaction.exception.transaction.TransactionInvalidAmountException;
 import com.banco.co.security.codeGenerator.CodeGenerator;
 import com.banco.co.security.cryptoLib.JasyptEncryptor;
 import com.banco.co.account.enums.AccountStatus;
@@ -118,10 +119,9 @@ public class Account {
     // Métodos de negocio
     public void deposit(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TransactionInvalidAmountException(amount,"Amount must be positive");
+            throw new AccountInvalidAmountException(amount, "Amount must be positive");
         }
         this.balance = this.balance.add(amount);
-        this.availableBalance = this.availableBalance.add(amount);
         this.lastTransactionAt = LocalDateTime.now();
     }
 
@@ -133,8 +133,8 @@ public class Account {
     }
 
     public BigDecimal getAvailableBalance() {
-        // Saldo Total - Fondos Bloqueados - Fondos en Sobres (opcional según tu lógica)
-        return this.balance;
+        // Saldo disponible: balance total menos fondos bloqueados en proceso
+        return this.balance.subtract(this.blockedBalance);
     }
     /**
      * Bloquear fondos para una transacción pendiente
@@ -154,26 +154,38 @@ public class Account {
      */
     public void unblockFunds(BigDecimal amount) {
         if (blockedBalance.compareTo(amount) < 0) {
-            throw new IllegalStateException("Cannot unblock more than blocked amount");
+            throw new AccountBlockedFundsException(this.accountCode, amount, blockedBalance, "unblock");
         }
 
         blockedBalance = blockedBalance.subtract(amount);
         balance = balance.add(amount);
     }
 
+    /**
+     * Confirmar la salida definitiva de fondos bloqueados.
+     * Llamar cuando una transferencia se completa: los fondos bloqueados
+     * salen de la cuenta (fueron a la cuenta destino).
+     */
+    public void confirmBlockedFunds(BigDecimal amount) {
+        if (blockedBalance.compareTo(amount) < 0) {
+            throw new AccountBlockedFundsException(this.accountCode, amount, blockedBalance, "confirm");
+        }
+        blockedBalance = blockedBalance.subtract(amount);
+    }
+
     public void withdraw(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TransactionInvalidAmountException(amount,"Amount must be positive");
+            throw new AccountInvalidAmountException(amount, "Amount must be positive");
         }
-        BigDecimal maxWithdraw = this.getAvailableBalance().add(this.overdraftLimit);
+        BigDecimal available = this.getAvailableBalance();
+        BigDecimal maxWithdraw = available.add(this.overdraftLimit);
         if (amount.compareTo(maxWithdraw) > 0) {
-            throw new AccountMaxWithdrawExceededException(this.accountCode,amount,maxWithdraw);
+            throw new AccountMaxWithdrawExceededException(this.accountCode, amount, maxWithdraw);
         }
-        if(amount.compareTo(availableBalance) > 0){
-            throw new AccountInsufficientFundsException(this.accountCode,amount,this.availableBalance);
+        if (amount.compareTo(available) > 0) {
+            throw new AccountInsufficientFundsException(this.accountCode, amount, available);
         }
         this.balance = this.balance.subtract(amount);
-        this.availableBalance = this.availableBalance.subtract(amount);
         this.lastTransactionAt = LocalDateTime.now();
     }
     public void addEnvelope(Envelope envelope) {
