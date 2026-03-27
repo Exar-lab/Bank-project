@@ -114,15 +114,20 @@ public class TransactionService implements ITransactionService {
         transaction.setFromAccountBalanceBefore(fromAccount.getBalance());
         transaction.setToAccountBalanceBefore(toAccount.getBalance());
 
+        // PROCESSING phase - reservar fondos en origen
         transaction.process();
 
         fromAccount.blockFunds(dto.amount());
-        toAccount.deposit(dto.amount());
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
-        transaction.setToAccountBalanceAfter(toAccount.getBalance());
 
+        // COMPLETING phase - confirmar salida definitiva y acreditar destino
         transaction.complete();
+
+        fromAccount.confirmBlockedFunds(dto.amount());
+        toAccount.deposit(dto.amount());
+
+        transaction.setToAccountBalanceAfter(toAccount.getBalance());
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         accountService.updateBalance(fromAccount);
@@ -422,16 +427,19 @@ public class TransactionService implements ITransactionService {
         // 8. Procesar
         transaction.process();
 
-        // 9. Ejecutar retiro
+        // 9. PROCESSING phase - reservar fondos
         fromAccount.blockFunds(dto.amount());
 
-        // 10. Guardar balance después
+        // 10. Guardar balance después del bloqueo
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
         // 11. Completar
         transaction.complete();
 
-        // 12. Persistir
+        // 12. COMPLETING phase - confirmar salida definitiva (efectivo entregado físicamente)
+        fromAccount.confirmBlockedFunds(dto.amount());
+
+        // 13. Persistir
         Transaction savedTransaction = transactionRepository.save(transaction);
         accountService.updateBalance(fromAccount);
 
