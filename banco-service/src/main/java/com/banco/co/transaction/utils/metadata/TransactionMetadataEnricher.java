@@ -1,8 +1,8 @@
 package com.banco.co.transaction.utils.metadata;
 
+import com.banco.co.transaction.dto.TransactionRequestMetadataDto;
 import com.banco.co.transaction.enums.TransactionChannel;
 import com.banco.co.transaction.model.Transaction;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -10,27 +10,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class TransactionMetadataEnricher implements ITransactionMetadataEnricher {
 
-    public void enrich(Transaction transaction, HttpServletRequest request, TransactionChannel channel) {
+    @Override
+    public void enrich(Transaction transaction, TransactionRequestMetadataDto metadata, TransactionChannel channel) {
         transaction.setChannel(channel);
+        transaction.setIpAddress(metadata.ipAddress());
+        transaction.setUserAgent(metadata.userAgent());
+        transaction.setDeviceId(metadata.deviceId());
+        transaction.setDeviceType(inferDeviceType(metadata.userAgent()));
 
-        String ip = getClientIP(request);
-        transaction.setIpAddress(ip);
-
-        String userAgent = request.getHeader("User-Agent");
-        transaction.setUserAgent(userAgent);
-
-        transaction.setDeviceId(request.getHeader("X-Device-Id"));
-        transaction.setDeviceType(inferDeviceType(userAgent));
-
-        log.debug("Transaction enriched with metadata: IP={}, Device={}", ip, transaction.getDeviceType());
-    }
-
-    private String getClientIP(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        log.debug("Transaction enriched with metadata: IP={}, Device={}", metadata.ipAddress(), transaction.getDeviceType());
     }
 
     private String inferDeviceType(String userAgent) {

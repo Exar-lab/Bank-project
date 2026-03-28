@@ -3,3 +3,9 @@
 
 # Local environment overrides — never commit secrets
 .env
+
+# IDE files
+.idea/
+
+# Claude agent worktrees (temporary, machine-specific)
+.claude/worktrees/
