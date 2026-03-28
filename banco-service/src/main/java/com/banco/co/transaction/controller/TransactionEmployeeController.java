@@ -37,7 +37,7 @@ public class TransactionEmployeeController {
             Authentication authentication,
             HttpServletRequest request
     ) {
-        TransactionRequestMetadataDto metadata = buildMetadata(request);
+        TransactionRequestMetadataDto metadata = TransactionMetadataExtractor.extract(request);
         TransactionResponseDto response = transactionService.cashDeposit(dto, authentication.getName(), metadata);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -49,7 +49,7 @@ public class TransactionEmployeeController {
             Authentication authentication,
             HttpServletRequest request
     ) {
-        TransactionRequestMetadataDto metadata = buildMetadata(request);
+        TransactionRequestMetadataDto metadata = TransactionMetadataExtractor.extract(request);
         TransactionResponseDto response = transactionService.cashWithdrawal(dto, authentication.getName(), metadata);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -61,32 +61,9 @@ public class TransactionEmployeeController {
             Authentication authentication,
             HttpServletRequest request
     ) {
-        TransactionRequestMetadataDto metadata = buildMetadata(request);
+        TransactionRequestMetadataDto metadata = TransactionMetadataExtractor.extract(request);
         TransactionResponseDto response = transactionService.checkDeposit(dto, authentication.getName(), metadata);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ══════════════════════════════════════════════════════════
-    //  PRIVATE HELPERS
-    // ══════════════════════════════════════════════════════════
-
-    private TransactionRequestMetadataDto buildMetadata(HttpServletRequest request) {
-        String clientIp = request.getHeader("X-Forwarded-For");
-        if (clientIp != null && !clientIp.isBlank()) {
-            int commaIndex = clientIp.indexOf(',');
-            clientIp = commaIndex > -1
-                    ? clientIp.substring(0, commaIndex).trim()
-                    : clientIp.trim();
-            if (clientIp.isEmpty()) {
-                clientIp = request.getRemoteAddr();
-            }
-        } else {
-            clientIp = request.getRemoteAddr();
-        }
-        return new TransactionRequestMetadataDto(
-                clientIp,
-                request.getHeader("User-Agent"),
-                request.getHeader("X-Device-Id")
-        );
-    }
 }

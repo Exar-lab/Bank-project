@@ -4,6 +4,8 @@ import com.banco.co.account.dto.AccountRequestDto;
 import com.banco.co.account.dto.AccountResponseDto;
 import com.banco.co.account.dto.AccountUpdateDto;
 import com.banco.co.account.model.Account;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
@@ -17,7 +19,6 @@ public interface IAccountMapper {
     @Mapping(target = "accountCode", ignore = true)
     @Mapping(target = "accountNumber", ignore = true)
     @Mapping(target = "balance", ignore = true)
-    @Mapping(target = "availableBalance", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -28,6 +29,7 @@ public interface IAccountMapper {
     Account toEntity(AccountRequestDto dto);
 
     @Mapping(source = "user.email", target = "userEmail")
+    @Mapping(target = "availableBalance", expression = "java(account.getAvailableBalance())")
     AccountResponseDto toDto(Account account);
 
     // ══════════════════════════════════════════════════════════
@@ -40,7 +42,6 @@ public interface IAccountMapper {
     @Mapping(target = "accountNumber", ignore = true)
     @Mapping(target = "accountType", ignore = true)
     @Mapping(target = "balance", ignore = true)
-    @Mapping(target = "availableBalance", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "lastTransactionAt", ignore = true)
@@ -53,6 +54,14 @@ public interface IAccountMapper {
     // JSON Serialization (for Audit Logs)
     // ══════════════════════════════════════════════════════════
 
-    String toJsonString(Account account);
+    ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    default String toJsonString(Account account) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(account);
+        } catch (JsonProcessingException e) {
+            return "{\"error\":\"serialization_failed\"}";
+        }
+    }
 
 }

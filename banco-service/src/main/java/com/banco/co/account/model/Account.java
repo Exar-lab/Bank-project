@@ -26,7 +26,6 @@ import java.util.*;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor
 public class Account {
     /**
@@ -44,10 +43,12 @@ public class Account {
     private String accountNumber; // Se muestra al usuario, pero solo al propietario
 
     // Relaciones
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Setter
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL,orphanRemoval = true,fetch = FetchType.LAZY)
     private List<Card> cards = new ArrayList<>();  // Una cuenta puede tener VARIAS tarjetas
 
@@ -55,24 +56,26 @@ public class Account {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal availableBalance = BigDecimal.ZERO;  // Balance - retenciones
-
+    @Setter
     @Column(precision = 19, scale = 2)
     private BigDecimal overdraftLimit = BigDecimal.ZERO;  // Sobregiro permitido
 
+    @Setter
     @Column(precision = 5, scale = 2)
     private BigDecimal interestRate;  // Tasa de interés anual (ej: 5.25%)
 
     // Tipo y estado
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountType accountType;  // SAVINGS, CHECKING, PAYROLL
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status = AccountStatus.ACTIVE;
 
+    @Setter
     @Column(length = 3, nullable = false)
     private String currency = "CRC";  // Código ISO 4217
 
@@ -84,6 +87,7 @@ public class Account {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Setter
     private LocalDateTime lastTransactionAt;
 
     @Column(nullable = false, precision = 19, scale = 2)
@@ -98,6 +102,7 @@ public class Account {
     private Set<Envelope> envelopes = new HashSet<>();
 
 
+    @Setter
     @Column(nullable = false)
     private Integer maxEnvelope = 10;
 
@@ -133,15 +138,16 @@ public class Account {
     }
 
     public BigDecimal getAvailableBalance() {
+        // Saldo Total - Fondos Bloqueados - Fondos en Sobres (opcional según tu lógica)
         return this.balance;
     }
     /**
      * Bloquear fondos para una transacción pendiente
      */
     public void blockFunds(BigDecimal amount) {
-        BigDecimal maxWithdraw = this.getAvailableBalance().add(this.overdraftLimit);
-        if (balance.compareTo(amount) < 0) {
-            throw new AccountInsufficientFundsException(this.accountCode,amount,maxWithdraw);
+        BigDecimal maxWithdraw = this.balance.add(this.overdraftLimit);
+        if (amount.compareTo(maxWithdraw) > 0) {
+            throw new AccountInsufficientFundsException(this.accountCode, amount, maxWithdraw);
         }
 
         balance = balance.subtract(amount);
@@ -153,36 +159,20 @@ public class Account {
      */
     public void unblockFunds(BigDecimal amount) {
         if (blockedBalance.compareTo(amount) < 0) {
-            throw new AccountBlockedFundsException(this.accountCode, amount, blockedBalance, "unblock");
+            throw new AccountBlockedFundsException(this.accountCode, amount, this.blockedBalance, "unblock");
         }
 
         blockedBalance = blockedBalance.subtract(amount);
         balance = balance.add(amount);
     }
 
-    /**
-     * Confirmar la salida definitiva de fondos bloqueados.
-     * Llamar cuando una transferencia se completa: los fondos bloqueados
-     * salen de la cuenta (fueron a la cuenta destino).
-     */
-    public void confirmBlockedFunds(BigDecimal amount) {
-        if (blockedBalance.compareTo(amount) < 0) {
-            throw new AccountBlockedFundsException(this.accountCode, amount, blockedBalance, "confirm");
-        }
-        blockedBalance = blockedBalance.subtract(amount);
-    }
-
     public void withdraw(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new AccountInvalidAmountException(amount, "Amount must be positive");
         }
-        BigDecimal available = this.getAvailableBalance();
-        BigDecimal maxWithdraw = available.add(this.overdraftLimit);
+        BigDecimal maxWithdraw = this.getAvailableBalance().add(this.overdraftLimit);
         if (amount.compareTo(maxWithdraw) > 0) {
             throw new AccountMaxWithdrawExceededException(this.accountCode, amount, maxWithdraw);
-        }
-        if (amount.compareTo(available) > 0) {
-            throw new AccountInsufficientFundsException(this.accountCode, amount, available);
         }
         this.balance = this.balance.subtract(amount);
         this.lastTransactionAt = LocalDateTime.now();
