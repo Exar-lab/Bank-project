@@ -11,7 +11,7 @@ public class AccountBlockedFundsException extends AccountException {
 
     public AccountBlockedFundsException(String accountCode, BigDecimal requested, BigDecimal blocked, String operation) {
         super(
-                String.format("Cannot %s %.2f: only %.2f blocked in account %s",
+                String.format("Cannot %s %s: only %s blocked in account %s",
                         operation, requested, blocked, accountCode),
                 ERROR_CODE,
                 STATUS

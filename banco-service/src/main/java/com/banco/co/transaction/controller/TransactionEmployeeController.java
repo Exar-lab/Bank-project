@@ -71,8 +71,20 @@ public class TransactionEmployeeController {
     // ══════════════════════════════════════════════════════════
 
     private TransactionRequestMetadataDto buildMetadata(HttpServletRequest request) {
+        String clientIp = request.getHeader("X-Forwarded-For");
+        if (clientIp != null && !clientIp.isBlank()) {
+            int commaIndex = clientIp.indexOf(',');
+            clientIp = commaIndex > -1
+                    ? clientIp.substring(0, commaIndex).trim()
+                    : clientIp.trim();
+            if (clientIp.isEmpty()) {
+                clientIp = request.getRemoteAddr();
+            }
+        } else {
+            clientIp = request.getRemoteAddr();
+        }
         return new TransactionRequestMetadataDto(
-                request.getRemoteAddr(),
+                clientIp,
                 request.getHeader("User-Agent"),
                 request.getHeader("X-Device-Id")
         );

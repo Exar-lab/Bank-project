@@ -133,8 +133,7 @@ public class Account {
     }
 
     public BigDecimal getAvailableBalance() {
-        // Saldo disponible: balance total menos fondos bloqueados en proceso
-        return this.balance.subtract(this.blockedBalance);
+        return this.balance;
     }
     /**
      * Bloquear fondos para una transacción pendiente

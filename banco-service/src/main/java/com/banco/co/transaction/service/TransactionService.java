@@ -24,6 +24,7 @@ import com.banco.co.transaction.enums.TransactionCategory;
 import com.banco.co.transaction.enums.TransactionChannel;
 import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.enums.TransactionType;
+import com.banco.co.transaction.exception.transaction.TransactionDeclinedException;
 import com.banco.co.transaction.exception.transaction.TransactionInvalidException;
 import com.banco.co.transaction.exception.transaction.TransactionNotFoundException;
 import com.banco.co.transaction.exception.transaction.TransactionStatusException;
@@ -179,6 +180,10 @@ public class TransactionService implements ITransactionService {
             throw new UnauthorizedException("You don't own this card");
         }
 
+        if (!card.canTransact(dto.amount())) {
+            throw new TransactionDeclinedException(dto.cardCode(), "Card cannot be used for this payment");
+        }
+
         accountService.validateCanWithdraw(fromAccount, dto.amount());
 
         Transaction transaction = new Transaction();
@@ -209,6 +214,8 @@ public class TransactionService implements ITransactionService {
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
         transaction.complete();
+
+        fromAccount.confirmBlockedFunds(dto.amount());
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         accountService.updateBalance(fromAccount);
@@ -285,6 +292,8 @@ public class TransactionService implements ITransactionService {
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
         transaction.complete();
+
+        fromAccount.confirmBlockedFunds(dto.amount());
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         accountService.updateBalance(fromAccount);
@@ -867,7 +876,7 @@ public class TransactionService implements ITransactionService {
 
         if (transaction.getToAccount() != null) {
             accountService.validateCanWithdraw(transaction.getToAccount(), transaction.getAmount());
-            transaction.getToAccount().blockFunds(transaction.getAmount());
+            transaction.getToAccount().withdraw(transaction.getAmount());
             accountService.updateBalance(transaction.getToAccount());
         }
 

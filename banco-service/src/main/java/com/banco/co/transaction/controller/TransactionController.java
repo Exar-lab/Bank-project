@@ -153,7 +153,7 @@ public class TransactionController {
     @GetMapping("/categories")
     @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<List<TransactionResponseDto>> getTransactionsByCategory(
-            @RequestParam(required = false) TransactionCategory category,
+            @RequestParam TransactionCategory category,
             Authentication authentication
     ) {
         List<TransactionResponseDto> response = transactionService.getTransactionsByCategory(
@@ -178,8 +178,20 @@ public class TransactionController {
     // ══════════════════════════════════════════════════════════
 
     private TransactionRequestMetadataDto buildMetadata(HttpServletRequest request) {
+        String clientIp = request.getHeader("X-Forwarded-For");
+        if (clientIp != null && !clientIp.isBlank()) {
+            int commaIndex = clientIp.indexOf(',');
+            clientIp = commaIndex > -1
+                    ? clientIp.substring(0, commaIndex).trim()
+                    : clientIp.trim();
+            if (clientIp.isEmpty()) {
+                clientIp = request.getRemoteAddr();
+            }
+        } else {
+            clientIp = request.getRemoteAddr();
+        }
         return new TransactionRequestMetadataDto(
-                request.getRemoteAddr(),
+                clientIp,
                 request.getHeader("User-Agent"),
                 request.getHeader("X-Device-Id")
         );
