@@ -15,6 +15,7 @@ All skills follow the pattern: `{skill-name}/SKILL.md` (patterns + anti-patterns
 | [`clean-code`](./clean-code/SKILL.md) | Naming classes/methods/constants, structuring methods, Optional handling, exception hierarchy |
 | [`api-contract-review`](./api-contract-review/SKILL.md) | Designing or reviewing REST endpoints — HTTP verbs, @Valid, @PreAuthorize, GlobalExceptionHandler |
 | [`audit-logging-patterns`](./audit-logging-patterns/SKILL.md) | Calling IAuditLogService in any @Service — logSuccess, logFailure, logCritical, logAnonymous, AuditLogDetail context |
+| [`release-please`](./release-please/SKILL.md) | Creating a release, bumping version, updating CHANGELOG, or any versioning/release automation question |
 
 ## Quick Reference
 
@@ -50,4 +51,7 @@ Choose logSuccess vs logFailure vs logCritical → audit-logging-patterns
 Log a security violation or fraud event    → audit-logging-patterns
 Log an unauthenticated (anonymous) action  → audit-logging-patterns
 Build AuditLogDetail context for a CREATE/UPDATE → audit-logging-patterns
+Create a new release / bump version         → release-please
+Update CHANGELOG.md                         → release-please
+Understand what commit triggers major/minor → release-please
 ```
