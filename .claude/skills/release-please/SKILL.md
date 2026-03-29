@@ -30,7 +30,8 @@ feat(account): add balance freeze endpoint
 | `fix:` | patch (0.0.X) | `fix(transaction): prevent duplicate debit on retry` |
 | `feat:` | minor (0.X.0) | `feat(envelope): add envelope transfer use case` |
 | `feat!:` or `BREAKING CHANGE:` footer | major (X.0.0) | `feat!: remove legacy card endpoint` |
-| `perf:`, `refactor:`, `chore:`, `docs:` | patch (0.0.X) | `refactor(account): extract balance validation to domain method` |
+| `perf:` | patch (0.0.X) | `perf(account): cache balance lookups` |
+| `refactor:`, `chore:`, `docs:` | no bump (changelog only) | `refactor(account): extract balance validation to domain method` |
 
 ### ❌ Wrong — commit that release-please ignores (won't appear in changelog)
 
@@ -160,7 +161,7 @@ chore(deps): bump spring-boot-starter-parent to 3.3.1
 ### What the release PR looks like
 
 ```markdown
-## chore(main): release 0.2.0
+## chore(master): release 0.2.0
 
 ### Features
 - **account**: add balance freeze endpoint (#42)
