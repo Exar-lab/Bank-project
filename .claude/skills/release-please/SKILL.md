@@ -143,7 +143,7 @@ chore(deps): bump spring-boot-starter-parent to 3.3.1
 2. release-please GitHub Action runs on push to master
    └─ Reads all unreleased commits since last tag
    └─ Calculates next version (patch / minor / major)
-   └─ Opens or updates a PR titled: "chore(main): release 0.2.0"
+   └─ Opens or updates a PR titled: "chore(master): release 0.2.0"
       └─ PR diff: pom.xml version bump + CHANGELOG.md new section
 
 3. Developer reviews the release PR
