@@ -55,7 +55,7 @@ Step 1: Push conventional commits to master
          ↓
          release-please reads commit history
          ↓
-         Opens PR: "chore(main): release 0.1.0"
+         Opens PR: "chore(master): release 0.1.0"
          (updates pom.xml version + CHANGELOG.md)
 
 Step 2: Developer reviews the release PR and merges it
