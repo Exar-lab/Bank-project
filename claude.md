@@ -439,6 +439,7 @@ proposal → spec ──→ tasks → apply → verify → archive
 | JPA + N+1 prevention / @Transactional | `.claude/skills/jpa-patterns/SKILL.md` |
 | Outbox pattern | `.claude/skills/jpa-patterns/SKILL.md` |
 | Flyway migrations (MySQL) | `.claude/skills/java-migration/SKILL.md` |
+| Release automation / CHANGELOG / versioning | `.claude/skills/release-please/SKILL.md` |
 | Logging / MDC / Sensitive data | `.claude/skills/logging-patterns/SKILL.md` |
 | Kafka event logging | `.claude/skills/logging-patterns/SKILL.md` |
 | REST API / @Valid / @PreAuthorize | `.claude/skills/api-contract-review/SKILL.md` |
@@ -461,6 +462,7 @@ proposal → spec ──→ tasks → apply → verify → archive
 8. **ABSTRACT EXCEPTIONS**: Toda jerarquía de excepciones usa clases abstract.
 9. **PACKAGE NAMING**: Todo bajo `com.banco.co.*`.
 10. **CONVENTIONAL COMMITS**: `feat(domain):`, `feat(infrastructure):`, `test(application):`, etc.
+11. **CONVENTIONAL COMMITS para releases**: Cada commit que llegue a `master` debe seguir conventional commits — release-please lee el historial para calcular el próximo bump. Un `feat:` sin contexto rompe el CHANGELOG tanto como uno bien formado lo mejora.
 
 ---
 
