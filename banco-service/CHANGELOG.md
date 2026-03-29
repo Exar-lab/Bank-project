@@ -1,0 +1,48 @@
+# Changelog
+
+## [0.1.0](https://github.com/Exar-lab/Bank-project/compare/v0.0.1...v0.1.0) (2026-03-29)
+
+
+### Features
+
+* Add account exception classes and transaction management ([6f2271d](https://github.com/Exar-lab/Bank-project/commit/6f2271d97029fcf12059f9d5b45d0666875eacf0))
+* **application:** add FraudFlagRequestDto record ([02bb3a2](https://github.com/Exar-lab/Bank-project/commit/02bb3a2e233364ad8b36710c6329e2ddc059ac79))
+* **application:** complete outbox wiring in UserService and EnvelopeScheduleService ([dad65ef](https://github.com/Exar-lab/Bank-project/commit/dad65ef005fceb46dc28a28b05ea0023e0e0a39a))
+* **application:** implement digital and admin transaction service methods ([29b2571](https://github.com/Exar-lab/Bank-project/commit/29b2571fc279db103ce295f67b5fa5c880e870cf))
+* **application:** implement presential transaction operations (cash deposit/withdrawal/check) ([661a11f](https://github.com/Exar-lab/Bank-project/commit/661a11fc1b1d3dd5124ace7cdc0cb99c49219015))
+* **application:** implement read-only transaction service methods ([6eb3cb8](https://github.com/Exar-lab/Bank-project/commit/6eb3cb88e596c732b54dee94110c64d8f722b7d2))
+* Implement transaction service and DTOs for various transaction types ([f54a410](https://github.com/Exar-lab/Bank-project/commit/f54a410cab19e41f69d58d14cde5f4c3aa5bf60e))
+* Implement user authentication and management features ([e4257cf](https://github.com/Exar-lab/Bank-project/commit/e4257cf4e36177f47a4f15f72a6f511b31f0f7d6))
+* **infrastructure:** implement Kafka consumers phase 2 — fraud detection and notification ([503841d](https://github.com/Exar-lab/Bank-project/commit/503841d8be1a819cc8bc6366d8b5d360e8cdc537))
+* **infrastructure:** implement Transactional Outbox pattern with Kafka ([9058516](https://github.com/Exar-lab/Bank-project/commit/9058516189767cd82962687dda160bbab57f097e))
+* **infrastructure:** Kafka Consumers Phase 2 — fraud detection and notification ([4edcf13](https://github.com/Exar-lab/Bank-project/commit/4edcf13ff1f1012556427294d00699015ca63377))
+* **infrastructure:** Transactional Outbox Pattern with Kafka — complete implementation ([e95fe55](https://github.com/Exar-lab/Bank-project/commit/e95fe551a7940fa6ad8b094d32cec55c17b7bb4e))
+* **presentation:** add GlobalExceptionHandler for transaction error mapping ([4e7dfe9](https://github.com/Exar-lab/Bank-project/commit/4e7dfe986e742082555b8dfc15955369c3a817c5))
+* **presentation:** add TransactionController, TransactionEmployeeController, TransactionAdminController ([b147d80](https://github.com/Exar-lab/Bank-project/commit/b147d80465dc690b1f47521590903dc82f52965c))
+* **skills:** complete registry with 5 Spring Boot technical skills and navigation index ([b7bb17f](https://github.com/Exar-lab/Bank-project/commit/b7bb17f84ef2abaa7a4bb3c8973726a01129c3fd))
+* **transaction:** complete Transaction endpoints, service layer and two-phase transfer ([9db6ced](https://github.com/Exar-lab/Bank-project/commit/9db6cedc86da98da18813ae3f017a126efa6617c))
+
+
+### Bug Fixes
+
+* address all Copilot review comments on PR [#17](https://github.com/Exar-lab/Bank-project/issues/17) ([07c98c9](https://github.com/Exar-lab/Bank-project/commit/07c98c92bf97fd69d1118affd1a76cb5eca1be96))
+* address Guardian Angel observations on Account domain and controllers ([030ce68](https://github.com/Exar-lab/Bank-project/commit/030ce68aa59d38349b536a8518b530c2fb7ffca0))
+* **application:** implement two-phase blockFunds pattern in transfer and cashWithdrawal ([f0a2387](https://github.com/Exar-lab/Bank-project/commit/f0a23870452ca6f4832026d6f2829df7760c92e5))
+* **application:** resolve null accountCode in TransactionMapper ([337b3d5](https://github.com/Exar-lab/Bank-project/commit/337b3d546983358af0e1bd3607c1767cbce5ee3c))
+* **infrastructure:** address 10 Copilot review comments on PR [#14](https://github.com/Exar-lab/Bank-project/issues/14) ([bb80f1a](https://github.com/Exar-lab/Bank-project/commit/bb80f1a061a807575d3d66b200e0399990e1d773))
+* **infrastructure:** address all Copilot review comments on PR [#16](https://github.com/Exar-lab/Bank-project/issues/16) ([e6cc644](https://github.com/Exar-lab/Bank-project/commit/e6cc64496fc0d5b26dd59b3d75f14273007dc95d))
+* **infrastructure:** outbox review fixes — claim filter, missing event, rename, payload helper ([b49b3e6](https://github.com/Exar-lab/Bank-project/commit/b49b3e6fa4bd5e973f6463e6d4065bef9e4e9907))
+
+
+### Refactoring
+
+* Remove unused bank and branch related classes and enums and account service creation ([fe83398](https://github.com/Exar-lab/Bank-project/commit/fe83398ac97ec69def6246df7fee13df9aaa6b57))
+
+
+### Miscellaneous
+
+* **master:** release 0.0.2-SNAPSHOT ([#20](https://github.com/Exar-lab/Bank-project/issues/20)) ([7c84ba0](https://github.com/Exar-lab/Bank-project/commit/7c84ba0ca01d82dd4fbf6de2862a59ed1cca2149))
+* merge phase 1 and phase 2 changes in TransactionService ([04bcc69](https://github.com/Exar-lab/Bank-project/commit/04bcc69b461d643b49201c4c5fbcf6ed344c65de))
+* merge phase 3 - complete all transaction service methods ([54e5099](https://github.com/Exar-lab/Bank-project/commit/54e50999ae5c6b913066948b2977a74479d1b3cf))
+* **merge:** resolve conflicts with origin/master ([23761d2](https://github.com/Exar-lab/Bank-project/commit/23761d2e38714f20bd903b2f9ae6fcf524110855))
+* **merge:** resolve conflicts with origin/master — keep Copilot fix corrections ([3d6074a](https://github.com/Exar-lab/Bank-project/commit/3d6074a7a90c8dbd0aa636a909458e9d93ea6d72))
