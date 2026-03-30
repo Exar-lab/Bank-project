@@ -83,7 +83,7 @@ public class TransactionService implements ITransactionService {
 
     @Transactional
     @Override
-    public TransactionResponseDto transfer(TransferRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) { // Poner el sistema de antifraude (pendiente)
+    public TransactionResponseDto transfer(TransferRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
 
         Account fromAccount = accountService.findAccountWithUserByAccountCode(dto.fromAccountCode());
