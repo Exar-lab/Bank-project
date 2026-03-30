@@ -57,8 +57,8 @@ public class FraudDetectionConsumer {
 
         TransactionFraudContext context = new TransactionFraudContext(
                 node.path("transactionId").asText(),
-                node.path("fromAccount").asText(),
-                node.path("toAccount").asText(null),
+                node.path("fromAccountCode").asText(node.path("fromAccount").asText()),
+                node.path("toAccountCode").asText(node.path("toAccount").asText(null)),
                 new BigDecimal(node.path("amount").asText()),
                 node.path("currency").asText(),
                 node.path("transactionCode").asText(null),

@@ -76,7 +76,6 @@ public class TransactionService implements ITransactionService {
     private final IFraudDetectionService fraudDetectionService;
 
     private static final BigDecimal SUSPICIOUS_FRAUD_SCORE = BigDecimal.valueOf(75);
-    private static final BigDecimal BLOCKED_FRAUD_SCORE = BigDecimal.valueOf(95);
 
     // ══════════════════════════════════════════════════════════
     //  OPERACIONES DIGITALES
@@ -1005,7 +1004,7 @@ public class TransactionService implements ITransactionService {
                 fromAccount.getAccountCode(),
                 savedTx.getToAccount() != null ? savedTx.getToAccount().getAccountCode() : null,
                 amount,
-                savedTx.getCurrency() != null ? savedTx.getCurrency() : "COP",
+                savedTx.getCurrency() != null ? savedTx.getCurrency() : "CRC",
                 savedTx.getTransactionCode(),
                 savedTx.getType() != null ? savedTx.getType().name() : null,
                 savedTx.getChannel() != null ? savedTx.getChannel().name() : null,
