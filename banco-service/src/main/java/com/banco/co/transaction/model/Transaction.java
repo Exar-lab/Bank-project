@@ -268,6 +268,19 @@ public class Transaction {
         this.completedAt = LocalDateTime.now();
     }
 
+    /**
+     * Transitions a fraud-reviewed APPROVED transaction to COMPLETED.
+     * Called by approveTransaction() after human review.
+     * complete() is untouched — it guards on PROCESSING.
+     */
+    public void completeFromApproved() {
+        if (this.status != TransactionStatus.APPROVED) {
+            throw new TransactionStatusException(this.transactionCode, this.status, TransactionStatus.COMPLETED);
+        }
+        this.status = TransactionStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
+    }
+
     public void fail(String reason) {
         if(this.status != TransactionStatus.PROCESSING) {
             throw new TransactionStatusException(this.transactionCode,this.status,TransactionStatus.FAILED);

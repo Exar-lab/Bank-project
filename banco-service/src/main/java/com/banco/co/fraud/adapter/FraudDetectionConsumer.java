@@ -48,12 +48,27 @@ public class FraudDetectionConsumer {
             return;
         }
 
+        String transactionStatus = node.path("status").asText(null);
+        if ("PENDING_REVIEW".equals(transactionStatus) || "REJECTED".equals(transactionStatus)) {
+            log.debug("FraudDetectionConsumer: skipping re-analysis for already-handled status='{}', transactionCode='{}'",
+                    transactionStatus, node.path("transactionCode").asText("unknown"));
+            return;
+        }
+
         TransactionFraudContext context = new TransactionFraudContext(
                 node.path("transactionId").asText(),
                 node.path("fromAccount").asText(),
-                node.path("toAccount").asText(),
+                node.path("toAccount").asText(null),
                 new BigDecimal(node.path("amount").asText()),
-                node.path("currency").asText()
+                node.path("currency").asText(),
+                node.path("transactionCode").asText(null),
+                node.path("transactionType").asText(null),
+                node.path("channel").asText(null),
+                node.path("merchantName").asText(null),
+                node.path("merchantMccCode").asText(null),
+                node.path("ipAddress").asText(null),
+                node.path("deviceId").asText(null),
+                node.path("locationCountry").asText(null)
         );
 
         // Let RuntimeException propagate → DefaultErrorHandler will retry up to 3 times
