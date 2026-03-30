@@ -275,7 +275,8 @@ public class TransactionService implements ITransactionService {
 
     @Transactional
     @Override
-    public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) { // Validar que el servicio sea legítimo (pendiente)
+    public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
+        // TODO: Validar que el servicio sea legítimo.
         User user = userService.getEntityUserByEmail(userEmail);
 
         Account fromAccount = accountService.findAccountWithUserByAccountCode(dto.accountCode());
