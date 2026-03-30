@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public record TransactionFraudContext(
     // --- Existing fields (kept in original order) ---
-    String transactionId,       // transactionCode used as correlation ID
+    String transactionId,       // UUID from "transactionId" payload field, used as correlation ID
     String fromAccount,
     String toAccount,           // nullable — null for withdrawals/payments
     BigDecimal amount,
