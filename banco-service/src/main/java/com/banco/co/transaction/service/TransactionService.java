@@ -9,6 +9,10 @@ import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.card.model.Card;
 import com.banco.co.card.service.ICardService;
 import com.banco.co.exception.authentication.UnauthorizedException;
+import com.banco.co.exception.fraud.FraudBlockedException;
+import com.banco.co.fraud.dto.TransactionFraudContext;
+import com.banco.co.fraud.enums.FraudAnalysisResult;
+import com.banco.co.fraud.service.IFraudDetectionService;
 import com.banco.co.transaction.dto.CategorySummaryDto;
 import com.banco.co.transaction.dto.ScheduledTransferRequestDto;
 import com.banco.co.transaction.dto.TransactionFiltersDto;
@@ -69,12 +73,15 @@ public class TransactionService implements ITransactionService {
     private final IOutboxEventPort outboxEventPort;
     private final ICardService cardService;
     private final ObjectMapper objectMapper;
+    private final IFraudDetectionService fraudDetectionService;
+
+    private static final BigDecimal SUSPICIOUS_FRAUD_SCORE = BigDecimal.valueOf(75);
 
     // ══════════════════════════════════════════════════════════
     //  OPERACIONES DIGITALES
     // ══════════════════════════════════════════════════════════
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto transfer(TransferRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
@@ -122,15 +129,24 @@ public class TransactionService implements ITransactionService {
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        // COMPLETING phase - confirmar salida definitiva y acreditar destino
-        transaction.complete();
+        // Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
+        if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
+            accountService.updateBalance(fromAccount);
+            return transactionMapper.toDto(savedTransaction);
+        }
+
+        // CLEAR path — COMPLETING phase: confirmar salida definitiva y acreditar destino
+        savedTransaction.complete();
 
         fromAccount.confirmBlockedFunds(dto.amount());
         toAccount.deposit(dto.amount());
 
-        transaction.setToAccountBalanceAfter(toAccount.getBalance());
+        savedTransaction.setToAccountBalanceAfter(toAccount.getBalance());
 
-        Transaction savedTransaction = transactionRepository.save(transaction);
+        transactionRepository.save(savedTransaction);
         accountService.updateBalance(fromAccount);
         accountService.updateBalance(toAccount);
 
@@ -161,7 +177,7 @@ public class TransactionService implements ITransactionService {
         return transactionMapper.toDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto payment(PaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
@@ -213,11 +229,21 @@ public class TransactionService implements ITransactionService {
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        transaction.complete();
+        // Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
+        if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
+            accountService.updateBalance(fromAccount);
+            return transactionMapper.toDto(savedTransaction);
+        }
+
+        // CLEAR path
+        savedTransaction.complete();
 
         fromAccount.confirmBlockedFunds(dto.amount());
 
-        Transaction savedTransaction = transactionRepository.save(transaction);
+        transactionRepository.save(savedTransaction);
         accountService.updateBalance(fromAccount);
 
         auditLogService.logSuccess(
@@ -247,9 +273,10 @@ public class TransactionService implements ITransactionService {
         return transactionMapper.toDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
+        // TODO: Validar que el servicio sea legítimo.
         User user = userService.getEntityUserByEmail(userEmail);
 
         Account fromAccount = accountService.findAccountWithUserByAccountCode(dto.accountCode());
@@ -291,11 +318,21 @@ public class TransactionService implements ITransactionService {
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        transaction.complete();
+        // Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
+        if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
+            accountService.updateBalance(fromAccount);
+            return transactionMapper.toDto(savedTransaction);
+        }
+
+        // CLEAR path
+        savedTransaction.complete();
 
         fromAccount.confirmBlockedFunds(dto.amount());
 
-        Transaction savedTransaction = transactionRepository.save(transaction);
+        transactionRepository.save(savedTransaction);
         accountService.updateBalance(fromAccount);
 
         auditLogService.logSuccess(
@@ -398,7 +435,7 @@ public class TransactionService implements ITransactionService {
         return transactionMapper.toDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto cashWithdrawal(CashWithdrawalRequestDto dto, String employeeEmail, TransactionRequestMetadataDto metadata) {
         // 1. Validar empleado
@@ -442,14 +479,23 @@ public class TransactionService implements ITransactionService {
         // 10. Guardar balance después del bloqueo
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        // 11. Completar
-        transaction.complete();
+        // 11. Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        Transaction savedTransaction = transactionRepository.save(transaction);
 
-        // 12. COMPLETING phase - confirmar salida definitiva (efectivo entregado físicamente)
+        // 12. Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
+        if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
+            accountService.updateBalance(fromAccount);
+            return transactionMapper.toDto(savedTransaction);
+        }
+
+        // 13. CLEAR path — completar y confirmar salida definitiva
+        savedTransaction.complete();
+
+        // COMPLETING phase - confirmar salida definitiva (efectivo entregado físicamente)
         fromAccount.confirmBlockedFunds(dto.amount());
 
-        // 13. Persistir
-        Transaction savedTransaction = transactionRepository.save(transaction);
+        // 14. Persistir
+        transactionRepository.save(savedTransaction);
         accountService.updateBalance(fromAccount);
 
         // 13. Auditar
@@ -824,19 +870,63 @@ public class TransactionService implements ITransactionService {
         Transaction transaction = transactionRepository.findByIdWithAccounts(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId.toString()));
 
+        if (transaction.getStatus() != TransactionStatus.PENDING_REVIEW) {
+            throw new TransactionStatusException(
+                    transaction.getTransactionCode(),
+                    transaction.getStatus(),
+                    TransactionStatus.APPROVED
+            );
+        }
+
         transaction.approve(adminEmail);
+
+        // If the transaction was flagged for fraud, the funds were already blocked during
+        // the original call. Completing it here moves money and settles the transaction.
+        if (transaction.isFlaggedForFraud()) {
+            Account fromAccount = transaction.getFromAccount();
+            Account toAccount = transaction.getToAccount();
+            BigDecimal amount = transaction.getAmount();
+
+            if (fromAccount != null) {
+                fromAccount.confirmBlockedFunds(amount);
+            }
+
+            if (toAccount != null) {
+                toAccount.deposit(amount);
+            }
+
+            transaction.completeFromApproved();
+
+            // Update balance-after fields after fund movements
+            if (fromAccount != null) {
+                transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
+            }
+
+            if (toAccount != null) {
+                transaction.setToAccountBalanceAfter(toAccount.getBalance());
+            }
+
+            if (fromAccount != null) {
+                accountService.updateBalance(fromAccount);
+            }
+
+            if (toAccount != null) {
+                accountService.updateBalance(toAccount);
+            }
+        }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
+        String eventType = transaction.isFlaggedForFraud() ? "TransactionCompleted" : "TransactionApproved";
         outboxEventPort.save(new OutboxEvent(
                 "Transaction",
                 savedTransaction.getId().toString(),
-                "TransactionApproved",
-                buildTransactionPayload(savedTransaction, "TransactionApproved"),
+                eventType,
+                buildTransactionPayload(savedTransaction, eventType),
                 KafkaTopic.TRANSACTION_EVENTS
         ));
 
-        log.info("Transaction {} approved by admin {}", transactionId, adminEmail);
+        log.info("Transaction {} approved by admin {} — status: {}", transactionId, adminEmail, savedTransaction.getStatus());
 
         return transactionMapper.toDto(savedTransaction);
     }
@@ -904,13 +994,68 @@ public class TransactionService implements ITransactionService {
         transaction.flagForFraud(fraudScore, reason);
         transactionRepository.save(transaction);
 
-        log.info("Transaction {} flagged as fraud by analyst {} with score {}: {}",
-                transactionId, analystEmail, fraudScore, reason);
+        log.info("Transaction {} flagged as fraud by analyst {}", transactionId, analystEmail);
+        log.debug("Transaction {} fraud details — score={}, reason={}", transactionId, fraudScore, reason);
     }
 
     // ══════════════════════════════════════════════════════════
     //  MÉTODOS PRIVADOS
     // ══════════════════════════════════════════════════════════
+
+    /**
+     * Runs the fraud analysis gate for a persisted transaction.
+     * Returns true if the transaction should proceed (CLEAR).
+     * Returns false if SUSPICIOUS (transaction flagged for review, caller must return early).
+     * Throws FraudBlockedException if BLOCKED after persisting failure trace and outbox event.
+     */
+    private boolean executeFraudGate(Transaction savedTx, Account fromAccount, BigDecimal amount) {
+        TransactionFraudContext context = new TransactionFraudContext(
+                savedTx.getId() != null ? savedTx.getId().toString() : null,
+                fromAccount.getAccountCode(),
+                savedTx.getToAccount() != null ? savedTx.getToAccount().getAccountCode() : null,
+                amount,
+                savedTx.getCurrency() != null ? savedTx.getCurrency() : "CRC",
+                savedTx.getTransactionCode(),
+                savedTx.getType() != null ? savedTx.getType().name() : null,
+                savedTx.getChannel() != null ? savedTx.getChannel().name() : null,
+                savedTx.getMerchantName(),
+                savedTx.getMerchantMccCode(),
+                savedTx.getIpAddress(),
+                savedTx.getDeviceId(),
+                savedTx.getLocationCountry()
+        );
+
+        FraudAnalysisResult result = fraudDetectionService.analyze(context);
+
+        return switch (result) {
+            case CLEAR -> true;
+            case SUSPICIOUS -> {
+                savedTx.flagForFraud(SUSPICIOUS_FRAUD_SCORE, "Suspicious activity detected by fraud engine");
+                transactionRepository.save(savedTx);
+                outboxEventPort.save(new OutboxEvent(
+                        "Transaction",
+                        savedTx.getId().toString(),
+                        "TransactionFlaggedForReview",
+                        buildTransactionPayload(savedTx, "TransactionFlaggedForReview"),
+                        KafkaTopic.TRANSACTION_EVENTS
+                ));
+                yield false;
+            }
+            case BLOCKED -> {
+                fromAccount.unblockFunds(amount);
+                savedTx.fail("Blocked by fraud detection engine");
+                transactionRepository.save(savedTx);
+                outboxEventPort.save(new OutboxEvent(
+                        "Transaction",
+                        savedTx.getId().toString(),
+                        "TransactionFraudBlocked",
+                        buildTransactionPayload(savedTx, "TransactionFraudBlocked"),
+                        KafkaTopic.TRANSACTION_EVENTS
+                ));
+                throw new FraudBlockedException(savedTx.getTransactionCode(), "Blocked by fraud detection engine");
+            }
+        };
+    }
 
     private boolean isTransactionOwner(Transaction transaction, String userEmail) {
         boolean isFromOwner = transaction.getFromAccount() != null
