@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -50,13 +51,9 @@ import static org.mockito.Mockito.when;
  * Covers: transfer() CLEAR/SUSPICIOUS/BLOCKED + approveTransaction() flagged/not-flagged/wrong-status.
  *
  * BLOCKED path note:
- *   In a real Spring context, the FraudBlockedException thrown at the end of executeFraudGate()
- *   triggers @Transactional rollback — meaning transactionRepository.save(FAILED) and
- *   outboxEventPort.save(TransactionFraudBlocked) are rolled back.
- *   In this unit test there is no transaction boundary, so we verify:
- *     1. FraudBlockedException is thrown.
- *     2. The save() call was made (even though it would roll back in production).
- *     3. The in-memory status is FAILED (what the code intended before rollback).
+ *   transfer/payment/payService/cashWithdrawal now use @Transactional(noRollbackFor = FraudBlockedException.class)
+ *   so FAILED status and TransactionFraudBlocked outbox event are expected to persist.
+ *   In this unit test we verify the exception and state transitions at service level.
  */
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceFraudGateTest {
@@ -70,6 +67,7 @@ class TransactionServiceFraudGateTest {
     @Mock private IOutboxEventPort outboxEventPort;
     @Mock private ICardService cardService;
     @Mock private IFraudDetectionService fraudDetectionService;
+    @Spy private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
     private TransactionService transactionService;
@@ -80,16 +78,6 @@ class TransactionServiceFraudGateTest {
 
     @BeforeEach
     void setUp() {
-        // ObjectMapper is a concrete class — @InjectMocks cannot inject it as a mock.
-        // We use reflection to set the real instance in the service under test.
-        try {
-            var field = TransactionService.class.getDeclaredField("objectMapper");
-            field.setAccessible(true);
-            field.set(transactionService, new ObjectMapper());
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not inject ObjectMapper into TransactionService", e);
-        }
-
         testUser = buildUser("user@banco.co");
 
         fromAccount = buildAccount("ACC-FROM-001", new BigDecimal("1000000"), testUser);
@@ -162,8 +150,7 @@ class TransactionServiceFraudGateTest {
 
     @Test
     void testTransfer_FraudBlocked_SaveIsCalledForFailedStatusBeforeRollback() {
-        // Even though @Transactional rolls back in production, save() IS called in-memory
-        // before the throw. This verifies the code path executed correctly.
+        // Verifies initial save + failed-status save attempt in BLOCKED path.
         TransferRequestDto dto = buildTransferDto();
 
         stubTransferCommonMocksBlocked();
@@ -175,14 +162,13 @@ class TransactionServiceFraudGateTest {
             // Expected
         }
 
-        // Initial save (before fraud gate) + BLOCKED save attempt (rolled back in production)
+        // Initial save (before fraud gate) + BLOCKED save attempt
         verify(transactionRepository, times(2)).save(any(Transaction.class));
     }
 
     @Test
     void testTransfer_FraudBlocked_TransactionStatusIsFailedInMemory() {
         // Confirms the in-memory state after BLOCKED path: fail() was called on the transaction.
-        // In a real Spring context this is rolled back — but the method contract is correct.
         TransferRequestDto dto = buildTransferDto();
 
         // Use a real Transaction so we can inspect in-memory state after the call
@@ -409,10 +395,8 @@ class TransactionServiceFraudGateTest {
     private Transaction buildFlaggedTransaction(Account from, Account to) {
         Transaction tx = new Transaction();
         tx.setTransactionCode("TXN-BCR-FLAGGED");
-        // flagForFraud sets status to PENDING_REVIEW
+        // flagForFraud sets status to PENDING_REVIEW (required by approveTransaction)
         tx.flagForFraud(BigDecimal.valueOf(75), "Suspicious activity detected");
-        // approve() transitions PENDING_REVIEW → APPROVED
-        tx.approve("admin@banco.co");
         tx.setFromAccount(from);
         tx.setToAccount(to);
         tx.setAmount(new BigDecimal("100000"));
@@ -424,10 +408,8 @@ class TransactionServiceFraudGateTest {
     private Transaction buildNonFlaggedTransaction() {
         Transaction tx = new Transaction();
         tx.setTransactionCode("TXN-BCR-NOTFLAGGED");
-        // Non-flagged: status starts at PENDING_REVIEW without flagForFraud
+        // Non-flagged: status starts at PENDING_REVIEW (required by approveTransaction)
         tx.setStatus(TransactionStatus.PENDING_REVIEW);
-        // approve() sets status to APPROVED
-        tx.approve("admin@banco.co");
         tx.setAmount(new BigDecimal("100000"));
         tx.setCurrency("CRC");
         return tx;

@@ -62,7 +62,7 @@ public class FraudDetectionConsumer {
                 new BigDecimal(node.path("amount").asText()),
                 node.path("currency").asText(),
                 node.path("transactionCode").asText(null),
-                node.path("transactionType").asText(null),
+                node.path("transactionType").asText(node.path("type").asText(null)),
                 node.path("channel").asText(null),
                 node.path("merchantName").asText(null),
                 node.path("merchantMccCode").asText(null),

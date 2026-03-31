@@ -81,7 +81,7 @@ public class TransactionService implements ITransactionService {
     //  OPERACIONES DIGITALES
     // ══════════════════════════════════════════════════════════
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto transfer(TransferRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
@@ -177,7 +177,7 @@ public class TransactionService implements ITransactionService {
         return transactionMapper.toDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto payment(PaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
@@ -273,7 +273,7 @@ public class TransactionService implements ITransactionService {
         return transactionMapper.toDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         // TODO: Validar que el servicio sea legítimo.
@@ -435,7 +435,7 @@ public class TransactionService implements ITransactionService {
         return transactionMapper.toDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto cashWithdrawal(CashWithdrawalRequestDto dto, String employeeEmail, TransactionRequestMetadataDto metadata) {
         // 1. Validar empleado
@@ -897,6 +897,15 @@ public class TransactionService implements ITransactionService {
 
             transaction.completeFromApproved();
 
+            // Update balance-after fields after fund movements
+            if (fromAccount != null) {
+                transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
+            }
+
+            if (toAccount != null) {
+                transaction.setToAccountBalanceAfter(toAccount.getBalance());
+            }
+
             if (fromAccount != null) {
                 accountService.updateBalance(fromAccount);
             }
@@ -997,11 +1006,11 @@ public class TransactionService implements ITransactionService {
      * Runs the fraud analysis gate for a persisted transaction.
      * Returns true if the transaction should proceed (CLEAR).
      * Returns false if SUSPICIOUS (transaction flagged for review, caller must return early).
-     * Throws FraudBlockedException if BLOCKED (funds released, @Transactional rolls back the DB writes).
+     * Throws FraudBlockedException if BLOCKED after persisting failure trace and outbox event.
      */
     private boolean executeFraudGate(Transaction savedTx, Account fromAccount, BigDecimal amount) {
         TransactionFraudContext context = new TransactionFraudContext(
-                savedTx.getTransactionCode(),
+                savedTx.getId() != null ? savedTx.getId().toString() : null,
                 fromAccount.getAccountCode(),
                 savedTx.getToAccount() != null ? savedTx.getToAccount().getAccountCode() : null,
                 amount,
