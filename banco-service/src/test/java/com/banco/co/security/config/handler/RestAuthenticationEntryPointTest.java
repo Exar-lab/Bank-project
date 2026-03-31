@@ -2,9 +2,11 @@ package com.banco.co.security.config.handler;
 
 import com.banco.co.exception.support.ErrorResponseFactory;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,8 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RestAuthenticationEntryPointTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .disable(MapperFeature.REQUIRE_HANDLERS_FOR_JAVA8_TIMES);
+    private final ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json()
+            .modules(new JavaTimeModule())
+            .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build();
     private final ErrorResponseFactory errorResponseFactory = new ErrorResponseFactory();
 
     @Test
