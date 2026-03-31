@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0](https://github.com/Exar-lab/Bank-project/compare/v0.1.1...v0.2.0) (2026-03-31)
+
+
+### Features
+
+* **fraud:** real-time fraud gate in TransactionService ([b1f66eb](https://github.com/Exar-lab/Bank-project/commit/b1f66ebb3039580efff22616fe10ccce41a8abc4))
+
+
+### Bug Fixes
+
+* **fraud:** address copilot review feedback in fraud gate ([04e1ed2](https://github.com/Exar-lab/Bank-project/commit/04e1ed255e37c745f9840252ebf4fd99834c7f93))
+
+
+### Miscellaneous
+
+* **master:** release 0.1.2-SNAPSHOT ([fc961a2](https://github.com/Exar-lab/Bank-project/commit/fc961a2be81c605d1def171211579332b3880a17))
+* **master:** release 0.1.2-SNAPSHOT ([ada9531](https://github.com/Exar-lab/Bank-project/commit/ada95312541b3dcd540a36e528e23df7e41d6c97))
+
 ## [0.1.1](https://github.com/Exar-lab/Bank-project/compare/v0.1.0...v0.1.1) (2026-03-29)
 
 
