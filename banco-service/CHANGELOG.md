@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/Exar-lab/Bank-project/compare/v0.2.1...v0.2.2) (2026-03-31)
+
+
+### Miscellaneous
+
+* **master:** release 0.2.2-SNAPSHOT ([e8c58f9](https://github.com/Exar-lab/Bank-project/commit/e8c58f948adea3f943245b673fe8223e2405315d))
+* **master:** release 0.2.2-SNAPSHOT ([1b98107](https://github.com/Exar-lab/Bank-project/commit/1b9810761b64b70f13acbf64d22913aee6062cf3))
+
 ## [0.2.1](https://github.com/Exar-lab/Bank-project/compare/v0.2.0...v0.2.1) (2026-03-31)
 
 
