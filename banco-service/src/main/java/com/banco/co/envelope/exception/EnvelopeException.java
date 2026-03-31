@@ -3,7 +3,7 @@ package com.banco.co.envelope.exception;
 import com.banco.co.exception.BankingException;
 import org.springframework.http.HttpStatus;
 
-public class EnvelopeException extends BankingException {
+public abstract class EnvelopeException extends BankingException {
     protected EnvelopeException(String message, String errorCode, HttpStatus httpStatus) {
         super(message, errorCode, httpStatus);
     }
