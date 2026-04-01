@@ -15,6 +15,7 @@ import org.springframework.util.backoff.FixedBackOff;
 import java.util.HashMap;
 import java.util.Map;
 
+// @EnableKafka already exists on KafkaProducerConfig — do NOT add it here
 @Configuration(proxyBeanMethods = false)
 public class KafkaConsumerConfig {
 
