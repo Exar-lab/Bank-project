@@ -565,7 +565,7 @@ public class EnvelopeService implements IEnvelopeService {
             payload.put("type", envelope.getType().name());
             payload.put("status", envelope.getStatus().name());
             payload.put("balance", envelope.getBalance());
-            if (EnvelopeType.GOAL.equals(envelope.getType())) {
+            if (envelope.getTargetAmount() != null) {
                 payload.put("goalAmount", envelope.getTargetAmount());
             }
             return objectMapper.writeValueAsString(payload);

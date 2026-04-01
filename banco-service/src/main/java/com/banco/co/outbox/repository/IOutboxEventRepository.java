@@ -22,10 +22,10 @@ public interface IOutboxEventRepository extends JpaRepository<OutboxEvent, Long>
 
     @Modifying
     @Transactional
-    @Query("UPDATE OutboxEvent e SET e.status = com.banco.co.outbox.enums.OutboxStatus.PROCESSING WHERE e.id IN :ids AND e.status IN (com.banco.co.outbox.enums.OutboxStatus.PENDING, com.banco.co.outbox.enums.OutboxStatus.FAILED)")
-    void claimForProcessing(@Param("ids") List<Long> ids);
+    @Query("UPDATE OutboxEvent e SET e.status = com.banco.co.outbox.enums.OutboxStatus.PROCESSING, e.claimedBy = :owner, e.claimedAt = CURRENT_TIMESTAMP WHERE e.id IN :ids AND e.status IN (com.banco.co.outbox.enums.OutboxStatus.PENDING, com.banco.co.outbox.enums.OutboxStatus.FAILED)")
+    int claimForProcessing(@Param("ids") List<Long> ids, @Param("owner") String owner);
 
-    @Query("SELECT e FROM OutboxEvent e WHERE e.id IN :ids AND e.status = com.banco.co.outbox.enums.OutboxStatus.PROCESSING")
+    @Query("SELECT e FROM OutboxEvent e WHERE e.id IN :ids AND e.status = com.banco.co.outbox.enums.OutboxStatus.PROCESSING AND e.claimedBy = :owner")
     @Transactional(readOnly = true)
-    List<OutboxEvent> findClaimedForProcessing(@Param("ids") List<Long> ids);
+    List<OutboxEvent> findClaimedForProcessing(@Param("ids") List<Long> ids, @Param("owner") String owner);
 }

@@ -276,7 +276,6 @@ public class TransactionService implements ITransactionService {
     @Transactional(noRollbackFor = FraudBlockedException.class)
     @Override
     public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
-        // TODO: Validar que el servicio sea legítimo.
         User user = userService.getEntityUserByEmail(userEmail);
 
         Account fromAccount = accountService.findAccountWithUserByAccountCode(dto.accountCode());

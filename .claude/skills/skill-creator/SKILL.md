@@ -298,11 +298,11 @@ Update progress:
 **Run validation scripts:**
 
 ```bash
-# Validate YAML frontmatter
-scripts/validate-skill-yaml.sh ".github/skills/$SKILL_NAME"
+# Install validator dependency (required once)
+python -m pip install -r .claude/skills/skill-creator/requirements.txt
 
-# Validate content quality
-scripts/validate-skill-content.sh ".github/skills/$SKILL_NAME"
+# Validate SKILL.md frontmatter + naming contract
+python .claude/skills/skill-creator/scripts/quick_validate.py ".claude/skills/$SKILL_NAME"
 ```
 
 **Expected output:**
@@ -324,6 +324,12 @@ scripts/validate-skill-content.sh ".github/skills/$SKILL_NAME"
 - Convert second-person to imperative form
 - Reformat description to third-person
 - Add missing required fields
+
+**Validator contract (frontmatter):**
+- Required: `name`, `description`
+- Allowed top-level keys: `name`, `description`, `license`, `allowed-tools`, `metadata`, `category`, `risk`, `source`, `tags`, `date_added`
+- `name`: hyphen-case, lowercase/digits/hyphen only, max 64 chars
+- `description`: plain text (no `<`/`>`), max 1024 chars
 
 ### Phase 5: Installation
 

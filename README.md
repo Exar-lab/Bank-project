@@ -173,6 +173,74 @@ Lineamientos importantes del proyecto:
 
 ---
 
+## Error Handling Contract (actualizado)
+
+Para respuestas de error HTTP, el contrato canónico del servicio es:
+
+- `errorCode` (string)
+- `message` (string)
+- `details` (map)
+- `timestamp` (datetime)
+
+Este contrato se construye de forma centralizada para mantener consistencia entre:
+
+- Excepciones manejadas en MVC (`GlobalExceptionHandler`)
+- Errores de seguridad (`401/403`) vía handlers dedicados en `SecurityConfig`
+
+Componentes principales:
+
+- `banco-service/src/main/java/com/banco/co/exception/ErrorResponseDto.java`
+- `banco-service/src/main/java/com/banco/co/exception/support/ErrorResponseFactory.java`
+- `banco-service/src/main/java/com/banco/co/exception/catalog/ErrorCodeCatalog.java`
+- `banco-service/src/main/java/com/banco/co/security/config/handler/RestAuthenticationEntryPoint.java`
+- `banco-service/src/main/java/com/banco/co/security/config/handler/RestAccessDeniedHandler.java`
+
+Ejemplo de payload:
+
+```json
+{
+  "errorCode": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "details": {
+    "field": "must not be blank"
+  },
+  "timestamp": "2026-03-31T21:00:00"
+}
+```
+
+> Nota: el contrato vigente usa `errorCode` (no `code`) y `details` como mapa para compatibilidad y consistencia.
+
+---
+
+## Governance de excepciones
+
+Se reforzó la jerarquía de excepciones para cumplir reglas del proyecto:
+
+- `UserException` es abstracta
+- `RoleException` es abstracta
+- `EnvelopeException` es abstracta
+
+Esto evita instanciación intermedia y fuerza excepciones concretas por caso de negocio.
+
+---
+
+## Verificación focalizada recomendada
+
+Para validar rápidamente el contrato de errores y seguridad sin ejecutar una batería completa:
+
+```bash
+./mvnw -Dtest=ExceptionHierarchyGovernanceTest,GlobalExceptionHandlerWebMvcTest,RestAuthenticationEntryPointTest,RestAccessDeniedHandlerTest test
+```
+
+Cobertura de esta suite focalizada:
+
+- contrato de error en handlers MVC
+- contrato de error en `401/403`
+- regresión de consumidor legacy (parser de payload)
+- cumplimiento de jerarquía abstracta de excepciones
+
+---
+
 ## Notas
 
 - El proyecto incluye `docker-compose.yml` para desarrollo local (Kafka + MySQL).

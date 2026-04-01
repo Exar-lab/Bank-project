@@ -77,7 +77,6 @@ public class AccountService implements IAccountService {
         Account account = mapper.toEntity(dto);
         account.setUser(user);
         account.setStatus(AccountStatus.ACTIVE);
-        account.setBalance(BigDecimal.ZERO);
 
         Account savedAccount = accountRepository.save(account);
 
