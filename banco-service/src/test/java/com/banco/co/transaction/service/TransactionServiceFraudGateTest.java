@@ -382,6 +382,7 @@ class TransactionServiceFraudGateTest {
 
     private Transaction buildSavedTransaction(String code, TransactionStatus status) {
         Transaction tx = new Transaction();
+        tx.setId(UUID.randomUUID());
         tx.setTransactionCode(code);
         tx.setStatus(status);
         tx.setCurrency("CRC");
