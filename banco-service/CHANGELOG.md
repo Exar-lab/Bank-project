@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.5](https://github.com/Exar-lab/Bank-project/compare/v0.2.4...v0.2.5) (2026-04-01)
+
+
+### Bug Fixes
+
+* **build:** align compiler to Java 21 and fix null id in transaction test mocks ([00049be](https://github.com/Exar-lab/Bank-project/commit/00049bef44a46869c30616e6278f5fa579fcb806))
+* **build:** restore Java 24 preview and Kafka producer config ([127f1d7](https://github.com/Exar-lab/Bank-project/commit/127f1d76fe3c9546c183656e4bfd2bd277b45580))
+
+
+### Miscellaneous
+
+* **master:** release 0.2.5-SNAPSHOT ([d839a15](https://github.com/Exar-lab/Bank-project/commit/d839a158a1a14f7086201b7ea3b3103456c2333a))
+* **master:** release 0.2.5-SNAPSHOT ([0f38c68](https://github.com/Exar-lab/Bank-project/commit/0f38c68c3d57f423becf5a6f03b3e03fa57b2b92))
+
 ## [0.2.4](https://github.com/Exar-lab/Bank-project/compare/v0.2.3...v0.2.4) (2026-04-01)
 
 
