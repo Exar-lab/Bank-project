@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>com.banco.co</groupId>
 	<artifactId>banco-service</artifactId>
-	<version>0.2.2</version>
+	<version>0.2.3-SNAPSHOT</version>
 	<name>banco-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
