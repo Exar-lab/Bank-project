@@ -4,35 +4,13 @@ Quick validation script for skills - minimal version
 """
 
 import sys
+import os
 import re
+import yaml
 from pathlib import Path
-from typing import Any
-
-try:
-    import yaml as _yaml
-except ImportError:
-    _yaml = None
-
-yaml: Any = _yaml
-
-
-MAX_SKILL_NAME_LENGTH = 64
-
-
-def _ensure_yaml_dependency():
-    if yaml is None:
-        return (
-            False,
-            "Missing dependency: PyYAML. Install with `pip install -r .claude/skills/skill-creator/requirements.txt` or `pip install pyyaml`."
-        )
-    return True, "ok"
 
 def validate_skill(skill_path):
     """Basic validation of a skill"""
-    dep_ok, dep_message = _ensure_yaml_dependency()
-    if not dep_ok:
-        return False, dep_message
-
     skill_path = Path(skill_path)
 
     # Check SKILL.md exists
@@ -61,18 +39,7 @@ def validate_skill(skill_path):
         return False, f"Invalid YAML in frontmatter: {e}"
 
     # Define allowed properties
-    ALLOWED_PROPERTIES = {
-        'name',
-        'description',
-        'license',
-        'allowed-tools',
-        'metadata',
-        'category',
-        'risk',
-        'source',
-        'tags',
-        'date_added',
-    }
+    ALLOWED_PROPERTIES = {'name', 'description', 'license', 'allowed-tools', 'metadata'}
 
     # Check for unexpected properties (excluding nested keys under metadata)
     unexpected_keys = set(frontmatter.keys()) - ALLOWED_PROPERTIES
@@ -99,9 +66,9 @@ def validate_skill(skill_path):
             return False, f"Name '{name}' should be hyphen-case (lowercase letters, digits, and hyphens only)"
         if name.startswith('-') or name.endswith('-') or '--' in name:
             return False, f"Name '{name}' cannot start/end with hyphen or contain consecutive hyphens"
-        # Check name length
-        if len(name) > MAX_SKILL_NAME_LENGTH:
-            return False, f"Name is too long ({len(name)} characters). Maximum is {MAX_SKILL_NAME_LENGTH} characters."
+        # Check name length (max 64 characters per spec)
+        if len(name) > 64:
+            return False, f"Name is too long ({len(name)} characters). Maximum is 64 characters."
 
     # Extract and validate description
     description = frontmatter.get('description', '')

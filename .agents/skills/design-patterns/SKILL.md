@@ -21,7 +21,7 @@ com.banco.co.
 │   ├── service/        ← AccountService (@Service, uses IAccountRepository)
 │   ├── dto/            ← CreateAccountDto, AccountResponseDto (Records)
 │   ├── mapper/         ← AccountMapper (MapStruct)
-│   ├── repository/     ← IAccountRepository + adapters Spring Data
+│   ├── repository/     ← AccountEntity (@Entity), IAccountRepository
 │   └── controller/     ← AccountController (@RestController)
 │
 ├── transaction/        ← Same structure
@@ -248,7 +248,7 @@ public void processOutboxEvents() {
 ## Best Practices
 
 - Screaming Architecture is non-negotiable: feature-first packaging, not layer-first.
-- Domain model (`{feature}/model/`) in this repo is AS-IS with `@Entity`/JPA mappings + business logic; keep business invariants in model and avoid Spring service/web annotations there.
+- Domain model (`{feature}/model/`) ZERO Spring annotations. Pure Java. 100% testable without mocks.
 - Strategy pattern when behavior varies by type (fee types, fraud rules, notification channels).
 - Factory pattern when object creation varies by type (account types, transaction types).
 - Outbox pattern when you need Kafka events to be atomic with database writes.

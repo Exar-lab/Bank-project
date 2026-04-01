@@ -46,7 +46,7 @@ if command -v gh &>/dev/null && gh copilot --version &>/dev/null 2>&1; then
     COPILOT_INSTALLED=true
 fi
 
-if [[ -d "$HOME/.claude" ]]; then
+if [[ -d "$HOME/.Codex" ]]; then
     CLAUDE_INSTALLED=true
 fi
 
@@ -70,7 +70,7 @@ EMAIL=$(git config user.email || echo "")
 ```
 
 **Key Information Needed:**
-- Which platforms to target (Copilot, Claude, Codex, or all three)
+- Which platforms to target (Copilot, Codex, Codex, or all three)
 - Installation preference (local, global, or both)
 - Skill name and purpose
 - Skill type (general, code, documentation, analysis)
@@ -134,7 +134,7 @@ Display progress:
 
 4. **Which platforms should support this skill?**
    - [ ] GitHub Copilot CLI
-   - [ ] Claude Code
+   - [ ] Codex
     - [ ] Codex
     - [ ] All three (recommended)
 
@@ -203,8 +203,8 @@ if [[ "$PLATFORM" =~ "copilot" ]]; then
     mkdir -p ".github/skills/$SKILL_NAME"/{references,examples,scripts}
 fi
 
-if [[ "$PLATFORM" =~ "claude" ]]; then
-    mkdir -p ".claude/skills/$SKILL_NAME"/{references,examples,scripts}
+if [[ "$PLATFORM" =~ "Codex" ]]; then
+    mkdir -p ".Codex/skills/$SKILL_NAME"/{references,examples,scripts}
 fi
 
 if [[ "$PLATFORM" =~ "codex" ]]; then
@@ -215,7 +215,7 @@ fi
 **Apply templates:**
 
 1. **SKILL.md** - Use appropriate template:
-   - `skill-template-copilot.md`, `skill-template-claude.md`, or `skill-template-codex.md`
+   - `skill-template-copilot.md`, `skill-template-AGENTS.md`, or `skill-template-codex.md`
    - Substitute placeholders:
      - `{{SKILL_NAME}}` → kebab-case name
      - `{{DESCRIPTION}}` → one-line description
@@ -269,7 +269,7 @@ fi
 ```
 ✅ Created:
    .github/skills/your-skill-name/ (if Copilot selected)
-   .claude/skills/your-skill-name/ (if Claude selected)
+   .Codex/skills/your-skill-name/ (if Codex selected)
    .codex/skills/your-skill-name/ (if Codex selected)
    ├── SKILL.md (832 lines)
    ├── README.md (347 lines)
@@ -298,11 +298,11 @@ Update progress:
 **Run validation scripts:**
 
 ```bash
-# Install validator dependency (required once)
-python -m pip install -r .claude/skills/skill-creator/requirements.txt
+# Validate YAML frontmatter
+scripts/validate-skill-yaml.sh ".github/skills/$SKILL_NAME"
 
-# Validate SKILL.md frontmatter + naming contract
-python .claude/skills/skill-creator/scripts/quick_validate.py ".claude/skills/$SKILL_NAME"
+# Validate content quality
+scripts/validate-skill-content.sh ".github/skills/$SKILL_NAME"
 ```
 
 **Expected output:**
@@ -324,12 +324,6 @@ python .claude/skills/skill-creator/scripts/quick_validate.py ".claude/skills/$S
 - Convert second-person to imperative form
 - Reformat description to third-person
 - Add missing required fields
-
-**Validator contract (frontmatter):**
-- Required: `name`, `description`
-- Allowed top-level keys: `name`, `description`, `license`, `allowed-tools`, `metadata`, `category`, `risk`, `source`, `tags`, `date_added`
-- `name`: hyphen-case, lowercase/digits/hyphen only, max 64 chars
-- `description`: plain text (no `<`/`>`), max 1024 chars
 
 ### Phase 5: Installation
 
@@ -366,8 +360,8 @@ if [[ "$COPILOT_INSTALLED" == "true" ]] && [[ "$PLATFORM" =~ "copilot" ]]; then
     INSTALL_TARGETS+=("copilot")
 fi
 
-if [[ "$CLAUDE_INSTALLED" == "true" ]] && [[ "$PLATFORM" =~ "claude" ]]; then
-    INSTALL_TARGETS+=("claude")
+if [[ "$CLAUDE_INSTALLED" == "true" ]] && [[ "$PLATFORM" =~ "Codex" ]]; then
+    INSTALL_TARGETS+=("Codex")
 fi
 
 if [[ "$CODEX_INSTALLED" == "true" ]] && [[ "$PLATFORM" =~ "codex" ]]; then
@@ -389,11 +383,11 @@ if [[ " ${INSTALL_TARGETS[*]} " =~ " copilot " ]]; then
     echo "✅ Installed for GitHub Copilot CLI"
 fi
 
-# Claude Code
-if [[ " ${INSTALL_TARGETS[*]} " =~ " claude " ]]; then
-    ln -sf "$SKILLS_REPO/.claude/skills/$SKILL_NAME" \
-           "$HOME/.claude/skills/$SKILL_NAME"
-    echo "✅ Installed for Claude Code"
+# Codex
+if [[ " ${INSTALL_TARGETS[*]} " =~ " Codex " ]]; then
+    ln -sf "$SKILLS_REPO/.Codex/skills/$SKILL_NAME" \
+           "$HOME/.Codex/skills/$SKILL_NAME"
+    echo "✅ Installed for Codex"
 fi
 
 # Codex
@@ -409,7 +403,7 @@ fi
 ```bash
 # Check symlinks
 ls -la ~/.copilot/skills/$SKILL_NAME 2>/dev/null
-ls -la ~/.claude/skills/$SKILL_NAME 2>/dev/null
+ls -la ~/.Codex/skills/$SKILL_NAME 2>/dev/null
 ls -la ~/.codex/skills/$SKILL_NAME 2>/dev/null
 ```
 
@@ -437,7 +431,7 @@ Update progress:
 
 📦 Skill Name: your-skill-name
 📁 Location: .github/skills/your-skill-name/
-🔗 Installed: Global (Copilot + Claude)
+🔗 Installed: Global (Copilot + Codex)
 
 📋 Files Created:
    ✅ SKILL.md (1,847 words)
@@ -467,7 +461,7 @@ Update progress:
 
 If platforms cannot be detected:
 ```
-⚠️  Unable to detect GitHub Copilot CLI or Claude Code
+⚠️  Unable to detect GitHub Copilot CLI or Codex
     
 Would you like to:
 1. Install for repository only (works when in repo)
@@ -590,7 +584,7 @@ Executable utilities for skill maintenance:
 
 ## References
 
-- **Anthropic Official Skill Development Guide:** https://github.com/anthropics/claude-plugins-official/blob/main/plugins/plugin-dev/skills/skill-development/SKILL.md
+- **Anthropic Official Skill Development Guide:** https://github.com/anthropics/Codex-plugins-official/blob/main/plugins/plugin-dev/skills/skill-development/SKILL.md
 - **Repository:** https://github.com/yourusername/cli-ai-skills
 - **Writing Style Guide:** `resources/templates/writing-style-guide.md`
 - **Progress Tracker Template:** `resources/templates/progress-tracker.md`
