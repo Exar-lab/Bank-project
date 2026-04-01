@@ -20,6 +20,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect backend changes (PR only)
+        id: changes
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- banco-service/; then
+            echo "run_tests=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_tests=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -29,5 +40,10 @@ jobs:
           cache-dependency-path: banco-service/pom.xml
 
       - name: Run tests
+        if: github.event_name == 'push' || steps.changes.outputs.run_tests == 'true'
         working-directory: banco-service
         run: mvn -B -ntp test
+
+      - name: Skip tests (no backend changes in PR)
+        if: github.event_name == 'pull_request' && steps.changes.outputs.run_tests != 'true'
+        run: echo "No backend changes detected; skipping Maven tests for this PR."
