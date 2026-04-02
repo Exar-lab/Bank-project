@@ -1,6 +1,7 @@
 package com.banco.co;
 
 import com.banco.co.fraud.config.FraudDetectionProperties;
+import com.banco.co.fraud.riskprofile.config.RiskProfileAsyncUpdaterProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -12,7 +13,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties(FraudDetectionProperties.class)
+@EnableConfigurationProperties({
+        FraudDetectionProperties.class,
+        RiskProfileAsyncUpdaterProperties.class
+})
 public class BancoServiceApplication {
 
 	public static void main(String[] args) {
