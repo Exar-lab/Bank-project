@@ -181,6 +181,20 @@ Every skill created is automatically validated for:
 - ✅ **Writing Style** - Imperative form, no second-person
 - ✅ **Progressive Disclosure** - Proper content organization
 
+### Validation dependency
+
+`quick_validate.py` requires **PyYAML**.
+
+```bash
+python -m pip install -r .claude/skills/skill-creator/requirements.txt
+```
+
+Then run:
+
+```bash
+python .claude/skills/skill-creator/scripts/quick_validate.py .claude/skills/your-skill-name
+```
+
 ## Frameworks Used
 
 This skill leverages several established methodologies:

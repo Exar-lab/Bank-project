@@ -12,7 +12,12 @@ Examples:
 """
 
 import sys
+import re
 from pathlib import Path
+
+
+MAX_SKILL_NAME_LENGTH = 64
+SKILL_NAME_PATTERN = re.compile(r'^[a-z0-9-]+$')
 
 
 SKILL_TEMPLATE = """---
@@ -202,6 +207,17 @@ def init_skill(skill_name, path):
     Returns:
         Path to created skill directory, or None if error
     """
+    skill_name = skill_name.strip()
+    if not SKILL_NAME_PATTERN.fullmatch(skill_name):
+        print("❌ Error: skill-name must be hyphen-case (lowercase letters, digits, and hyphens only)")
+        return None
+    if skill_name.startswith('-') or skill_name.endswith('-') or '--' in skill_name:
+        print("❌ Error: skill-name cannot start/end with hyphen or contain consecutive hyphens")
+        return None
+    if len(skill_name) > MAX_SKILL_NAME_LENGTH:
+        print(f"❌ Error: skill-name too long ({len(skill_name)}). Maximum is {MAX_SKILL_NAME_LENGTH} characters")
+        return None
+
     # Determine skill directory path
     skill_dir = Path(path).resolve() / skill_name
 
@@ -276,7 +292,7 @@ def main():
         print("\nSkill name requirements:")
         print("  - Hyphen-case identifier (e.g., 'data-analyzer')")
         print("  - Lowercase letters, digits, and hyphens only")
-        print("  - Max 40 characters")
+        print("  - Max 64 characters")
         print("  - Must match directory name exactly")
         print("\nExamples:")
         print("  init_skill.py my-new-skill --path skills/public")
