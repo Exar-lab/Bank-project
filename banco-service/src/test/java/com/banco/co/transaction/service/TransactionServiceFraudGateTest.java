@@ -382,6 +382,7 @@ class TransactionServiceFraudGateTest {
 
     private Transaction buildSavedTransaction(String code, TransactionStatus status) {
         Transaction tx = new Transaction();
+        tx.setId(UUID.randomUUID());
         tx.setTransactionCode(code);
         tx.setStatus(status);
         tx.setCurrency("CRC");
@@ -394,6 +395,7 @@ class TransactionServiceFraudGateTest {
 
     private Transaction buildFlaggedTransaction(Account from, Account to) {
         Transaction tx = new Transaction();
+        tx.setId(UUID.randomUUID());
         tx.setTransactionCode("TXN-BCR-FLAGGED");
         // flagForFraud sets status to PENDING_REVIEW (required by approveTransaction)
         tx.flagForFraud(BigDecimal.valueOf(75), "Suspicious activity detected");
@@ -402,11 +404,13 @@ class TransactionServiceFraudGateTest {
         tx.setAmount(new BigDecimal("100000"));
         tx.setCurrency("CRC");
         tx.setType(com.banco.co.transaction.enums.TransactionType.TRANSFER);
+        from.blockFunds(tx.getAmount());
         return tx;
     }
 
     private Transaction buildNonFlaggedTransaction() {
         Transaction tx = new Transaction();
+        tx.setId(UUID.randomUUID());
         tx.setTransactionCode("TXN-BCR-NOTFLAGGED");
         // Non-flagged: status starts at PENDING_REVIEW (required by approveTransaction)
         tx.setStatus(TransactionStatus.PENDING_REVIEW);
