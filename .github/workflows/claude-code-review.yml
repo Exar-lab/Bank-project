@@ -37,13 +37,27 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Detect self-workflow changes in PR
+        id: workflow-changes
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          if git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" | grep -Fxq ".github/workflows/claude-code-review.yml"; then
+            echo "self_workflow_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "self_workflow_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip when reviewing workflow itself
+        if: ${{ steps.workflow-changes.outputs.self_workflow_changed == 'true' }}
+        run: echo "Skipping Claude review because this PR modifies claude-code-review workflow file."
+
       - name: Skip when OAuth token is unavailable
-        if: ${{ env.CLAUDE_TOKEN == '' }}
+        if: ${{ env.CLAUDE_TOKEN == '' && steps.workflow-changes.outputs.self_workflow_changed != 'true' }}
         run: echo "CLAUDE_CODE_OAUTH_TOKEN is not configured; skipping Claude review."
 
       - name: Run Claude Code Review
         id: claude-review
-        if: ${{ env.CLAUDE_TOKEN != '' }}
+        if: ${{ env.CLAUDE_TOKEN != '' && steps.workflow-changes.outputs.self_workflow_changed != 'true' }}
         uses: anthropics/claude-code-action@3ac52d0da9f8ec9ca7b4dc23bb477e36ef9c77a9 # v1 — pinned SHA for supply-chain security
         with:
           claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
