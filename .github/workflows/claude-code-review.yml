@@ -26,6 +26,9 @@ jobs:
       issues: read
       id-token: write
 
+    env:
+      CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,15 +36,15 @@ jobs:
           fetch-depth: 1
 
       - name: Skip when OAuth token is unavailable
-        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' }}
+        if: ${{ env.CLAUDE_TOKEN == '' }}
         run: echo "CLAUDE_CODE_OAUTH_TOKEN is not configured; skipping Claude review."
 
       - name: Run Claude Code Review
         id: claude-review
-        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+        if: ${{ env.CLAUDE_TOKEN != '' }}
         uses: anthropics/claude-code-action@3ac52d0da9f8ec9ca7b4dc23bb477e36ef9c77a9 # v1 — pinned SHA for supply-chain security
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
