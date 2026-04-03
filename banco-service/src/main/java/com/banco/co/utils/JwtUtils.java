@@ -164,6 +164,11 @@ public class JwtUtils {
             throw new InvalidTokenException("Token is not an access token");
         }
 
+        String subject = decodedJWT.getSubject();
+        if (subject == null || subject.isBlank()) {
+            throw new InvalidTokenException("Access token subject is missing or blank");
+        }
+
         return decodedJWT;
     }
 
@@ -202,8 +207,23 @@ public class JwtUtils {
     }
 
     public List<String> getScopes(DecodedJWT token) {
+        Claim scopeClaim = token.getClaim("scope");
+        if (!scopeClaim.isMissing() && !scopeClaim.isNull()) {
+            List<String> scopeList = scopeClaim.asList(String.class);
+            if (scopeList != null) {
+                return scopeList;
+            }
+
+            String scopeText = scopeClaim.asString();
+            if (scopeText != null && !scopeText.isBlank()) {
+                return Arrays.stream(scopeText.trim().split("\\s+"))
+                        .filter(value -> !value.isBlank())
+                        .toList();
+            }
+        }
+
         Claim scopesClaim = token.getClaim("scopes");
-        return scopesClaim.isNull() ? List.of() : scopesClaim.asList(String.class);
+        return scopesClaim.isMissing() || scopesClaim.isNull() ? List.of() : scopesClaim.asList(String.class);
     }
 
     public String getTokenId(DecodedJWT token) {
