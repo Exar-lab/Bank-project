@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.7](https://github.com/Exar-lab/Bank-project/compare/v0.3.6...v0.3.7) (2026-04-03)
+
+
+### Bug Fixes
+
+* **security:** enforce jwt subject and authorities mapping ([0c94377](https://github.com/Exar-lab/Bank-project/commit/0c94377fe651ba67eb9e66921eaedcf49d8a2884))
+
+
+### Miscellaneous
+
+* **master:** release 0.3.7-SNAPSHOT ([9aa113b](https://github.com/Exar-lab/Bank-project/commit/9aa113b447714bd5721410af799d0ff9420eecb1))
+* **master:** release 0.3.7-SNAPSHOT ([c3b4c1c](https://github.com/Exar-lab/Bank-project/commit/c3b4c1c0432cc8d2ea2f8cd4f58ca492d7ade403))
+
 ## [0.3.6](https://github.com/Exar-lab/Bank-project/compare/v0.3.5...v0.3.6) (2026-04-03)
 
 
