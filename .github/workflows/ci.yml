@@ -25,7 +25,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
-          if git diff --quiet "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- banco-service/; then
+          if git diff --quiet "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" -- banco-service/; then
             echo "run_tests=false" >> "$GITHUB_OUTPUT"
           else
             echo "run_tests=true" >> "$GITHUB_OUTPUT"
