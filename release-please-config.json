@@ -8,7 +8,6 @@
         { "type": "fix", "section": "Bug Fixes" },
         { "type": "perf", "section": "Performance Improvements" },
         { "type": "refactor", "section": "Refactoring" },
-        { "type": "chore", "section": "Miscellaneous" },
         { "type": "docs", "section": "Documentation" }
       ]
     }
