@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.3.0](https://github.com/Exar-lab/Bank-project/compare/v0.2.6...v0.3.0) (2026-04-03)
+
+
+### Features
+
+* **fraud:** add risk profile domain model and schema ([2d59ab5](https://github.com/Exar-lab/Bank-project/commit/2d59ab5422ad614af8ce6b4f0098575b8e61b6bd))
+* **fraud:** implement risk profile antifraud gate with kafka dlt ([aea0d2a](https://github.com/Exar-lab/Bank-project/commit/aea0d2a673db516acf942638f9dd7c80536f03de))
+* **fraud:** wire synchronous risk profile gate with fallback ([4ec4ebd](https://github.com/Exar-lab/Bank-project/commit/4ec4ebd337daed01299c4daee27e6c190bcbfdcd))
+
+
+### Bug Fixes
+
+* **test:** stabilize fraud gate and kafka integration tests ([50091c7](https://github.com/Exar-lab/Bank-project/commit/50091c78ab9fd29bf42e2758702ef68b220f3ad9))
+
+
+### Miscellaneous
+
+* **master:** release 0.2.7-SNAPSHOT ([1209aa0](https://github.com/Exar-lab/Bank-project/commit/1209aa0834ef103218543e68bbe237ee5d0439f8))
+* **master:** release 0.2.7-SNAPSHOT ([040734f](https://github.com/Exar-lab/Bank-project/commit/040734f3b95350f6df9a2f3850b8d45481d37e2f))
+
 ## [0.2.6](https://github.com/Exar-lab/Bank-project/compare/v0.2.5...v0.2.6) (2026-04-02)
 
 
