@@ -324,7 +324,8 @@ public class InsufficientFundsException extends BankingException {
 }
 
 // ❌ NUNCA
-public class BankingException extends Exception {} // no abstract = jerarquía descontrolada
+public class BankingException extends RuntimeException {} // base no abstract = jerarquía descontrolada
+public class InsufficientFundsException extends RuntimeException {} // saltea la jerarquía común
 ```
 
 ### 5. Package naming (feature-first / Screaming Architecture)

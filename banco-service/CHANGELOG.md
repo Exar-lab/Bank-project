@@ -1,5 +1,79 @@
 # Changelog
 
+## [0.2.6](https://github.com/Exar-lab/Bank-project/compare/v0.2.5...v0.2.6) (2026-04-02)
+
+
+### Miscellaneous
+
+* **master:** release 0.2.6-SNAPSHOT ([cc536eb](https://github.com/Exar-lab/Bank-project/commit/cc536eb341065c5bd51d593e853cbc36a1424f75))
+* **master:** release 0.2.6-SNAPSHOT ([39f1cec](https://github.com/Exar-lab/Bank-project/commit/39f1cec5a94757a31bb98ff9b520aabd4a383015))
+
+## [0.2.5](https://github.com/Exar-lab/Bank-project/compare/v0.2.4...v0.2.5) (2026-04-01)
+
+
+### Bug Fixes
+
+* **build:** align compiler to Java 21 and fix null id in transaction test mocks ([00049be](https://github.com/Exar-lab/Bank-project/commit/00049bef44a46869c30616e6278f5fa579fcb806))
+* **build:** restore Java 24 preview and Kafka producer config ([127f1d7](https://github.com/Exar-lab/Bank-project/commit/127f1d76fe3c9546c183656e4bfd2bd277b45580))
+
+
+### Miscellaneous
+
+* **master:** release 0.2.5-SNAPSHOT ([d839a15](https://github.com/Exar-lab/Bank-project/commit/d839a158a1a14f7086201b7ea3b3103456c2333a))
+* **master:** release 0.2.5-SNAPSHOT ([0f38c68](https://github.com/Exar-lab/Bank-project/commit/0f38c68c3d57f423becf5a6f03b3e03fa57b2b92))
+
+## [0.2.4](https://github.com/Exar-lab/Bank-project/compare/v0.2.3...v0.2.4) (2026-04-01)
+
+
+### Miscellaneous
+
+* **master:** release 0.2.4-SNAPSHOT ([09f0761](https://github.com/Exar-lab/Bank-project/commit/09f07614ebae0537cad032c391bfc7f14263e526))
+* **master:** release 0.2.4-SNAPSHOT ([e972e8e](https://github.com/Exar-lab/Bank-project/commit/e972e8e7f48a244aa4eb36cceb5c5727eb78b51e))
+
+## [0.2.3](https://github.com/Exar-lab/Bank-project/compare/v0.2.2...v0.2.3) (2026-04-01)
+
+
+### Miscellaneous
+
+* **master:** release 0.2.2 ([7a79ff5](https://github.com/Exar-lab/Bank-project/commit/7a79ff5ca878039eecfdf7d06510fb2441c86cbe))
+* **master:** release 0.2.3-SNAPSHOT ([8c42d0a](https://github.com/Exar-lab/Bank-project/commit/8c42d0a8501651a646ebb7e7c63a26b0406ea10d))
+* **master:** release 0.2.3-SNAPSHOT ([68edb17](https://github.com/Exar-lab/Bank-project/commit/68edb1767b7c05d9415e59a83c4a5d3149d32c5b))
+* **master:** release 0.2.3-SNAPSHOT ([a82c833](https://github.com/Exar-lab/Bank-project/commit/a82c8338f658975635920a23e81a41bc46959969))
+
+## [0.2.2](https://github.com/Exar-lab/Bank-project/compare/v0.2.1...v0.2.2) (2026-03-31)
+
+
+### Miscellaneous
+
+* **master:** release 0.2.2-SNAPSHOT ([e8c58f9](https://github.com/Exar-lab/Bank-project/commit/e8c58f948adea3f943245b673fe8223e2405315d))
+* **master:** release 0.2.2-SNAPSHOT ([1b98107](https://github.com/Exar-lab/Bank-project/commit/1b9810761b64b70f13acbf64d22913aee6062cf3))
+
+## [0.2.1](https://github.com/Exar-lab/Bank-project/compare/v0.2.0...v0.2.1) (2026-03-31)
+
+
+### Miscellaneous
+
+* **master:** release 0.2.1-SNAPSHOT ([6626049](https://github.com/Exar-lab/Bank-project/commit/66260492cb0c56e4b138f38ce576171b2f266095))
+* **master:** release 0.2.1-SNAPSHOT ([e71cde7](https://github.com/Exar-lab/Bank-project/commit/e71cde7695271d45e8177f8485c51a4b0e3ee908))
+
+## [0.2.0](https://github.com/Exar-lab/Bank-project/compare/v0.1.1...v0.2.0) (2026-03-31)
+
+
+### Features
+
+* **fraud:** real-time fraud gate in TransactionService ([b1f66eb](https://github.com/Exar-lab/Bank-project/commit/b1f66ebb3039580efff22616fe10ccce41a8abc4))
+
+
+### Bug Fixes
+
+* **fraud:** address copilot review feedback in fraud gate ([04e1ed2](https://github.com/Exar-lab/Bank-project/commit/04e1ed255e37c745f9840252ebf4fd99834c7f93))
+
+
+### Miscellaneous
+
+* **master:** release 0.1.2-SNAPSHOT ([fc961a2](https://github.com/Exar-lab/Bank-project/commit/fc961a2be81c605d1def171211579332b3880a17))
+* **master:** release 0.1.2-SNAPSHOT ([ada9531](https://github.com/Exar-lab/Bank-project/commit/ada95312541b3dcd540a36e528e23df7e41d6c97))
+
 ## [0.1.1](https://github.com/Exar-lab/Bank-project/compare/v0.1.0...v0.1.1) (2026-03-29)
 
 

@@ -4,7 +4,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * Canonical error response body returned by GlobalExceptionHandler for all error scenarios.
+ * Canonical error response body for all REST error scenarios (MVC + Security).
+ *
+ * <p>Contract compatibility note: this payload intentionally keeps fields
+ * {@code errorCode}, {@code message}, {@code details}, and {@code timestamp}
+ * (instead of legacy alternatives like {@code code}) to avoid breaking existing API consumers.</p>
  *
  * <pre>
  * {

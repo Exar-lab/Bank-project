@@ -51,6 +51,11 @@ public class OutboxEvent {
 
     private LocalDateTime publishedAt;
 
+    @Column(length = 100)
+    private String claimedBy;
+
+    private LocalDateTime claimedAt;
+
     public OutboxEvent(String aggregateType, String aggregateId,
                        String eventType, String payload, KafkaTopic kafkaTopic) {
         this.aggregateType = aggregateType;
@@ -69,9 +74,13 @@ public class OutboxEvent {
     public void markAsPublished() {
         this.status      = OutboxStatus.PUBLISHED;
         this.publishedAt = LocalDateTime.now();
+        this.claimedBy   = null;
+        this.claimedAt   = null;
     }
 
     public void markAsFailed() {
         this.status = OutboxStatus.FAILED;
+        this.claimedBy = null;
+        this.claimedAt = null;
     }
 }

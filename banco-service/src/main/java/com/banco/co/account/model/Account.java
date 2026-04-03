@@ -166,6 +166,18 @@ public class Account {
         balance = balance.add(amount);
     }
 
+    /**
+     * Confirmar fondos bloqueados cuando la transacción se completa.
+     * No modifica balance porque fue descontado en blockFunds.
+     */
+    public void confirmBlockedFunds(BigDecimal amount) {
+        if (blockedBalance.compareTo(amount) < 0) {
+            throw new AccountBlockedFundsException(this.accountCode, amount, this.blockedBalance, "confirm");
+        }
+        blockedBalance = blockedBalance.subtract(amount);
+        this.lastTransactionAt = LocalDateTime.now();
+    }
+
     public void withdraw(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new AccountInvalidAmountException(amount, "Amount must be positive");

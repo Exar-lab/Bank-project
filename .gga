@@ -30,8 +30,9 @@ FILE_PATTERNS="*.java"
 # Examples:
 #   EXCLUDE_PATTERNS="*.test.ts,*.spec.ts"
 #   EXCLUDE_PATTERNS="*_test.go,*.mock.ts"
-# Tests excluded: GGA reviews production code quality only. Test coverage is enforced separately.
-EXCLUDE_PATTERNS="*Test.java,*IT.java,*Tests.java"
+# Keep empty by default to avoid excluding all tests implicitly.
+# Add explicit patterns only when you intentionally want to skip specific test suites.
+EXCLUDE_PATTERNS=""
 
 # File containing code review rules
 # Default: AGENTS.md
