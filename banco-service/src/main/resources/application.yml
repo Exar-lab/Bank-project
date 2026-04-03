@@ -65,5 +65,18 @@ security:
 # =============================================
 fraud:
   detection:
+    risk-profile-enabled: false
     suspicious-threshold: 10000000
     blocked-threshold: 50000000
+    risk-profile-query-timeout-ms: 25
+    risk-profile-fallback-policy: FAIL_OPEN_LEGACY_THRESHOLD
+    risk-profile-async:
+      consumer-name: risk-profile-consumer
+      medium-threshold: 10000000
+      high-threshold: 50000000
+      restricted-threshold: 100000000
+      low-score: 25.00
+      medium-score: 60.00
+      high-score: 85.00
+      restricted-score: 95.00
+      rule-set-version: v1

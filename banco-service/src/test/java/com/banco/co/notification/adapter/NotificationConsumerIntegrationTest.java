@@ -1,5 +1,7 @@
 package com.banco.co.notification.adapter;
 
+import com.banco.co.outbox.config.KafkaConsumerConfig;
+import com.banco.co.outbox.config.KafkaProducerConfig;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -10,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
@@ -21,7 +25,25 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(
+        classes = {
+                NotificationConsumer.class,
+                KafkaProducerConfig.class,
+                KafkaConsumerConfig.class,
+                NotificationConsumerIntegrationTest.TestKafkaBeans.class
+        },
+        properties = {
+                "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+                "spring.task.scheduling.enabled=false",
+                "spring.autoconfigure.exclude="
+                        + "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
+                        + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
+                        + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration"
+        }
+)
 @EmbeddedKafka(
         partitions = 1,
         topics = {"banco.envelope.events"}
@@ -95,5 +117,13 @@ class NotificationConsumerIntegrationTest {
                         event.getLevel() == Level.INFO &&
                         event.getFormattedMessage().contains("NOTIFICATION"));
         assertThat(found).isFalse();
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class TestKafkaBeans {
+        @Bean
+        ObjectMapper objectMapper() {
+            return new ObjectMapper();
+        }
     }
 }
