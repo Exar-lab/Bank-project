@@ -4,7 +4,7 @@ import com.banco.co.fraud.config.FraudDetectionProperties;
 import com.banco.co.fraud.dto.TransactionFraudContext;
 import com.banco.co.fraud.enums.FraudAnalysisResult;
 import com.banco.co.fraud.riskprofile.enums.RiskProfileFallbackPolicy;
-import com.banco.co.fraud.riskprofile.service.RiskProfileGateService;
+import com.banco.co.fraud.riskprofile.service.IRiskProfileGateService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,11 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class FraudDetectionServiceImplTest {
 
     private FraudDetectionServiceImpl service;
-    private RiskProfileGateService riskProfileGateService;
+    private IRiskProfileGateService riskProfileGateService;
 
     @BeforeEach
     void setUp() {
-        riskProfileGateService = Mockito.mock(RiskProfileGateService.class);
+        riskProfileGateService = Mockito.mock(IRiskProfileGateService.class);
         FraudDetectionProperties properties = new FraudDetectionProperties(
                 false,
                 new BigDecimal("10000000"),

@@ -1,6 +1,6 @@
 package com.banco.co.fraud.riskprofile.adapter;
 
-import com.banco.co.fraud.riskprofile.service.RiskProfileAsyncUpdaterService;
+import com.banco.co.fraud.riskprofile.service.IRiskProfileAsyncUpdaterService;
 import com.banco.co.outbox.config.KafkaConsumerConfig;
 import com.banco.co.outbox.config.KafkaProducerConfig;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -63,7 +63,7 @@ class RiskProfileConsumerDltIntegrationTest {
     private final EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @MockitoBean
-    private RiskProfileAsyncUpdaterService asyncUpdaterService;
+    private IRiskProfileAsyncUpdaterService asyncUpdaterService;
 
     RiskProfileConsumerDltIntegrationTest(
             KafkaTemplate<String, String> kafkaTemplate,
