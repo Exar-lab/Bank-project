@@ -1,7 +1,7 @@
 package com.banco.co.fraud.riskprofile.adapter;
 
 import com.banco.co.fraud.riskprofile.dto.TransactionCompletedRiskEvent;
-import com.banco.co.fraud.riskprofile.service.RiskProfileAsyncUpdaterService;
+import com.banco.co.fraud.riskprofile.service.IRiskProfileAsyncUpdaterService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
@@ -23,14 +23,14 @@ public class RiskProfileConsumer {
     private static final String STATUS_REJECTED = "REJECTED";
 
     private final ObjectMapper objectMapper;
-    private final RiskProfileAsyncUpdaterService asyncUpdaterService;
+    private final IRiskProfileAsyncUpdaterService asyncUpdaterService;
     private final Counter processedCounter;
     private final Counter duplicatedCounter;
     private final Counter invalidPayloadCounter;
     private final Counter failedCounter;
 
     public RiskProfileConsumer(ObjectMapper objectMapper,
-                               RiskProfileAsyncUpdaterService asyncUpdaterService,
+                               IRiskProfileAsyncUpdaterService asyncUpdaterService,
                                MeterRegistry meterRegistry) {
         this.objectMapper = objectMapper;
         this.asyncUpdaterService = asyncUpdaterService;

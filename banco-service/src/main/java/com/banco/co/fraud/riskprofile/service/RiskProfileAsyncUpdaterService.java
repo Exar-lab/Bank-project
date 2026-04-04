@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 
 @Service
-public class RiskProfileAsyncUpdaterService {
+public class RiskProfileAsyncUpdaterService implements IRiskProfileAsyncUpdaterService {
 
     private final IRiskProfileUpdatePort riskProfileUpdatePort;
     private final RiskProfileAsyncUpdaterProperties properties;
@@ -25,6 +25,7 @@ public class RiskProfileAsyncUpdaterService {
     }
 
     @Transactional
+    @Override
     public boolean updateFromTransactionCompleted(TransactionCompletedRiskEvent event) {
         if (!riskProfileUpdatePort.markEventProcessed(event.eventId(), properties.consumerName())) {
             return false;

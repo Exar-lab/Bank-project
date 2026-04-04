@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Service
-public class RiskProfileGateService {
+public class RiskProfileGateService implements IRiskProfileGateService {
 
     private static final Logger log = LoggerFactory.getLogger(RiskProfileGateService.class);
 
@@ -44,6 +44,7 @@ public class RiskProfileGateService {
         this.gateLatencyTimer = meterRegistry.timer("fraud.riskprofile.gate.latency");
     }
 
+    @Override
     public FraudAnalysisResult evaluate(TransactionFraudContext context) {
         long start = System.nanoTime();
 
