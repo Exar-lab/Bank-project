@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Exar-lab/Bank-project/compare/v0.4.0...v0.4.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* **structure:** restore spring boot main class package path ([68c3ba1](https://github.com/Exar-lab/Bank-project/commit/68c3ba14f8013bec0557f75f51352a0143f48b7c))
+
 ## [0.4.0](https://github.com/Exar-lab/Bank-project/compare/v0.3.10...v0.4.0) (2026-04-04)
 
 
