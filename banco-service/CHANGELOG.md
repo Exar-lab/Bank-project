@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/Exar-lab/Bank-project/compare/v0.3.10...v0.4.0) (2026-04-04)
+
+
+### Features
+
+* **security:** adopt hybrid scope authorization in transaction controllers ([199e642](https://github.com/Exar-lab/Bank-project/commit/199e64282140a016eccd840f143cefc5c9402288))
+* **security:** adopt hybrid scope authorization in transaction controllers ([adca23a](https://github.com/Exar-lab/Bank-project/commit/adca23aef439c0b089a922c2727906ae6f2de07b))
+
+
+### Bug Fixes
+
+* **security:** enforce scope and role on teller and admin actions ([edd51db](https://github.com/Exar-lab/Bank-project/commit/edd51dbb4c9c42b9f56f39b6089e374efac0f050))
+
 ## [0.3.10](https://github.com/Exar-lab/Bank-project/compare/v0.3.9...v0.3.10) (2026-04-03)
 
 
