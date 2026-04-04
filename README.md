@@ -12,6 +12,54 @@ Incluye persistencia en **MySQL**, mensajería asíncrona con **Kafka**, migraci
 
 ---
 
+## Inicio rápido (5 minutos)
+
+### 1) Clonar y preparar variables
+
+Linux/macOS:
+```bash
+cp .env.example .env
+```
+
+Windows (PowerShell):
+```powershell
+Copy-Item .env.example .env
+```
+
+### 2) Levantar infraestructura local (MySQL + Kafka)
+
+```bash
+docker compose up -d
+```
+
+### 3) Ejecutar la app
+
+Linux/macOS:
+```bash
+./banco-service/mvnw -f banco-service/pom.xml spring-boot:run
+```
+
+Windows:
+```bat
+banco-service\mvnw.cmd -f banco-service/pom.xml spring-boot:run
+```
+
+### 4) Health check
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Respuesta esperada:
+
+```json
+{
+  "status": "UP"
+}
+```
+
+---
+
 ## Stack / Tecnologías
 
 - **Java**: 21+  
@@ -32,6 +80,42 @@ Incluye persistencia en **MySQL**, mensajería asíncrona con **Kafka**, migraci
 
 - `banco-service/` → servicio principal (Spring Boot + Maven)
 - `docker-compose.yml` → infraestructura local (MySQL + Kafka)
+- `.env.example` → plantilla de configuración local
+- `docs/` → documentación adicional del proyecto
+
+---
+
+## Novedades recientes (últimos PRs)
+
+### Seguridad y autorización
+
+- Se adoptó una estrategia **híbrida de autorización** en controladores de transacciones:
+  - validación por **scope** (token OAuth/JWT)
+  - validación por **rol** (`@PreAuthorize`)
+- Se reforzaron endpoints de operaciones de **teller/admin** para exigir scope + rol correcto.
+
+Archivos clave:
+
+- `banco-service/src/main/java/com/banco/co/transaction/controller/TransactionController.java`
+- `banco-service/src/main/java/com/banco/co/transaction/controller/TransactionEmployeeController.java`
+- `banco-service/src/main/java/com/banco/co/transaction/controller/TransactionAdminController.java`
+- `banco-service/src/main/java/com/banco/co/role/configuration/RolePermissionMatrix.java`
+
+### Configuración local
+
+- Se consolidó bootstrap de `.env` compartido entre Docker Compose y Spring Boot.
+- Se alineó la dependencia `springboot4-dotenv` vía BOM para reducir drift de versiones.
+
+Archivos clave:
+
+- `.env.example`
+- `banco-service/pom.xml`
+- `banco-service/src/main/resources/application.yml`
+
+### Estructura del proyecto
+
+- Se restauró la ubicación correcta de la clase principal en el paquete `com.banco.co`:
+  - `banco-service/src/main/java/com/banco/co/BancoServiceApplication.java`
 
 ---
 
@@ -100,6 +184,8 @@ El `docker-compose.yml` permite configurar el root password vía:
 ---
 
 ## Ejecutar el servicio
+
+> Si ya seguiste la sección **Inicio rápido**, podés usar esta sección como referencia extendida.
 
 ### Paso a paso local (recomendado)
 
