@@ -43,6 +43,12 @@ spring:
       enabled: true
 
 # =============================================
+# Dotenv (Opción C: .env compartido con Docker Compose)
+# =============================================
+springdotenv:
+  directory: ${SPRINGDOTENV_DIRECTORY:..}
+
+# =============================================
 # Jasypt - Encriptación
 # =============================================
 jasypt:

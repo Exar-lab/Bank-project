@@ -75,6 +75,13 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+		<!-- Dotenv para desarrollo local (Spring Boot 4) -->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>springboot4-dotenv</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
 		<!-- Jasypt Spring Boot - Encriptacion de propiedades y datos -->
 		<dependency>
 			<groupId>com.github.ulisesbocchio</groupId>

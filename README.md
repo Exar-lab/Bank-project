@@ -43,29 +43,42 @@ Incluye persistencia en **MySQL**, mensajería asíncrona con **Kafka**, migraci
 
 ---
 
-## Configuración (variables de entorno)
+## Configuración (variables de entorno) — Opción C
 
-El servicio usa `application.yml` con variables de entorno obligatorias/esperadas:
+Se implementó la **Opción C**: un único archivo `.env` compartido entre:
 
-### Base de datos (MySQL)
+- `docker-compose.yml` (infra local)
+- Spring Boot (`application.yml` vía `springboot4-dotenv`)
+
+### Prioridad de valores
+
+Para Spring Boot, los valores se resuelven con esta prioridad:
+
+1. **Variables de entorno reales del sistema/proceso**
+2. **Archivo `.env`**
+3. **Defaults definidos en `application.yml`** (si existen)
+
+Esto permite sobrescribir una variable puntual sin editar `.env`.
+
+### Archivo `.env` compartido
+
+- Plantilla versionada: `/.env.example`
+- Archivo local real: `/.env`
+- `.env` está ignorado por Git (no se commitea)
+
+#### Variables mínimas obligatorias para arrancar
+
+- `MYSQL_ROOT_PASSWORD` (Docker Compose / MySQL)
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
-
-### Kafka
-- `KAFKA_BOOTSTRAP_SERVERS` (por defecto: `localhost:9092`)
-
-### Seguridad (JWT)
 - `JWT_SECRET_KEY`
 - `ISSUER_GENERATOR`
-- Config de expiración:
-  - Access token: 15 min
-  - Refresh token: 30 días
-
-### Jasypt
 - `JASYPT_ENCRYPTOR_PASSWORD`
 
-> Importante: no hardcodear secretos en el repo.
+`KAFKA_BOOTSTRAP_SERVERS` tiene default (`localhost:9092`), pero se recomienda definirlo igual en `.env`.
+
+> Importante: usar valores locales/no reales y no hardcodear secretos en el repo.
 
 ---
 
@@ -88,7 +101,63 @@ El `docker-compose.yml` permite configurar el root password vía:
 
 ## Ejecutar el servicio
 
-Desde `banco-service/`:
+### Paso a paso local (recomendado)
+
+1) **Copiar plantilla de entorno**
+
+Linux/macOS:
+```bash
+cp .env.example .env
+```
+
+Windows (PowerShell):
+```powershell
+Copy-Item .env.example .env
+```
+
+2) **Levantar infraestructura**
+
+```bash
+docker compose up -d
+```
+
+3) **Ejecutar la app Spring Boot**
+
+> Recomendado: ejecutar Maven desde la **raíz** para que Spring tome el mismo `.env` compartido.
+
+Linux/macOS:
+```bash
+./banco-service/mvnw -f banco-service/pom.xml spring-boot:run
+```
+
+Windows (PowerShell o CMD):
+```bat
+banco-service\mvnw.cmd -f banco-service/pom.xml spring-boot:run
+```
+
+### Si ejecutás desde `banco-service/`
+
+`application.yml` define:
+
+```yaml
+springdotenv:
+  directory: ${SPRINGDOTENV_DIRECTORY:..}
+```
+
+Con eso, por defecto busca `.env` en el directorio padre (la raíz del repo).
+
+Si cambiás el directorio de ejecución, podés sobreescribirlo con:
+
+- Linux/macOS:
+  ```bash
+  export SPRINGDOTENV_DIRECTORY=/ruta/al/directorio/que/contiene/env
+  ```
+- Windows PowerShell:
+  ```powershell
+  $env:SPRINGDOTENV_DIRECTORY="C:\ruta\al\directorio\que\contiene\env"
+  ```
+
+### Ejecución directa desde `banco-service/` (alternativa)
 
 ### Linux/macOS
 ```bash
