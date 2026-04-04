@@ -31,7 +31,7 @@ public class TransactionEmployeeController {
     // ══════════════════════════════════════════════════════════
 
     @PostMapping("/cash-deposit")
-    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('TELLER', 'ADVISOR', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasAuthority('transaction:create') and hasAnyRole('TELLER', 'ADVISOR', 'BRANCH_MANAGER')")
     public ResponseEntity<TransactionResponseDto> cashDeposit(
             @Valid @RequestBody CashDepositRequestDto dto,
             Authentication authentication,
@@ -43,7 +43,7 @@ public class TransactionEmployeeController {
     }
 
     @PostMapping("/cash-withdrawal")
-    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('TELLER', 'ADVISOR', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasAuthority('transaction:create') and hasAnyRole('TELLER', 'ADVISOR', 'BRANCH_MANAGER')")
     public ResponseEntity<TransactionResponseDto> cashWithdrawal(
             @Valid @RequestBody CashWithdrawalRequestDto dto,
             Authentication authentication,
@@ -55,7 +55,7 @@ public class TransactionEmployeeController {
     }
 
     @PostMapping("/check-deposit")
-    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('TELLER', 'ADVISOR', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasAuthority('transaction:create') and hasAnyRole('TELLER', 'ADVISOR', 'BRANCH_MANAGER')")
     public ResponseEntity<TransactionResponseDto> checkDeposit(
             @Valid @RequestBody CheckDepositRequestDto dto,
             Authentication authentication,

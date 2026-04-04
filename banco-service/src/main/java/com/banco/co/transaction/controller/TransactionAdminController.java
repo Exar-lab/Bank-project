@@ -70,7 +70,7 @@ public class TransactionAdminController {
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasAuthority('transaction:reverse') or hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('transaction:reverse') and hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Void> rejectTransaction(
             @PathVariable UUID id,
             @RequestParam String reason,
@@ -81,7 +81,7 @@ public class TransactionAdminController {
     }
 
     @PutMapping("/{id}/reverse")
-    @PreAuthorize("hasAuthority('transaction:reverse') or hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('transaction:reverse') and hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<TransactionResponseDto> reverseTransaction(
             @PathVariable UUID id,
             @RequestParam String reason,
