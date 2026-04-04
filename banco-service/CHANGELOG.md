@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/Exar-lab/Bank-project/compare/v0.4.1...v0.4.2) (2026-04-04)
+
+
+### Refactoring
+
+* **riskprofile:** depend on service interfaces across fraud flow ([cc50405](https://github.com/Exar-lab/Bank-project/commit/cc50405cbc3cb689511edbf5aeb4f269e9798901))
+* **riskprofile:** depend on service interfaces across fraud flow ([0b68a4c](https://github.com/Exar-lab/Bank-project/commit/0b68a4cd836089e12a2ed43a79c1bc990e647c11))
+
 ## [0.4.1](https://github.com/Exar-lab/Bank-project/compare/v0.4.0...v0.4.1) (2026-04-04)
 
 
