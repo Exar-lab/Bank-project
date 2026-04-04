@@ -34,7 +34,7 @@ public class TransactionAdminController {
     // ══════════════════════════════════════════════════════════
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN', 'FRAUD_ANALYST', 'AUDITOR')")
+    @PreAuthorize("hasAuthority('transaction:read:all') or hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN', 'FRAUD_ANALYST', 'AUDITOR')")
     public ResponseEntity<Page<TransactionResponseDto>> getAllTransactions(
             @ModelAttribute TransactionFiltersDto filters,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
@@ -46,7 +46,7 @@ public class TransactionAdminController {
     }
 
     @GetMapping("/suspicious")
-    @PreAuthorize("hasAnyRole('FRAUD_ANALYST', 'SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('fraud:alert:read') or hasAnyRole('FRAUD_ANALYST', 'SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<TransactionResponseDto>> getSuspiciousTransactions(
             Authentication authentication
     ) {
@@ -60,7 +60,7 @@ public class TransactionAdminController {
     // ══════════════════════════════════════════════════════════
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('transaction:approve') or hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<TransactionResponseDto> approveTransaction(
             @PathVariable UUID id,
             Authentication authentication
@@ -70,7 +70,7 @@ public class TransactionAdminController {
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('transaction:reverse') or hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Void> rejectTransaction(
             @PathVariable UUID id,
             @RequestParam String reason,
@@ -81,7 +81,7 @@ public class TransactionAdminController {
     }
 
     @PutMapping("/{id}/reverse")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('transaction:reverse') or hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<TransactionResponseDto> reverseTransaction(
             @PathVariable UUID id,
             @RequestParam String reason,
@@ -96,7 +96,7 @@ public class TransactionAdminController {
     // ══════════════════════════════════════════════════════════
 
     @PostMapping("/{id}/fraud")
-    @PreAuthorize("hasAnyRole('FRAUD_ANALYST', 'SYSTEM_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('fraud:alert:resolve') or hasAnyRole('FRAUD_ANALYST', 'SYSTEM_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Void> flagAsFraud(
             @PathVariable UUID id,
             @Valid @RequestBody FraudFlagRequestDto dto,

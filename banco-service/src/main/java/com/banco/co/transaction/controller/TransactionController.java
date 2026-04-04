@@ -43,7 +43,7 @@ public class TransactionController {
     // ══════════════════════════════════════════════════════════
 
     @PostMapping("/transfer")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<TransactionResponseDto> transfer(
             @Valid @RequestBody TransferRequestDto dto,
             Authentication authentication,
@@ -55,7 +55,7 @@ public class TransactionController {
     }
 
     @PostMapping("/payment")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<TransactionResponseDto> payment(
             @Valid @RequestBody PaymentRequestDto dto,
             Authentication authentication,
@@ -67,7 +67,7 @@ public class TransactionController {
     }
 
     @PostMapping("/pay-service")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<TransactionResponseDto> payService(
             @Valid @RequestBody ServicePaymentRequestDto dto,
             Authentication authentication,
@@ -79,7 +79,7 @@ public class TransactionController {
     }
 
     @PostMapping("/schedule")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:create') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<TransactionResponseDto> scheduleTransfer(
             @Valid @RequestBody ScheduledTransferRequestDto dto,
             Authentication authentication,
@@ -91,7 +91,7 @@ public class TransactionController {
     }
 
     @DeleteMapping("/{id}/schedule")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:reverse') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<Void> cancelScheduledTransaction(
             @PathVariable UUID id,
             Authentication authentication
@@ -101,7 +101,7 @@ public class TransactionController {
     }
 
     @PostMapping("/{id}/reversal")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:reverse') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<Void> requestReversal(
             @PathVariable UUID id,
             @RequestParam String reason,
@@ -116,7 +116,7 @@ public class TransactionController {
     // ══════════════════════════════════════════════════════════
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:read') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<Page<TransactionResponseDto>> getMyTransactions(
             @ModelAttribute TransactionFiltersDto filters,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
@@ -128,7 +128,7 @@ public class TransactionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:read') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<TransactionResponseDto> getMyTransaction(
             @PathVariable UUID id,
             Authentication authentication
@@ -138,7 +138,7 @@ public class TransactionController {
     }
 
     @GetMapping("/account/{code}")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:read') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<Page<TransactionResponseDto>> getAccountTransactions(
             @PathVariable String code,
             @ModelAttribute TransactionFiltersDto filters,
@@ -151,7 +151,7 @@ public class TransactionController {
     }
 
     @GetMapping("/categories")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:read') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<List<TransactionResponseDto>> getTransactionsByCategory(
             @RequestParam TransactionCategory category,
             Authentication authentication
@@ -162,7 +162,7 @@ public class TransactionController {
     }
 
     @GetMapping("/summary")
-    @PreAuthorize("hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
+    @PreAuthorize("hasAuthority('transaction:read') or hasAnyRole('CUSTOMER_BASIC', 'CUSTOMER_PREMIUM')")
     public ResponseEntity<CategorySummaryDto> getCategorySummary(
             @RequestParam(required = false) LocalDateTime startDate,
             @RequestParam(required = false) LocalDateTime endDate,

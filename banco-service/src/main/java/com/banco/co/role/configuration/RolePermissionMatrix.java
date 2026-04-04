@@ -19,6 +19,7 @@ public class RolePermissionMatrix {
                 SystemPermission.ACCOUNT_READ,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
+                SystemPermission.TRANSACTION_REVERSE,
                 SystemPermission.CARD_READ,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.TRANSACTION_CREATE
@@ -29,6 +30,7 @@ public class RolePermissionMatrix {
                 SystemPermission.ACCOUNT_READ,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
+                SystemPermission.TRANSACTION_REVERSE,
                 SystemPermission.TRANSACTION_EXPORT,
                 SystemPermission.CARD_READ,
                 SystemPermission.CARD_BLOCK,
@@ -45,6 +47,31 @@ public class RolePermissionMatrix {
                 SystemPermission.CARD_READ,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.USER_READ
+        ));
+
+        // Asesor: operaciones de sucursal + lectura operativa
+        MATRIX.put(SystemRole.ADVISOR, Set.of(
+                SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_BALANCE_READ,
+                SystemPermission.TRANSACTION_READ,
+                SystemPermission.TRANSACTION_CREATE,
+                SystemPermission.CARD_READ,
+                SystemPermission.CARD_BLOCK,
+                SystemPermission.USER_READ
+        ));
+
+        // Gerente de sucursal: capacidades de asesor + reportes y auditoría
+        MATRIX.put(SystemRole.BRANCH_MANAGER, Set.of(
+                SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_BALANCE_READ,
+                SystemPermission.TRANSACTION_READ,
+                SystemPermission.TRANSACTION_CREATE,
+                SystemPermission.TRANSACTION_EXPORT,
+                SystemPermission.CARD_READ,
+                SystemPermission.CARD_BLOCK,
+                SystemPermission.USER_READ,
+                SystemPermission.REPORT_BASIC,
+                SystemPermission.ADMIN_AUDIT_READ
         ));
 
         // Analista de fraude: ve todo pero no opera
@@ -70,6 +97,42 @@ public class RolePermissionMatrix {
                 SystemPermission.FRAUD_ALERT_READ,
                 SystemPermission.REPORT_FINANCIAL,
                 SystemPermission.ADMIN_AUDIT_READ
+        ));
+
+        // Admin del sistema: gobierno operativo y seguridad, sin privilegio absoluto
+        MATRIX.put(SystemRole.SYSTEM_ADMIN, Set.of(
+                SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_CREATE,
+                SystemPermission.ACCOUNT_UPDATE,
+                SystemPermission.ACCOUNT_CLOSE,
+                SystemPermission.ACCOUNT_BLOCK,
+                SystemPermission.ACCOUNT_BALANCE_READ,
+                SystemPermission.TRANSACTION_READ_ALL,
+                SystemPermission.TRANSACTION_CREATE,
+                SystemPermission.TRANSACTION_APPROVE,
+                SystemPermission.TRANSACTION_REVERSE,
+                SystemPermission.TRANSACTION_EXPORT,
+                SystemPermission.CARD_READ,
+                SystemPermission.CARD_CREATE,
+                SystemPermission.CARD_BLOCK,
+                SystemPermission.CARD_LIMIT_UPDATE,
+                SystemPermission.CARD_PIN_RESET,
+                SystemPermission.USER_READ,
+                SystemPermission.USER_READ_SENSITIVE,
+                SystemPermission.USER_CREATE,
+                SystemPermission.USER_UPDATE,
+                SystemPermission.USER_SUSPEND,
+                SystemPermission.USER_ROLE_ASSIGN,
+                SystemPermission.FRAUD_ALERT_READ,
+                SystemPermission.FRAUD_ALERT_RESOLVE,
+                SystemPermission.FRAUD_RULES_UPDATE,
+                SystemPermission.REPORT_BASIC,
+                SystemPermission.REPORT_ADVANCED,
+                SystemPermission.REPORT_FINANCIAL,
+                SystemPermission.ADMIN_SYSTEM_CONFIG,
+                SystemPermission.ADMIN_ROLE_MANAGE,
+                SystemPermission.ADMIN_AUDIT_READ,
+                SystemPermission.ADMIN_BANK_MANAGE
         ));
 
         // Super admin: todo
