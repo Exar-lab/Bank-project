@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/Exar-lab/Bank-project/compare/v0.4.2...v0.5.0) (2026-04-05)
+
+
+### Features
+
+* **card:** complete card feature ([7bd50ed](https://github.com/Exar-lab/Bank-project/commit/7bd50ed245f7f8afee152ccdc7c56256341d74be))
+* **card:** complete card feature with DTOs, service, mapper, controllers and tests ([fe1a2be](https://github.com/Exar-lab/Bank-project/commit/fe1a2be32f3137696abd9f0a7eefa96b4b848395))
+
+
+### Bug Fixes
+
+* **card:** resolve Copilot review findings ([166ef04](https://github.com/Exar-lab/Bank-project/commit/166ef04bfd97ab34de9aa04f4b831c1ce079cb26))
+
 ## [0.4.2](https://github.com/Exar-lab/Bank-project/compare/v0.4.1...v0.4.2) (2026-04-04)
 
 
