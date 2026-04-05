@@ -32,7 +32,7 @@ public class CardAdminController {
     //  CONSULTAS ADMIN
     // ══════════════════════════════════════════════════════════
 
-    @PreAuthorize("hasAuthority('card:read')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<Page<CardSummaryDto>> getAllByStatus(
             @RequestParam CardStatus status,
@@ -44,7 +44,7 @@ public class CardAdminController {
     //  ACCIONES ADMIN
     // ══════════════════════════════════════════════════════════
 
-    @PreAuthorize("hasAuthority('card:block')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     @PutMapping("/{cardCode}/status")
     public ResponseEntity<CardResponseDto> changeStatus(
             @PathVariable String cardCode,
@@ -53,7 +53,7 @@ public class CardAdminController {
         return ResponseEntity.ok(cardService.adminChangeStatus(cardCode, dto, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:pin:reset')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SUPER_ADMIN')")
     @PostMapping("/{cardCode}/reset-pin")
     public ResponseEntity<Void> resetPin(
             @PathVariable String cardCode,

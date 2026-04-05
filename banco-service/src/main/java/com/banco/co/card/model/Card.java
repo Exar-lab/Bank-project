@@ -6,6 +6,7 @@ import com.banco.co.card.enums.CardBrand;
 import com.banco.co.card.enums.CardStatus;
 import com.banco.co.card.enums.CardTier;
 import com.banco.co.card.enums.CardType;
+import com.banco.co.card.exception.card.CardBlockedException;
 import com.banco.co.card.exception.card.CardClosedException;
 import com.banco.co.card.exception.card.CardExpiredException;
 import com.banco.co.card.exception.card.CardNotActiveException;
@@ -196,8 +197,11 @@ public class Card {
     }
 
     public void reportLost() {
-        if (this.status == CardStatus.CLOSED || this.status == CardStatus.STOLEN) {
+        if (this.status == CardStatus.CLOSED) {
             throw new CardClosedException(this.cardCode);
+        }
+        if (this.status == CardStatus.STOLEN) {
+            throw new CardBlockedException(this.cardCode, "Card is already in a terminal security state (STOLEN)");
         }
         this.status = CardStatus.LOST;
         this.blockedReason = "Reported as lost by cardholder";

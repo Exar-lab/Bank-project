@@ -32,8 +32,12 @@ public interface ICardRepository extends JpaRepository<Card, UUID> {
     @Transactional(readOnly = true)
     Optional<Card> findByCardCode(String cardCode);
 
+    @Query(
+        value = "SELECT c FROM Card c JOIN FETCH c.account a WHERE c.status = :status",
+        countQuery = "SELECT COUNT(c) FROM Card c WHERE c.status = :status"
+    )
     @Transactional(readOnly = true)
-    Page<Card> findAllByStatus(CardStatus status, Pageable pageable);
+    Page<Card> findAllByStatus(@Param("status") CardStatus status, Pageable pageable);
 
     boolean existsByCardCode(String cardCode);
 

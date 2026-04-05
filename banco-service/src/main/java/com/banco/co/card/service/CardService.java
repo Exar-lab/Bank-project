@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -90,7 +91,7 @@ public class CardService implements ICardService {
         card.setBrand(dto.brand());
         card.setTier(dto.tier());
         card.setAccount(account);
-        card.setPinHash(HashUtils.hashBcrypt("000000"));
+        card.setPinHash(HashUtils.hashBcrypt(UUID.randomUUID().toString()));
 
         Card savedCard = cardRepository.save(card);
 
@@ -486,6 +487,8 @@ public class CardService implements ICardService {
         card.setStatus(dto.status());
         if (dto.reason() != null) {
             card.setBlockedReason(dto.reason());
+        } else if (dto.status() == CardStatus.ACTIVE || dto.status() == CardStatus.INACTIVE) {
+            card.setBlockedReason(null);
         }
         Card savedCard = cardRepository.save(card);
 
@@ -594,11 +597,10 @@ public class CardService implements ICardService {
     }
 
     /**
-     * Validates that the authenticated user owns the card (by comparing emails).
+     * Validates that the authenticated user owns the card (by comparing UUIDs).
      */
     private void validateCardOwnershipByCard(Card card, User user) {
-        String cardOwnerEmail = card.getAccount().getUser().getEmail();
-        if (!cardOwnerEmail.equals(user.getEmail())) {
+        if (!card.getAccount().getUser().getId().equals(user.getId())) {
             auditLogService.logFailure(
                     user,
                     AuditAction.CARD_READ,
@@ -608,7 +610,7 @@ public class CardService implements ICardService {
                             new AuditLogDetail("userId", user.getId()),
                             new AuditLogDetail("userEmail", user.getEmail()),
                             new AuditLogDetail("cardCode", card.getCardCode()),
-                            new AuditLogDetail("ownerEmail", cardOwnerEmail)
+                            new AuditLogDetail("ownerId", card.getAccount().getUser().getId())
                     )
             );
             throw new UnauthorizedException("You don't own this card");
