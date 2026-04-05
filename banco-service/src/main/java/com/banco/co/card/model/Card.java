@@ -6,6 +6,8 @@ import com.banco.co.card.enums.CardBrand;
 import com.banco.co.card.enums.CardStatus;
 import com.banco.co.card.enums.CardTier;
 import com.banco.co.card.enums.CardType;
+import com.banco.co.card.exception.card.CardBlockedException;
+import com.banco.co.card.exception.card.CardClosedException;
 import com.banco.co.card.exception.card.CardExpiredException;
 import com.banco.co.card.exception.card.CardNotActiveException;
 import com.banco.co.card.generator.CardNumberGenerator;
@@ -184,6 +186,25 @@ public class Card {
     public void reportStolen() {
         this.status = CardStatus.STOLEN;
         this.blockedReason = "Reported as stolen by cardholder";
+    }
+
+    public void close() {
+        if (this.status == CardStatus.CLOSED) {
+            throw new CardClosedException(this.cardCode);
+        }
+        this.status = CardStatus.CLOSED;
+        this.blockedReason = "Closed by cardholder";
+    }
+
+    public void reportLost() {
+        if (this.status == CardStatus.CLOSED) {
+            throw new CardClosedException(this.cardCode);
+        }
+        if (this.status == CardStatus.STOLEN) {
+            throw new CardBlockedException(this.cardCode, "Card is already in a terminal security state (STOLEN)");
+        }
+        this.status = CardStatus.LOST;
+        this.blockedReason = "Reported as lost by cardholder";
     }
 
     public boolean isExpired() {

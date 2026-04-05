@@ -21,6 +21,7 @@ public class RolePermissionMatrix {
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_REVERSE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.TRANSACTION_CREATE
         ));
@@ -33,6 +34,7 @@ public class RolePermissionMatrix {
                 SystemPermission.TRANSACTION_REVERSE,
                 SystemPermission.TRANSACTION_EXPORT,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.CARD_LIMIT_UPDATE,
                 SystemPermission.TRANSACTION_CREATE
@@ -45,6 +47,7 @@ public class RolePermissionMatrix {
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_CREATE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.USER_READ
         ));
