@@ -10,6 +10,7 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -101,6 +102,18 @@ public class GlobalExceptionHandler {
                 .body(errorResponseFactory.validationFailed(
                         DEFAULT_VALIDATION_MESSAGE,
                         extractMessageErrors(java.util.List.of(getSafeMessage(ex.getMessage())))
+                ));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponseDto> handleMissingServletRequestParameter(MissingServletRequestParameterException ex) {
+        String message = String.format("Required request parameter '%s' is missing", ex.getParameterName());
+        log.warn("Missing request parameter: {}", ex.getParameterName());
+
+        return ResponseEntity.badRequest()
+                .body(errorResponseFactory.validationFailed(
+                        DEFAULT_VALIDATION_MESSAGE,
+                        extractMessageErrors(java.util.List.of(message))
                 ));
     }
 

@@ -7,11 +7,16 @@ public enum SystemPermission {
 
     // ── ACCOUNTS ──────────────────────────────────
     ACCOUNT_READ("account:read", "Ver información de cuentas"),
+    ACCOUNT_WRITE("account:write", "Gestionar cuentas (alias write)"),
     ACCOUNT_CREATE("account:create", "Crear cuentas"),
     ACCOUNT_UPDATE("account:update", "Actualizar cuentas"),
     ACCOUNT_CLOSE("account:close", "Cerrar cuentas"),
     ACCOUNT_BLOCK("account:block", "Bloquear cuentas"),
     ACCOUNT_BALANCE_READ("account:balance:read", "Ver saldo"),
+
+    // ── ENVELOPES ─────────────────────────────────
+    ENVELOPE_READ("envelope:read", "Ver sobres"),
+    ENVELOPE_WRITE("envelope:write", "Gestionar sobres"),
 
     // ── TRANSACTIONS ──────────────────────────────
     TRANSACTION_READ("transaction:read", "Ver transacciones propias"),
@@ -23,6 +28,7 @@ public enum SystemPermission {
 
     // ── CARDS ─────────────────────────────────────
     CARD_READ("card:read", "Ver tarjetas"),
+    CARD_WRITE("card:write", "Gestionar tarjetas (alias write)"),
     CARD_CREATE("card:create", "Crear tarjetas"),
     CARD_BLOCK("card:block", "Bloquear tarjetas"),
     CARD_LIMIT_UPDATE("card:limit:update", "Cambiar límites"),
@@ -30,6 +36,7 @@ public enum SystemPermission {
 
     // ── USERS ─────────────────────────────────────
     USER_READ("user:read", "Ver usuarios"),
+    USER_WRITE("user:write", "Gestionar usuarios (alias write)"),
     USER_READ_SENSITIVE("user:read:sensitive", "Ver datos sensibles"),
     USER_CREATE("user:create", "Crear usuarios"),
     USER_UPDATE("user:update", "Actualizar usuarios"),

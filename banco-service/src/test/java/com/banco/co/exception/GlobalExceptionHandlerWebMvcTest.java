@@ -61,7 +61,9 @@ class GlobalExceptionHandlerWebMvcTest {
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("Request validation failed"))
                 .andExpect(jsonPath("$.details.name").exists())
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(content().string(not(containsString("Exception"))))
+                .andExpect(content().string(not(containsString("org.springframework"))));
     }
 
     @Test
@@ -96,6 +98,15 @@ class GlobalExceptionHandlerWebMvcTest {
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("Request validation failed"))
                 .andExpect(jsonPath("$.details").isMap());
+    }
+
+    @Test
+    void testMissingRequestParameter_WhenRequiredParamAbsent_ReturnsValidationFailed() throws Exception {
+        mockMvc.perform(get("/test/missing-param"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("Request validation failed"))
+                .andExpect(jsonPath("$.details.error-1").value("Required request parameter 'requiredValue' is missing"));
     }
 
     @Test
@@ -178,6 +189,11 @@ class GlobalExceptionHandlerWebMvcTest {
         String constraintViolation() {
             java.util.Set<jakarta.validation.ConstraintViolation<?>> violations = java.util.Collections.emptySet();
             throw new ConstraintViolationException("constraint failed", violations);
+        }
+
+        @GetMapping("/missing-param")
+        String missingParam(@RequestParam String requiredValue) {
+            return requiredValue;
         }
 
         @GetMapping("/domain-exception")

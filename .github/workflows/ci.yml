@@ -44,6 +44,14 @@ jobs:
         working-directory: banco-service
         run: mvn -B -ntp test
 
+      - name: Run focused controller/security suites
+        if: github.event_name == 'push' || steps.changes.outputs.run_tests == 'true'
+        working-directory: banco-service
+        run: >
+          mvn -B -ntp
+          -Dtest=ControllerSecurityAnnotationsTest,RolePermissionMatrixCardTest,AccountControllerSecuritySliceWebMvcTest,CardControllerSecuritySliceWebMvcTest,EnvelopeControllerSecuritySliceWebMvcTest
+          test
+
       - name: Skip tests (no backend changes in PR)
         if: github.event_name == 'pull_request' && steps.changes.outputs.run_tests != 'true'
         run: echo "No backend changes detected; skipping Maven tests for this PR."
