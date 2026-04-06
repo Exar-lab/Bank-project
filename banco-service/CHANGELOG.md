@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/Exar-lab/Bank-project/compare/v0.5.0...v0.6.0) (2026-04-06)
+
+
+### Features
+
+* **security:** complete remaining controllers and scope alignment ([d15ef8e](https://github.com/Exar-lab/Bank-project/commit/d15ef8e974f34e09a5e2233ba458b5ff0459ccf2))
+* **security:** complete remaining controllers and scope alignment ([b4cf47d](https://github.com/Exar-lab/Bank-project/commit/b4cf47d847c2f981ff1467f1920af2e7276a3b13))
+
+
+### Bug Fixes
+
+* **security:** resolve Copilot PR review findings ([30b88b6](https://github.com/Exar-lab/Bank-project/commit/30b88b62f8e43e63b52c1c9a5558a1a4186f03e4))
+
 ## [0.5.0](https://github.com/Exar-lab/Bank-project/compare/v0.4.2...v0.5.0) (2026-04-05)
 
 
