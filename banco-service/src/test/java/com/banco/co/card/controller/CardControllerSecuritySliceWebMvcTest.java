@@ -59,6 +59,15 @@ class CardControllerSecuritySliceWebMvcTest {
     }
 
     @Test
+    @WithMockUser(username = "customer@banco.co", authorities = "card:read")
+    void testGetCardByCode_WithLegacyReadAuthority_Returns200() throws Exception {
+        when(cardService.getCardByCode(eq("CARD-2024-X7K9P2"), anyString())).thenReturn(sampleResponse());
+
+        mockMvc.perform(get("/api/v1/cards/CARD-2024-X7K9P2"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(username = "customer@banco.co", authorities = "SCOPE_user:read")
     void testGetCardByCode_WithoutCardReadScope_Returns403() throws Exception {
         mockMvc.perform(get("/api/v1/cards/CARD-2024-X7K9P2"))

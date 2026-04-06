@@ -59,6 +59,15 @@ class EnvelopeControllerSecuritySliceWebMvcTest {
     }
 
     @Test
+    @WithMockUser(username = "customer@banco.co", authorities = "envelope:read")
+    void testGetMyEnvelopes_WithLegacyReadAuthority_Returns200() throws Exception {
+        when(envelopeService.getMyEnvelopes(anyString())).thenReturn(List.of(sampleResponse()));
+
+        mockMvc.perform(get("/api/v1/envelopes"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(username = "customer@banco.co", authorities = "SCOPE_envelope:write")
     void testCreate_WithWriteScope_Returns201() throws Exception {
         String validBody = """

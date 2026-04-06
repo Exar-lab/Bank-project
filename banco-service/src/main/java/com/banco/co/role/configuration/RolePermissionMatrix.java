@@ -111,9 +111,7 @@ public class RolePermissionMatrix {
                 SystemPermission.FRAUD_ALERT_RESOLVE,
                 SystemPermission.FRAUD_RULES_UPDATE,
                 SystemPermission.USER_READ,
-                SystemPermission.USER_WRITE,
                 SystemPermission.CARD_READ,
-                SystemPermission.CARD_WRITE,
                 SystemPermission.ADMIN_AUDIT_READ
         ));
 

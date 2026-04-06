@@ -15,6 +15,8 @@ Además, para mocks de contexto se usa:
 Se agregó un test slice real MVC + method security:
 
 - `banco-service/src/test/java/com/banco/co/account/controller/AccountControllerSecuritySliceWebMvcTest.java`
+- `banco-service/src/test/java/com/banco/co/card/controller/CardControllerSecuritySliceWebMvcTest.java`
+- `banco-service/src/test/java/com/banco/co/envelope/controller/EnvelopeControllerSecuritySliceWebMvcTest.java`
 
 Este test valida objetivamente:
 - 200 con scope correcto (`SCOPE_account:read`)
@@ -25,7 +27,7 @@ Se configuró `SecurityFilterChain` de test con `authenticationEntryPoint` y `ac
 
 ### Evidencia ejecutada
 ```bash
-./mvnw -B -ntp -Dtest=AccountControllerSecuritySliceWebMvcTest test
+./mvnw -B -ntp -Dtest=AccountControllerSecuritySliceWebMvcTest,CardControllerSecuritySliceWebMvcTest,EnvelopeControllerSecuritySliceWebMvcTest test
 ```
 
 Resultado:
@@ -54,12 +56,12 @@ Incluye:
 ## 3) Ajuste de pruebas/config mínima para evidencia trazable
 
 ### Ajustes mínimos realizados
-- Nuevo test slice: `AccountControllerSecuritySliceWebMvcTest`
+- Tests slice incorporados: `AccountControllerSecuritySliceWebMvcTest`, `CardControllerSecuritySliceWebMvcTest`, `EnvelopeControllerSecuritySliceWebMvcTest`
 - Mantenido y reutilizado test focused suite existente para contrato de errores y gobernanza de seguridad por anotación.
 
 ### Evidencia ejecutada
 ```bash
-./mvnw -B -ntp -Dtest=RolePermissionMatrixCardTest,ControllerSecurityAnnotationsTest,AccountControllerTest,AccountAdminControllerTest,EnvelopeControllerTest,PublicUserControllerTest,UserControllerTest,UserAdminControllerTest,CardControllerTest,CardAdminControllerTest,GlobalExceptionHandlerWebMvcTest test
+./mvnw -B -ntp -Dtest=ControllerSecurityAnnotationsTest,AccountControllerTest,AccountAdminControllerTest,EnvelopeControllerTest,PublicUserControllerTest,UserControllerTest,UserAdminControllerTest,CardControllerTest,CardAdminControllerTest,GlobalExceptionHandlerWebMvcTest test
 ```
 
 Resultado:

@@ -34,6 +34,8 @@ Definir alcance explícito para que `verify` evalúe SOLO los cambios del SDD y 
 - `banco-service/src/test/java/com/banco/co/security/controller/ControllerSecurityAnnotationsTest.java`
 - `banco-service/src/test/java/com/banco/co/exception/GlobalExceptionHandlerWebMvcTest.java`
 - `banco-service/src/test/java/com/banco/co/account/controller/AccountControllerSecuritySliceWebMvcTest.java` (mitigación MVC security slice)
+- `banco-service/src/test/java/com/banco/co/card/controller/CardControllerSecuritySliceWebMvcTest.java` (mitigación MVC security slice)
+- `banco-service/src/test/java/com/banco/co/envelope/controller/EnvelopeControllerSecuritySliceWebMvcTest.java` (mitigación MVC security slice)
 
 ### Scope governance artifacts
 - `docs/sdd/complete-remaining-entity-controllers-scopes/scope-manifest.md`
@@ -51,6 +53,6 @@ Definir alcance explícito para que `verify` evalúe SOLO los cambios del SDD y 
 
 ## Focused Verification Commands
 ```bash
-./mvnw -B -ntp -Dtest=AccountControllerSecuritySliceWebMvcTest test
-./mvnw -B -ntp -Dtest=RolePermissionMatrixCardTest,ControllerSecurityAnnotationsTest,AccountControllerTest,AccountAdminControllerTest,EnvelopeControllerTest,PublicUserControllerTest,UserControllerTest,UserAdminControllerTest,CardControllerTest,CardAdminControllerTest,GlobalExceptionHandlerWebMvcTest test
+./mvnw -B -ntp -Dtest=AccountControllerSecuritySliceWebMvcTest,CardControllerSecuritySliceWebMvcTest,EnvelopeControllerSecuritySliceWebMvcTest test
+./mvnw -B -ntp -Dtest=ControllerSecurityAnnotationsTest,AccountControllerTest,AccountAdminControllerTest,EnvelopeControllerTest,PublicUserControllerTest,UserControllerTest,UserAdminControllerTest,CardControllerTest,CardAdminControllerTest,GlobalExceptionHandlerWebMvcTest test
 ```

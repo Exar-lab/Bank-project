@@ -60,6 +60,15 @@ class AccountControllerSecuritySliceWebMvcTest {
     }
 
     @Test
+    @WithMockUser(username = "customer@banco.co", authorities = "account:read")
+    void testGetMyAccounts_WithLegacyReadAuthority_Returns200() throws Exception {
+        when(accountService.getMyAccounts(anyString())).thenReturn(List.of(sampleResponse()));
+
+        mockMvc.perform(get("/api/v1/accounts"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(username = "customer@banco.co", authorities = "SCOPE_account:read")
     void testGetAccountById_WithReadScope_Returns200() throws Exception {
         UUID accountId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
