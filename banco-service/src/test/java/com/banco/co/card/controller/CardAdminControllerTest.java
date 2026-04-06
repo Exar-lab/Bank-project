@@ -50,6 +50,8 @@ class CardAdminControllerTest {
     private static final UsernamePasswordAuthenticationToken ADMIN =
             new UsernamePasswordAuthenticationToken("admin@banco.co", "");
 
+    private static final String CARD_WRITE_SCOPE = "SCOPE_card:write";
+
     @BeforeEach
     void setUp() {
         cardService = mock(ICardService.class);
@@ -158,6 +160,28 @@ class CardAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testChangeStatus_WithScopeCardWriteAuthority_Returns200() throws Exception {
+        CardResponseDto response = buildCardResponse("CARD-001", CardStatus.BLOCKED);
+        AdminChangeCardStatusRequestDto dto = new AdminChangeCardStatusRequestDto(
+                CardStatus.BLOCKED, "Suspicious activity"
+        );
+
+        when(cardService.adminChangeStatus(eq("CARD-001"), any(AdminChangeCardStatusRequestDto.class), anyString()))
+                .thenReturn(response);
+
+        mockMvc.perform(put("/api/v1/admin/cards/CARD-001/status")
+                        .principal(new UsernamePasswordAuthenticationToken(
+                                "admin@banco.co",
+                                "",
+                                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(CARD_WRITE_SCOPE))
+                        ))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("BLOCKED"));
     }
 
     private CardResponseDto buildCardResponse(String cardCode, CardStatus status) {

@@ -51,6 +51,8 @@ class CardControllerTest {
     private static final UsernamePasswordAuthenticationToken USER =
             new UsernamePasswordAuthenticationToken("user@banco.co", "");
 
+    private static final String CARD_WRITE_SCOPE = "card:write";
+
     @BeforeEach
     void setUp() {
         cardService = mock(ICardService.class);
@@ -250,5 +252,25 @@ class CardControllerTest {
         mockMvc.perform(get("/api/v1/cards/account/ACC-001").principal(USER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].cardCode").value("CARD-2024-X7K9P2"));
+    }
+
+    @Test
+    void testCreateCard_WithScopeCardWriteAuthority_Returns201() throws Exception {
+        CreateCardRequestDto dto = new CreateCardRequestDto(
+                CardType.DEBITO, CardBrand.VISA, CardTier.GOLD, "ACC-001"
+        );
+        when(cardService.createCard(any(CreateCardRequestDto.class), anyString()))
+                .thenReturn(sampleResponse);
+
+        mockMvc.perform(post("/api/v1/cards")
+                        .principal(new UsernamePasswordAuthenticationToken(
+                                "user@banco.co",
+                                "",
+                                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(CARD_WRITE_SCOPE))
+                        ))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cardCode").value("CARD-2024-X7K9P2"));
     }
 }

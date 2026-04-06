@@ -17,62 +17,89 @@ public class RolePermissionMatrix {
         // Cliente básico: solo ve sus propias cosas
         MATRIX.put(SystemRole.CUSTOMER_BASIC, Set.of(
                 SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_WRITE,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_REVERSE,
+                SystemPermission.ENVELOPE_READ,
+                SystemPermission.ENVELOPE_WRITE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_WRITE,
                 SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
+                SystemPermission.USER_READ,
+                SystemPermission.USER_WRITE,
                 SystemPermission.TRANSACTION_CREATE
         ));
 
         // Cliente premium: puede más operaciones
         MATRIX.put(SystemRole.CUSTOMER_PREMIUM, Set.of(
                 SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_WRITE,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_REVERSE,
                 SystemPermission.TRANSACTION_EXPORT,
+                SystemPermission.ENVELOPE_READ,
+                SystemPermission.ENVELOPE_WRITE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_WRITE,
                 SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.CARD_LIMIT_UPDATE,
+                SystemPermission.USER_READ,
+                SystemPermission.USER_WRITE,
                 SystemPermission.TRANSACTION_CREATE
         ));
 
         // Cajero: opera cuentas pero no las crea
         MATRIX.put(SystemRole.TELLER, Set.of(
                 SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_WRITE,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_CREATE,
+                SystemPermission.ENVELOPE_READ,
+                SystemPermission.ENVELOPE_WRITE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_WRITE,
                 SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
-                SystemPermission.USER_READ
+                SystemPermission.USER_READ,
+                SystemPermission.USER_WRITE
         ));
 
         // Asesor: operaciones de sucursal + lectura operativa
         MATRIX.put(SystemRole.ADVISOR, Set.of(
                 SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_WRITE,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_CREATE,
+                SystemPermission.ENVELOPE_READ,
+                SystemPermission.ENVELOPE_WRITE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_WRITE,
                 SystemPermission.CARD_BLOCK,
-                SystemPermission.USER_READ
+                SystemPermission.USER_READ,
+                SystemPermission.USER_WRITE
         ));
 
         // Gerente de sucursal: capacidades de asesor + reportes y auditoría
         MATRIX.put(SystemRole.BRANCH_MANAGER, Set.of(
                 SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_WRITE,
                 SystemPermission.ACCOUNT_BALANCE_READ,
                 SystemPermission.TRANSACTION_READ,
                 SystemPermission.TRANSACTION_CREATE,
                 SystemPermission.TRANSACTION_EXPORT,
+                SystemPermission.ENVELOPE_READ,
+                SystemPermission.ENVELOPE_WRITE,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_WRITE,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.USER_READ,
+                SystemPermission.USER_WRITE,
                 SystemPermission.REPORT_BASIC,
                 SystemPermission.ADMIN_AUDIT_READ
         ));
@@ -92,6 +119,7 @@ public class RolePermissionMatrix {
         MATRIX.put(SystemRole.AUDITOR, Set.of(
                 SystemPermission.ACCOUNT_READ,
                 SystemPermission.ACCOUNT_BALANCE_READ,
+                SystemPermission.ENVELOPE_READ,
                 SystemPermission.TRANSACTION_READ_ALL,
                 SystemPermission.TRANSACTION_EXPORT,
                 SystemPermission.USER_READ,
@@ -105,22 +133,27 @@ public class RolePermissionMatrix {
         // Admin del sistema: gobierno operativo y seguridad, sin privilegio absoluto
         MATRIX.put(SystemRole.SYSTEM_ADMIN, Set.of(
                 SystemPermission.ACCOUNT_READ,
+                SystemPermission.ACCOUNT_WRITE,
                 SystemPermission.ACCOUNT_CREATE,
                 SystemPermission.ACCOUNT_UPDATE,
                 SystemPermission.ACCOUNT_CLOSE,
                 SystemPermission.ACCOUNT_BLOCK,
                 SystemPermission.ACCOUNT_BALANCE_READ,
+                SystemPermission.ENVELOPE_READ,
+                SystemPermission.ENVELOPE_WRITE,
                 SystemPermission.TRANSACTION_READ_ALL,
                 SystemPermission.TRANSACTION_CREATE,
                 SystemPermission.TRANSACTION_APPROVE,
                 SystemPermission.TRANSACTION_REVERSE,
                 SystemPermission.TRANSACTION_EXPORT,
                 SystemPermission.CARD_READ,
+                SystemPermission.CARD_WRITE,
                 SystemPermission.CARD_CREATE,
                 SystemPermission.CARD_BLOCK,
                 SystemPermission.CARD_LIMIT_UPDATE,
                 SystemPermission.CARD_PIN_RESET,
                 SystemPermission.USER_READ,
+                SystemPermission.USER_WRITE,
                 SystemPermission.USER_READ_SENSITIVE,
                 SystemPermission.USER_CREATE,
                 SystemPermission.USER_UPDATE,

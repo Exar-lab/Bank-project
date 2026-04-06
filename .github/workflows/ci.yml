@@ -39,10 +39,19 @@ jobs:
           cache: maven
           cache-dependency-path: banco-service/pom.xml
 
-      - name: Run tests
-        if: github.event_name == 'push' || steps.changes.outputs.run_tests == 'true'
+      - name: Run full test suite (push)
+        if: github.event_name == 'push'
         working-directory: banco-service
         run: mvn -B -ntp test
+
+      - name: Run focused controller/security smoke suite (PR backend changes)
+        # Smoke suite for fast feedback in PRs; full suite runs on push.
+        if: github.event_name == 'pull_request' && steps.changes.outputs.run_tests == 'true'
+        working-directory: banco-service
+        run: >
+          mvn -B -ntp
+          -Dtest=ControllerSecurityAnnotationsTest,AccountControllerSecuritySliceWebMvcTest,CardControllerSecuritySliceWebMvcTest,EnvelopeControllerSecuritySliceWebMvcTest
+          test
 
       - name: Skip tests (no backend changes in PR)
         if: github.event_name == 'pull_request' && steps.changes.outputs.run_tests != 'true'

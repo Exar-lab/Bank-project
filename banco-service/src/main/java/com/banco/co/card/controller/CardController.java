@@ -35,7 +35,7 @@ public class CardController {
         this.cardService = cardService;
     }
 
-    @PreAuthorize("hasAuthority('card:create')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:create')")
     @PostMapping
     public ResponseEntity<CardResponseDto> createCard(
             @Valid @RequestBody CreateCardRequestDto dto,
@@ -44,13 +44,13 @@ public class CardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PreAuthorize("hasAuthority('card:read')")
+    @PreAuthorize("hasAnyAuthority('card:read', 'SCOPE_card:read')")
     @GetMapping
     public ResponseEntity<List<CardSummaryDto>> getMyCards(Authentication authentication) {
         return ResponseEntity.ok(cardService.getMyCards(authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:read')")
+    @PreAuthorize("hasAnyAuthority('card:read', 'SCOPE_card:read')")
     @GetMapping("/account/{accountCode}")
     public ResponseEntity<List<CardSummaryDto>> getCardsByAccount(
             @PathVariable String accountCode,
@@ -58,7 +58,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.getMyCardsByAccount(accountCode, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:read')")
+    @PreAuthorize("hasAnyAuthority('card:read', 'SCOPE_card:read')")
     @GetMapping("/{cardCode}")
     public ResponseEntity<CardResponseDto> getCardByCode(
             @PathVariable String cardCode,
@@ -66,7 +66,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.getCardByCode(cardCode, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:create')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:create')")
     @PostMapping("/{cardCode}/activate")
     public ResponseEntity<CardResponseDto> activateCard(
             @PathVariable String cardCode,
@@ -75,7 +75,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.activateCard(cardCode, dto, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:block')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:block')")
     @PostMapping("/{cardCode}/block")
     public ResponseEntity<CardResponseDto> blockCard(
             @PathVariable String cardCode,
@@ -84,7 +84,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.blockCard(cardCode, dto, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:block')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:block')")
     @PostMapping("/{cardCode}/report-stolen")
     public ResponseEntity<CardResponseDto> reportStolen(
             @PathVariable String cardCode,
@@ -92,7 +92,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.reportStolen(cardCode, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:block')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:block')")
     @PostMapping("/{cardCode}/report-lost")
     public ResponseEntity<CardResponseDto> reportLost(
             @PathVariable String cardCode,
@@ -100,7 +100,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.reportLost(cardCode, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:block')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:block')")
     @PostMapping("/{cardCode}/close")
     public ResponseEntity<CardResponseDto> closeCard(
             @PathVariable String cardCode,
@@ -108,7 +108,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.closeCard(cardCode, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:limit:update')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:limit:update')")
     @PutMapping("/{cardCode}/limits")
     public ResponseEntity<CardResponseDto> updateLimits(
             @PathVariable String cardCode,
@@ -117,7 +117,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.updateLimits(cardCode, dto, authentication.getName()));
     }
 
-    @PreAuthorize("hasAuthority('card:create')")
+    @PreAuthorize("hasAnyAuthority('card:write', 'SCOPE_card:write', 'card:create')")
     @PutMapping("/{cardCode}/features")
     public ResponseEntity<CardResponseDto> updateFeatures(
             @PathVariable String cardCode,
