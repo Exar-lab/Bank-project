@@ -1,0 +1,2414 @@
+openapi: 3.1.0
+info:
+  title: Banco Service API
+  description: REST API for banco-service banking platform
+  version: 0.4.2-SNAPSHOT
+  x-schema-naming-convention: DTO schemas preserve Java `*Dto` suffix for deterministic Java-record parity
+servers:
+  - url: http://localhost:8080
+    description: Local development
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    SizeParam:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+    SortParam:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        default: createdAt,desc
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseDto'
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseDto'
+    Forbidden:
+      description: Insufficient authority
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseDto'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseDto'
+    Conflict:
+      description: Business conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseDto'
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseDto'
+  schemas:
+    ErrorResponseDto:
+      type: object
+      required: [errorCode, message, timestamp]
+      properties:
+        errorCode:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+    PageOfTransactionResponseDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponseDto'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+    PageOfCardSummaryDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardSummaryDto'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    AccountRequestDto:
+      type: object
+      required: [accountType, currency, documentNumber]
+      properties:
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+        overdraftLimit:
+          type: number
+          format: double
+          minimum: 0
+        interestRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        documentNumber:
+          type: string
+    AccountUpdateDto:
+      type: object
+      properties:
+        overdraftLimit:
+          type: number
+          format: double
+          minimum: 0
+        interestRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+    AccountResponseDto:
+      type: object
+      properties:
+        accountCode:
+          type: string
+        accountNumber:
+          type: string
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+        currency:
+          type: string
+        balance:
+          type: number
+          format: double
+        availableBalance:
+          type: number
+          format: double
+        overdraftLimit:
+          type: number
+          format: double
+        interestRate:
+          type: number
+          format: double
+        userEmail:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastTransactionAt:
+          type: string
+          format: date-time
+
+    CreateCardRequestDto:
+      type: object
+      required: [cardType, brand, tier, accountCode]
+      properties:
+        cardType:
+          $ref: '#/components/schemas/CardType'
+        brand:
+          $ref: '#/components/schemas/CardBrand'
+        tier:
+          $ref: '#/components/schemas/CardTier'
+        accountCode:
+          type: string
+    ActivateCardRequestDto:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 6
+          writeOnly: true
+          x-sensitive: true
+    BlockCardRequestDto:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+    UpdateCardLimitsRequestDto:
+      type: object
+      required: [dailyLimit, monthlyLimit]
+      properties:
+        dailyLimit:
+          type: number
+          format: double
+          minimum: 0
+        monthlyLimit:
+          type: number
+          format: double
+          minimum: 0
+    UpdateCardFeaturesRequestDto:
+      type: object
+      properties:
+        contactlessEnabled:
+          type: boolean
+        onlinePaymentsEnabled:
+          type: boolean
+        internationalEnabled:
+          type: boolean
+    AdminChangeCardStatusRequestDto:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        reason:
+          type: string
+          maxLength: 500
+    AdminResetPinRequestDto:
+      type: object
+      required: [newPin]
+      properties:
+        newPin:
+          type: string
+          minLength: 4
+          maxLength: 6
+          writeOnly: true
+          x-sensitive: true
+    CardResponseDto:
+      type: object
+      properties:
+        cardCode:
+          type: string
+        maskedCardNumber:
+          type: string
+        cardType:
+          $ref: '#/components/schemas/CardType'
+        brand:
+          $ref: '#/components/schemas/CardBrand'
+        tier:
+          $ref: '#/components/schemas/CardTier'
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        blockedReason:
+          type: string
+        accountCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        activatedAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+        dailyLimit:
+          type: number
+          format: double
+        monthlyLimit:
+          type: number
+          format: double
+        dailySpent:
+          type: number
+          format: double
+        monthlySpent:
+          type: number
+          format: double
+        contactlessEnabled:
+          type: boolean
+        onlinePaymentsEnabled:
+          type: boolean
+        internationalEnabled:
+          type: boolean
+        points:
+          type: number
+          format: double
+    CardSummaryDto:
+      type: object
+      properties:
+        cardCode:
+          type: string
+        maskedCardNumber:
+          type: string
+        cardType:
+          $ref: '#/components/schemas/CardType'
+        brand:
+          $ref: '#/components/schemas/CardBrand'
+        tier:
+          $ref: '#/components/schemas/CardTier'
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        accountCode:
+          type: string
+        expirationDate:
+          type: string
+          format: date-time
+
+    TransferRequestDto:
+      type: object
+      required: [fromAccountCode, toAccountCode, amount]
+      properties:
+        fromAccountCode:
+          type: string
+        toAccountCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          multipleOf: 0.01
+        description:
+          type: string
+          maxLength: 200
+        confirmTransfer:
+          type: boolean
+          default: true
+    PaymentRequestDto:
+      type: object
+      required: [cardCode, amount, merchantName]
+      properties:
+        cardCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        merchantName:
+          type: string
+        merchantMccCode:
+          type: string
+        description:
+          type: string
+    ServicePaymentRequestDto:
+      type: object
+      required: [accountCode, amount, serviceProvider, referenceNumber]
+      properties:
+        accountCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        serviceProvider:
+          type: string
+        referenceNumber:
+          type: string
+        description:
+          type: string
+    ScheduledTransferRequestDto:
+      type: object
+      required: [fromAccountCode, toAccountCode, amount, scheduledFor]
+      properties:
+        fromAccountCode:
+          type: string
+        toAccountCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        scheduledFor:
+          type: string
+          format: date-time
+        description:
+          type: string
+    FraudFlagRequestDto:
+      type: object
+      required: [fraudScore, reason]
+      properties:
+        fraudScore:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        reason:
+          type: string
+    CashDepositRequestDto:
+      type: object
+      required: [accountCode, amount]
+      properties:
+        accountCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        customerName:
+          type: string
+        description:
+          type: string
+    CashWithdrawalRequestDto:
+      type: object
+      required: [accountCode, amount, customerIdVerified]
+      properties:
+        accountCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        customerName:
+          type: string
+        customerIdVerified:
+          type: boolean
+        description:
+          type: string
+    CheckDepositRequestDto:
+      type: object
+      required: [accountCode, checkNumber, bankName, amount]
+      properties:
+        accountCode:
+          type: string
+        checkNumber:
+          type: string
+        bankName:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        description:
+          type: string
+    TransactionResponseDto:
+      type: object
+      properties:
+        transactionCode:
+          type: string
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        fromAccountCode:
+          type: string
+        toAccountCode:
+          type: string
+        amount:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        netAmount:
+          type: number
+          format: double
+        currency:
+          type: string
+        fromAccountBalanceBefore:
+          type: number
+          format: double
+        fromAccountBalanceAfter:
+          type: number
+          format: double
+        toAccountBalanceBefore:
+          type: number
+          format: double
+        toAccountBalanceAfter:
+          type: number
+          format: double
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        confirmationMessage:
+          type: string
+    CategorySummaryDto:
+      type: object
+      properties:
+        totalByCategory:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+        totalSpent:
+          type: number
+          format: double
+        topCategory:
+          $ref: '#/components/schemas/TransactionCategory'
+        transactionCount:
+          type: integer
+
+    EnvelopeRequestDto:
+      type: object
+      required: [name, accountCode, envelopeType, targetAmount]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        accountCode:
+          type: string
+        envelopeType:
+          $ref: '#/components/schemas/EnvelopeType'
+        targetAmount:
+          type: number
+          format: double
+          minimum: 0.01
+        targetDate:
+          type: string
+          format: date
+        autoContribute:
+          type: boolean
+          default: false
+        autoContributeAmount:
+          type: number
+          format: double
+        autoContributeFrequency:
+          $ref: '#/components/schemas/AutoContributeFrequency'
+        roundUpEnabled:
+          type: boolean
+          default: false
+        roundUpMultiple:
+          type: number
+          format: double
+        icon:
+          type: string
+        color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 10
+    EnvelopeUpdateDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        envelopeType:
+          $ref: '#/components/schemas/EnvelopeType'
+        targetAmount:
+          type: number
+          format: double
+        targetDate:
+          type: string
+          format: date
+        autoContribute:
+          type: boolean
+        autoContributeAmount:
+          type: number
+          format: double
+        autoContributeFrequency:
+          $ref: '#/components/schemas/AutoContributeFrequency'
+        roundUpEnabled:
+          type: boolean
+        roundUpMultiple:
+          type: number
+          format: double
+        icon:
+          type: string
+        color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 10
+    EnvelopeDepositDto:
+      type: object
+      required: [envelopeCode, amount]
+      properties:
+        envelopeCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          multipleOf: 0.01
+        description:
+          type: string
+    EnvelopeWithdrawDto:
+      type: object
+      required: [envelopeCode, amount]
+      properties:
+        envelopeCode:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          multipleOf: 0.01
+        description:
+          type: string
+        confirmWithdrawal:
+          type: boolean
+          default: true
+    EnvelopeResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/EnvelopeType'
+        status:
+          $ref: '#/components/schemas/EnvelopeStatus'
+        targetDate:
+          type: string
+          format: date
+        progressPercentage:
+          type: number
+          format: double
+        balance:
+          type: number
+          format: double
+        icon:
+          type: string
+        color:
+          type: string
+
+    CustomerRequestDto:
+      type: object
+      required: [fistName, lastName, email, password, documentNumber, documentType, birthDate, phoneNumber, address, username]
+      properties:
+        fistName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          writeOnly: true
+          x-sensitive: true
+        documentNumber:
+          type: string
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        birthDate:
+          type: string
+          format: date
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        username:
+          type: string
+    CustomerUpdateDto:
+      type: object
+      properties:
+        fistName:
+          type: string
+        lastName:
+          type: string
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        username:
+          type: string
+    PasswordRequestDto:
+      type: object
+      required: [currentPassword, password, confirmPassword]
+      properties:
+        currentPassword:
+          type: string
+          writeOnly: true
+          x-sensitive: true
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          writeOnly: true
+          x-sensitive: true
+        confirmPassword:
+          type: string
+          minLength: 8
+          maxLength: 100
+          writeOnly: true
+          x-sensitive: true
+    CustomerResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userCode:
+          type: string
+        fistName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        documentNumber:
+          type: string
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        birthDate:
+          type: string
+          format: date
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        kycStatus:
+          $ref: '#/components/schemas/KycStatus'
+        createdDate:
+          type: string
+          format: date-time
+        updatedDate:
+          type: string
+          format: date-time
+    EmployeeRequestDto:
+      type: object
+      required: [fistName, lastName, email, password, documentNumber, documentType, birthDate, phoneNumber, address, role]
+      properties:
+        fistName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          writeOnly: true
+          x-sensitive: true
+        documentNumber:
+          type: string
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        birthDate:
+          type: string
+          format: date
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        role:
+          $ref: '#/components/schemas/SystemRole'
+    EmployeeResponseDto:
+      allOf:
+        - $ref: '#/components/schemas/CustomerResponseDto'
+
+    AccountStatus:
+      type: string
+      enum: [ACTIVE, SUSPENDED, BLOCKED, INACTIVE, IN_REVIEW, CLOSED]
+    AccountType:
+      type: string
+      enum: [SAVINGS, CHECKING, PAYROLL, FIXED_DEPOSIT, MONEY_MARKET, INVESTMENT, JOINT_ACCOUNT, BUSINESS, STUDENT, TRUST, ESCROW]
+    CardStatus:
+      type: string
+      enum: [INACTIVE, ACTIVE, BLOCKED, EXPIRED, STOLEN, LOST, CLOSED]
+    CardType:
+      type: string
+      enum: [CREDITO, DEBITO]
+    CardBrand:
+      type: string
+      enum: [VISA, MASTERCARD, AMEX]
+    CardTier:
+      type: string
+      enum: [CLASSIC, GOLD, PLATINUM, BLACK]
+    TransactionStatus:
+      type: string
+      enum: [PENDING, PROCESSING, PENDING_REVIEW, APPROVED, COMPLETED, FAILED, REJECTED, CANCELLED, REVERSED, SCHEDULED]
+    TransactionType:
+      type: string
+      enum: [DEPOSIT, WITHDRAWAL, TRANSFER, PAYMENT, PURCHASE, REFUND, FEE, INTEREST, REVERSAL, ADJUSTMENT, CASHBACK, LOAN_DISBURSEMENT, LOAN_PAYMENT]
+    TransactionCategory:
+      type: string
+      enum: [FOOD_DINING, TRANSPORTATION, ENTERTAINMENT, SHOPPING, BILLS_UTILITIES, HEALTH_FITNESS, TRAVEL, EDUCATION, PERSONAL_CARE, FINANCIAL, INCOME, OTHER]
+    EnvelopeStatus:
+      type: string
+      enum: [ACTIVE, LOCKED, PAUSED, COMPLETED, CLOSED, ARCHIVED, UNDER_REVIEW, DELETED]
+    EnvelopeType:
+      type: string
+      enum: [SAVINGS, VACATION, EMERGENCY, PURCHASE, EDUCATION, CUSTOM, INVESTMENT, HOME, CAR]
+    AutoContributeFrequency:
+      type: string
+      enum: [DAILY, WEEKLY, MONTHLY]
+    DocumentType:
+      type: string
+      enum: [CEDULA, PASAPORTE, IDENTIFICACION_EXTRANJERA]
+    UserStatus:
+      type: string
+      enum: [ACTIVE, SUSPENDED, INACTIVE, CLOSED, DELETED]
+    KycStatus:
+      type: string
+      enum: [PENDING, IN_REVIEW, VERIFIED, REJECTED, EXPIRED]
+    SystemRole:
+      type: string
+      enum: [CUSTOMER_BASIC, CUSTOMER_PREMIUM, TELLER, ADVISOR, FRAUD_ANALYST, BRANCH_MANAGER, AUDITOR, SYSTEM_ADMIN, SUPER_ADMIN]
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: account
+    description: Customer account operations
+  - name: account-admin
+    description: Administrative account operations
+  - name: card
+    description: Customer card operations
+  - name: card-admin
+    description: Administrative card operations
+  - name: transaction
+    description: Customer transaction operations
+  - name: transaction-admin
+    description: Administrative transaction operations
+  - name: transaction-employee
+    description: Teller transaction operations
+  - name: envelope
+    description: Envelope management operations
+  - name: user
+    description: Authenticated user profile operations
+  - name: user-admin
+    description: Administrative user operations
+  - name: public-user
+    description: Public endpoints without authentication
+
+paths:
+  /api/v1/accounts:
+    get:
+      summary: List my accounts
+      operationId: getMyAccounts
+      tags: [account]
+      responses:
+        '200':
+          description: Accounts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      summary: Create account
+      operationId: createAccount
+      tags: [account]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequestDto'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/accounts/{id}:
+    get:
+      summary: Get account by id
+      operationId: getAccountById
+      tags: [account]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Account detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Close account
+      operationId: closeAccount
+      tags: [account]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Account closed
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/accounts/code/{code}:
+    get:
+      summary: Get account by code
+      operationId: getAccountByCode
+      tags: [account]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/accounts/{id}/balance:
+    get:
+      summary: Get account unassigned balance
+      operationId: getAccountBalance
+      tags: [account]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Unassigned balance
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/accounts/{code}:
+    put:
+      summary: Update account by code
+      operationId: updateAccount
+      tags: [account]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdateDto'
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/accounts/{id}/status:
+    put:
+      summary: Admin update account status
+      operationId: adminUpdateAccountStatus
+      tags: [account-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AccountStatus'
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/accounts/{id}/close:
+    post:
+      summary: Admin close account
+      operationId: adminCloseAccount
+      tags: [account-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Account closed
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards:
+    post:
+      summary: Create card
+      operationId: createCard
+      tags: [card]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCardRequestDto'
+      responses:
+        '201':
+          description: Card created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      summary: List my cards
+      operationId: getMyCards
+      tags: [card]
+      responses:
+        '200':
+          description: Card list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CardSummaryDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/cards/account/{accountCode}:
+    get:
+      summary: List cards by account code
+      operationId: getCardsByAccount
+      tags: [card]
+      parameters:
+        - name: accountCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CardSummaryDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/cards/{cardCode}:
+    get:
+      summary: Get card by code
+      operationId: getCardByCode
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/activate:
+    post:
+      summary: Activate card
+      operationId: activateCard
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateCardRequestDto'
+      responses:
+        '200':
+          description: Card activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/block:
+    post:
+      summary: Block card
+      operationId: blockCard
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockCardRequestDto'
+      responses:
+        '200':
+          description: Card blocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/report-stolen:
+    post:
+      summary: Report stolen card
+      operationId: reportCardStolen
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card marked stolen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/report-lost:
+    post:
+      summary: Report lost card
+      operationId: reportCardLost
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card marked lost
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/close:
+    post:
+      summary: Close card
+      operationId: closeCard
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/limits:
+    put:
+      summary: Update card limits
+      operationId: updateCardLimits
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCardLimitsRequestDto'
+      responses:
+        '200':
+          description: Card updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/cards/{cardCode}/features:
+    put:
+      summary: Update card features
+      operationId: updateCardFeatures
+      tags: [card]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCardFeaturesRequestDto'
+      responses:
+        '200':
+          description: Card updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/cards:
+    get:
+      summary: Admin list cards by status
+      operationId: adminGetCardsByStatus
+      tags: [card-admin]
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CardStatus'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paged cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfCardSummaryDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/admin/cards/{cardCode}/status:
+    put:
+      summary: Admin change card status
+      operationId: adminChangeCardStatus
+      tags: [card-admin]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminChangeCardStatusRequestDto'
+      responses:
+        '200':
+          description: Card updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/cards/{cardCode}/reset-pin:
+    post:
+      summary: Admin reset card pin
+      operationId: adminResetCardPin
+      tags: [card-admin]
+      parameters:
+        - name: cardCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminResetPinRequestDto'
+      responses:
+        '204':
+          description: Pin reset
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/transactions/transfer:
+    post:
+      summary: Create transfer transaction
+      operationId: transferFunds
+      tags: [transaction]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequestDto'
+      responses:
+        '201':
+          description: Transfer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/transactions/payment:
+    post:
+      summary: Create payment transaction
+      operationId: makePayment
+      tags: [transaction]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequestDto'
+      responses:
+        '201':
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/transactions/pay-service:
+    post:
+      summary: Create service payment transaction
+      operationId: payService
+      tags: [transaction]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePaymentRequestDto'
+      responses:
+        '201':
+          description: Service payment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/transactions/schedule:
+    post:
+      summary: Schedule transfer
+      operationId: scheduleTransfer
+      tags: [transaction]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduledTransferRequestDto'
+      responses:
+        '201':
+          description: Transfer scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/transactions/{id}/schedule:
+    delete:
+      summary: Cancel scheduled transfer
+      operationId: cancelScheduledTransaction
+      tags: [transaction]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Schedule cancelled
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/{id}/reversal:
+    post:
+      summary: Request transaction reversal
+      operationId: requestReversal
+      tags: [transaction]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Reversal request accepted
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/me:
+    get:
+      summary: Get my transactions (paged)
+      operationId: getMyTransactions
+      tags: [transaction]
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionType'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionCategory'
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: accountCode
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paged transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfTransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/transactions/{id}:
+    get:
+      summary: Get my transaction by id
+      operationId: getTransactionById
+      tags: [transaction]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/account/{code}:
+    get:
+      summary: Get account transactions (paged)
+      operationId: getAccountTransactions
+      tags: [transaction]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionType'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionCategory'
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: accountCode
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paged transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfTransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/transactions/categories:
+    get:
+      summary: Get transactions by category
+      operationId: getTransactionsByCategory
+      tags: [transaction]
+      parameters:
+        - name: category
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TransactionCategory'
+      responses:
+        '200':
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/transactions/summary:
+    get:
+      summary: Get transactions category summary
+      operationId: getCategorySummary
+      tags: [transaction]
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Summary response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategorySummaryDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/admin/transactions:
+    get:
+      summary: Admin get all transactions (paged)
+      operationId: adminGetAllTransactions
+      tags: [transaction-admin]
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionType'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionCategory'
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: accountCode
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paged transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfTransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/admin/transactions/suspicious:
+    get:
+      summary: Admin get suspicious transactions
+      operationId: adminGetSuspiciousTransactions
+      tags: [transaction-admin]
+      responses:
+        '200':
+          description: Suspicious transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/admin/transactions/{id}/approve:
+    put:
+      summary: Admin approve transaction
+      operationId: adminApproveTransaction
+      tags: [transaction-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Approved transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/transactions/{id}/reject:
+    put:
+      summary: Admin reject transaction
+      operationId: adminRejectTransaction
+      tags: [transaction-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Transaction rejected
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/transactions/{id}/reverse:
+    put:
+      summary: Admin reverse transaction
+      operationId: adminReverseTransaction
+      tags: [transaction-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reversed transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/transactions/{id}/fraud:
+    post:
+      summary: Admin flag transaction as fraud
+      operationId: adminFlagFraud
+      tags: [transaction-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudFlagRequestDto'
+      responses:
+        '204':
+          description: Fraud flagged
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/teller/transactions/cash-deposit:
+    post:
+      summary: Teller cash deposit
+      operationId: tellerCashDeposit
+      tags: [transaction-employee]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashDepositRequestDto'
+      responses:
+        '201':
+          description: Deposit created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/teller/transactions/cash-withdrawal:
+    post:
+      summary: Teller cash withdrawal
+      operationId: tellerCashWithdrawal
+      tags: [transaction-employee]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashWithdrawalRequestDto'
+      responses:
+        '201':
+          description: Withdrawal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/teller/transactions/check-deposit:
+    post:
+      summary: Teller check deposit
+      operationId: tellerCheckDeposit
+      tags: [transaction-employee]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckDepositRequestDto'
+      responses:
+        '201':
+          description: Check deposit created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/envelopes:
+    post:
+      summary: Create envelope
+      operationId: createEnvelope
+      tags: [envelope]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvelopeRequestDto'
+      responses:
+        '201':
+          description: Envelope created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      summary: List my envelopes
+      operationId: getMyEnvelopes
+      tags: [envelope]
+      responses:
+        '200':
+          description: Envelope list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/{code}:
+    get:
+      summary: Get envelope by code
+      operationId: getEnvelopeByCode
+      tags: [envelope]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Envelope detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Update envelope
+      operationId: updateEnvelope
+      tags: [envelope]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvelopeUpdateDto'
+      responses:
+        '200':
+          description: Envelope updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Delete envelope
+      operationId: deleteEnvelope
+      tags: [envelope]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Envelope deleted
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/envelopes/account/{accountCode}:
+    get:
+      summary: List envelopes by account
+      operationId: getEnvelopesByAccount
+      tags: [envelope]
+      parameters:
+        - name: accountCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Envelope list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/status/{status}:
+    get:
+      summary: List envelopes by status
+      operationId: getEnvelopesByStatus
+      tags: [envelope]
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/EnvelopeStatus'
+      responses:
+        '200':
+          description: Envelope list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/type/{type}:
+    get:
+      summary: List envelopes by type
+      operationId: getEnvelopesByType
+      tags: [envelope]
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/EnvelopeType'
+      responses:
+        '200':
+          description: Envelope list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/search:
+    get:
+      summary: Search envelopes by status and account code
+      operationId: searchEnvelopes
+      tags: [envelope]
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/EnvelopeStatus'
+        - name: accountCode
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Envelope list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/created-after:
+    get:
+      summary: List envelopes created after date
+      operationId: getEnvelopesCreatedAfter
+      tags: [envelope]
+      parameters:
+        - name: createdAfter
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: accountCode
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Envelope list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvelopeResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/deposit:
+    post:
+      summary: Deposit into envelope
+      operationId: depositToEnvelope
+      tags: [envelope]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvelopeDepositDto'
+      responses:
+        '200':
+          description: Envelope updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/envelopes/withdraw:
+    post:
+      summary: Withdraw from envelope
+      operationId: withdrawFromEnvelope
+      tags: [envelope]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvelopeWithdrawDto'
+      responses:
+        '200':
+          description: Envelope updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/users/me:
+    get:
+      summary: Get current user profile
+      operationId: getMyProfile
+      tags: [user]
+      responses:
+        '200':
+          description: Profile response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      summary: Update current user profile
+      operationId: updateMyProfile
+      tags: [user]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdateDto'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      summary: Delete current user
+      operationId: deleteMyAccount
+      tags: [user]
+      responses:
+        '204':
+          description: User deleted
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/users/me/password:
+    put:
+      summary: Update current user password
+      operationId: updateMyPassword
+      tags: [user]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRequestDto'
+      responses:
+        '204':
+          description: Password updated
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/admin/users/{id}:
+    get:
+      summary: Admin get user by id
+      operationId: adminGetUserById
+      tags: [user-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Admin update user
+      operationId: adminUpdateUser
+      tags: [user-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdateDto'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/users/{id}/suspend:
+    put:
+      summary: Admin suspend user
+      operationId: adminSuspendUser
+      tags: [user-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User suspended
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/users/{id}/activate:
+    put:
+      summary: Admin activate user
+      operationId: adminActivateUser
+      tags: [user-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User activated
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/users/{id}/status:
+    put:
+      summary: Admin update user status
+      operationId: adminUpdateUserStatus
+      tags: [user-admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/UserStatus'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/users/employees:
+    post:
+      summary: Admin create employee user
+      operationId: adminCreateEmployee
+      tags: [user-admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequestDto'
+      responses:
+        '201':
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/public/users/register:
+    post:
+      summary: Public user registration
+      operationId: registerUser
+      tags: [public-user]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequestDto'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponseDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
