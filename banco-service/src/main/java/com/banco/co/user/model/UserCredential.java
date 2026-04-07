@@ -23,10 +23,11 @@ import java.util.UUID;
 public class UserCredential {
 
     @Id
+    @Column(name = "user_id")
     private UUID id;  // Mismo ID que User
 
-    @OneToOne(mappedBy = "credential")
-    @MapsId  // ← Usa el mismo ID que User
+    @OneToOne
+    @MapsId
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
