@@ -23,6 +23,7 @@ import java.util.UUID;
 public class UserCredential {
 
     @Id
+    @Column(name = "user_id")
     private UUID id;  // Mismo ID que User
 
     @OneToOne
