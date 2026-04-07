@@ -25,8 +25,8 @@ public class UserCredential {
     @Id
     private UUID id;  // Mismo ID que User
 
-    @OneToOne(mappedBy = "credential")
-    @MapsId  // ← Usa el mismo ID que User
+    @OneToOne
+    @MapsId
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

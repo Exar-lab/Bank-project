@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>com.banco.co</groupId>
 	<artifactId>banco-service</artifactId>
-	<version>0.6.1-SNAPSHOT</version>
+	<version>0.4.2-SNAPSHOT</version>
 	<name>banco-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -171,9 +171,12 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-json</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
