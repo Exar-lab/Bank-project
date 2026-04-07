@@ -71,5 +71,4 @@ jobs:
       - name: Report non-blocking Claude failure
         if: ${{ steps.claude-review.outcome == 'failure' }}
         run: |
-          echo "Claude review failed due to an external service issue (for example, quota/rate limits)."
-          echo "This step is intentionally non-blocking so PR checks can proceed."
+          echo "::warning::Claude review failed due to an external service issue (for example, quota/rate limits). This step is intentionally non-blocking so PR checks can proceed."

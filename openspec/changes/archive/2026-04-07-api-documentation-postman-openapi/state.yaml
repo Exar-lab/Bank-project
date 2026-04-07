@@ -1,0 +1,15 @@
+change: api-documentation-postman-openapi
+project: banco-service-clean
+phase: archive
+status: closed
+archived: true
+closed_at: 2026-04-07
+verification_gate: PASS_WITH_WARNINGS
+critical_issues: 0
+accepted_warnings:
+  - id: REQ-4.S1
+    reason: GitHub Mermaid runtime rendering is non-deterministic locally
+    controls:
+      - docs/verification/test_api_docs_consistency.py::test_mermaid_blocks_exist_for_required_diagrams
+      - openspec/changes/archive/2026-04-07-api-documentation-postman-openapi/docs-checks-evidence.md
+      - design decision D4 in openspec/changes/archive/2026-04-07-api-documentation-postman-openapi/design.md
