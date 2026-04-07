@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.1](https://github.com/Exar-lab/Bank-project/compare/v0.6.0...v0.6.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **infrastructure:** address Copilot review on flyway jpa and jackson ([65051c6](https://github.com/Exar-lab/Bank-project/commit/65051c6505aaf0e533268c7ae694cf98a5c4d2db))
+* **infrastructure:** align persistence mappings and startup configs ([96537b4](https://github.com/Exar-lab/Bank-project/commit/96537b4d4158ef8f9b98621bd724531037489f5a))
+* **infrastructure:** align persistence mappings and startup configs ([176d354](https://github.com/Exar-lab/Bank-project/commit/176d354ecff2247318a42482f263cf3d8b1ba4b8))
+* **infrastructure:** remove incompatible Boot 4 customizers ([d17c2ac](https://github.com/Exar-lab/Bank-project/commit/d17c2ac529dcd388ae5332972dd2a92f68ad05df))
+
 ## [0.6.0](https://github.com/Exar-lab/Bank-project/compare/v0.5.0...v0.6.0) (2026-04-06)
 
 
