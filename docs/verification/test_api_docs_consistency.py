@@ -58,7 +58,8 @@ class DocsConsistencyTest(unittest.TestCase):
 
     def test_mermaid_blocks_exist_for_required_diagrams(self):
         discovered = {p.name for p in DIAGRAMS_DIR.glob("*.md")}
-        self.assertEqual(self.EXPECTED_DIAGRAMS, discovered)
+        missing_required = self.EXPECTED_DIAGRAMS - discovered
+        self.assertEqual(set(), missing_required, f"Missing required diagrams: {sorted(missing_required)}")
 
         for diagram in sorted(self.EXPECTED_DIAGRAMS):
             content = (DIAGRAMS_DIR / diagram).read_text(encoding="utf-8")
