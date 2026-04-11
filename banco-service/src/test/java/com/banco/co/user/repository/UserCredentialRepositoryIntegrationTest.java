@@ -92,6 +92,9 @@ class UserCredentialRepositoryIntegrationTest {
     @Autowired
     private EntityManagerFactory entityManagerFactory;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     @Test
     void testFindByEmailWithRolesAndPermissions_WhenCredentialExists_LoadsAuthoritiesWithoutNPlusOne() {
         Permission permission = new Permission();
@@ -135,6 +138,9 @@ class UserCredentialRepositoryIntegrationTest {
         credential.setCredentialsNonExpired(true);
         credential.setRoles(Set.of(role));
         userCredentialRepository.save(credential);
+
+        entityManager.flush();
+        entityManager.clear();
 
         SessionFactory sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
         Statistics statistics = sessionFactory.getStatistics();
