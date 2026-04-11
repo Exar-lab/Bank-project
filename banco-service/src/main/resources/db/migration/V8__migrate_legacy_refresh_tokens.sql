@@ -14,7 +14,33 @@ INSERT INTO refresh_tokens (
 SELECT
     UUID_TO_BIN(UUID()) AS id,
     uc.user_id,
-    SHA2(uc.refresh_token, 256) AS jti,
+    COALESCE(
+        JSON_UNQUOTE(
+            JSON_EXTRACT(
+                CONVERT(
+                    FROM_BASE64(
+                        CONCAT(
+                            REPLACE(
+                                REPLACE(
+                                    SUBSTRING_INDEX(SUBSTRING_INDEX(uc.refresh_token, '.', 2), '.', -1),
+                                    '-',
+                                    '+'
+                                ),
+                                '_',
+                                '/'
+                            ),
+                            REPEAT(
+                                '=',
+                                (4 - MOD(CHAR_LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(uc.refresh_token, '.', 2), '.', -1)), 4)) % 4
+                            )
+                        )
+                    ) USING utf8mb4
+                ),
+                '$.jti'
+            )
+        ),
+        SHA2(uc.refresh_token, 256)
+    ) AS jti,
     SHA2(uc.refresh_token, 256) AS token_hash,
     uc.refresh_token_expiry,
     COALESCE(uc.updated_at, uc.created_at, NOW(6)) AS created_at,

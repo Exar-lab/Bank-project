@@ -6,8 +6,8 @@
         </encoder>
     </appender>
 
-    <logger name="org.testcontainers" level="DEBUG"/>
-    <logger name="com.github.dockerjava" level="DEBUG"/>
+    <logger name="org.testcontainers" level="INFO"/>
+    <logger name="com.github.dockerjava" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
