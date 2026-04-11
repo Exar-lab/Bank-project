@@ -21,6 +21,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import jakarta.persistence.EntityManager;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -82,6 +83,9 @@ class RefreshTokenRepositoryIntegrationTest {
     @Autowired
     private IRefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @Test
     void testFindByJtiForUpdate_WhenTokenExists_ReturnsToken() {
         UserCredential credential = createCredential("lock-token@banco.co");
@@ -125,6 +129,9 @@ class RefreshTokenRepositoryIntegrationTest {
         );
 
         assertThat(affected).isEqualTo(2);
+
+        entityManager.flush();
+        entityManager.clear();
 
         RefreshToken reloadedActiveOne = refreshTokenRepository.findByJti("active-jti-1").orElseThrow();
         RefreshToken reloadedActiveTwo = refreshTokenRepository.findByJti("active-jti-2").orElseThrow();
