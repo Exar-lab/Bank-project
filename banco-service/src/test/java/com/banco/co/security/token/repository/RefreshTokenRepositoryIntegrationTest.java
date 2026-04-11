@@ -8,8 +8,12 @@ import com.banco.co.user.model.UserCredential;
 import com.banco.co.user.repository.IUserCredential;
 import com.banco.co.user.repository.IUserRepository;
 import org.junit.jupiter.api.Test;
+import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -28,12 +32,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @Testcontainers
 @ContextConfiguration(classes = com.banco.co.BancoServiceApplication.class)
+@Import(RefreshTokenRepositoryIntegrationTest.TestCryptoConfig.class)
 @TestPropertySource(properties = {
         "spring.flyway.enabled=false",
         "spring.test.database.replace=NONE",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 class RefreshTokenRepositoryIntegrationTest {
+
+    @TestConfiguration
+    static class TestCryptoConfig {
+        @Bean
+        StringEncryptor stringEncryptor() {
+            return new StringEncryptor() {
+                @Override
+                public String encrypt(String message) {
+                    return message;
+                }
+
+                @Override
+                public String decrypt(String encryptedMessage) {
+                    return encryptedMessage;
+                }
+            };
+        }
+    }
 
     @Container
     @SuppressWarnings("resource")

@@ -9,10 +9,14 @@ import com.banco.co.role.repository.IRoleRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.model.UserCredential;
 import jakarta.persistence.EntityManagerFactory;
+import org.jasypt.encryption.StringEncryptor;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -31,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @Testcontainers
 @ContextConfiguration(classes = com.banco.co.BancoServiceApplication.class)
+@Import(UserCredentialRepositoryIntegrationTest.TestCryptoConfig.class)
 @TestPropertySource(properties = {
         "spring.flyway.enabled=false",
         "spring.jpa.properties.hibernate.generate_statistics=true",
@@ -38,6 +43,24 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 class UserCredentialRepositoryIntegrationTest {
+
+    @TestConfiguration
+    static class TestCryptoConfig {
+        @Bean
+        StringEncryptor stringEncryptor() {
+            return new StringEncryptor() {
+                @Override
+                public String encrypt(String message) {
+                    return message;
+                }
+
+                @Override
+                public String decrypt(String encryptedMessage) {
+                    return encryptedMessage;
+                }
+            };
+        }
+    }
 
     @Container
     @SuppressWarnings("resource")
