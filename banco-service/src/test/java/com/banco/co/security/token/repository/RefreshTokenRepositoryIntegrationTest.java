@@ -147,6 +147,7 @@ class RefreshTokenRepositoryIntegrationTest {
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         user.setFistName("Token");
         user.setLastName("Tester");
+        user.setUsername("token" + suffix.substring(0, 5));
         user.setEmail(email);
         user.setDocumentType(DocumentType.CEDULA);
         user.setDocumentNumber("30" + suffix.substring(0, 6));
