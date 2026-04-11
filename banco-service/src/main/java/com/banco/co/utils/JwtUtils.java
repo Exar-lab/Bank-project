@@ -3,7 +3,9 @@ package com.banco.co.utils;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.*;
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.banco.co.exception.authentication.InvalidPrincipalException;
@@ -137,9 +139,9 @@ public class JwtUtils {
 
             return decodedJWT;
 
-        } catch (TokenExpiredException e) {
+        } catch (com.auth0.jwt.exceptions.TokenExpiredException e) {
             log.warn("Token expired: {}", e.getMessage());
-            throw new TokenExpiredException("Token has expired",Instant.now());
+            throw new com.banco.co.exception.authentication.TokenExpiredException("Token has expired", e);
 
         } catch (SignatureVerificationException e) {
             log.error("Invalid token signature: {}", e.getMessage());
@@ -266,5 +268,9 @@ public class JwtUtils {
 
     public boolean isAccessToken(DecodedJWT token) {
         return "access".equals(token.getClaim("type").asString());
+    }
+
+    public long getAccessTokenExpirationSeconds() {
+        return accessTokenExpirationMinutes * 60L;
     }
 }
