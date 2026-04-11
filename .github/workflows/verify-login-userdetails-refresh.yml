@@ -34,5 +34,5 @@ jobs:
         working-directory: banco-service
         run: >
           mvn -B -ntp
-          -Dtest=com.banco.co.auth.service.AuthServiceTest,com.banco.co.auth.service.CustomUserDetailsServiceTest,com.banco.co.auth.controller.AuthControllerWebMvcTest,com.banco.co.user.repository.UserCredentialRepositoryIntegrationTest,com.banco.co.security.token.repository.RefreshTokenRepositoryIntegrationTest
+          -Dtest=AuthServiceTest,CustomUserDetailsServiceTest,AuthControllerWebMvcTest,UserCredentialRepositoryIntegrationTest,RefreshTokenRepositoryIntegrationTest
           test
