@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.0](https://github.com/Exar-lab/Bank-project/compare/v0.6.1...v0.7.0) (2026-04-12)
+
+
+### Features
+
+* **auth:** implement login and refresh token hardening ([799ebb9](https://github.com/Exar-lab/Bank-project/commit/799ebb9acab3ce8fe4c992457f9683be79f023b7))
+* **auth:** implement login userdetails refresh flow ([2f72a4f](https://github.com/Exar-lab/Bank-project/commit/2f72a4f726dd4a8cfaa19abe843f01fd728e1a85))
+
+
+### Bug Fixes
+
+* **domain:** remove scale from floating point columns ([8b02473](https://github.com/Exar-lab/Bank-project/commit/8b0247389e3909c8618c08ab83baf2c123387a5d))
+* **infrastructure:** address copilot review on testcontainers and migration ([6cb8da9](https://github.com/Exar-lab/Bank-project/commit/6cb8da97020594f09203dae9ca6dc63427fa97c6))
+* **test:** clear persistence context after bulk token revoke ([c14ea47](https://github.com/Exar-lab/Bank-project/commit/c14ea474f0b2dab6e8339d2fb3952268edb2d4bc))
+* **test:** isolate query count in user credential integration test ([63ff6bc](https://github.com/Exar-lab/Bank-project/commit/63ff6bc347f13af0d37a7c9e16d3eca527da900d))
+* **test:** provide jasypt encryptor bean in jpa integration tests ([a01f221](https://github.com/Exar-lab/Bank-project/commit/a01f221e46da1873b34f4cb04b8531bd902c77f8))
+* **test:** set explicit username in refresh token integration test ([a447529](https://github.com/Exar-lab/Bank-project/commit/a447529094146f4bffe697129004481ee27a364f))
+
 ## [0.6.1](https://github.com/Exar-lab/Bank-project/compare/v0.6.0...v0.6.1) (2026-04-07)
 
 
