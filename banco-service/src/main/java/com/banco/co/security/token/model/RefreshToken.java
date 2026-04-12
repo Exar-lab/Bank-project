@@ -1,20 +1,25 @@
 package com.banco.co.security.token.model;
 
+import com.banco.co.security.token.enums.RefreshTokenRevocationReason;
 import com.banco.co.user.model.UserCredential;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens", indexes = {
-        @Index(name = "idx_token", columnList = "token"),
+        @Index(name = "idx_refresh_tokens_jti", columnList = "jti", unique = true),
+        @Index(name = "idx_refresh_tokens_token_hash", columnList = "token_hash"),
+        @Index(name = "idx_refresh_tokens_user_id_active", columnList = "user_id,revoked"),
         @Index(name = "idx_user_id", columnList = "user_id")
 })
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,8 +28,11 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 500)
-    private String token;
+    @Column(nullable = false, unique = true, length = 64)
+    private String jti;
+
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    private String tokenHash;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -34,14 +42,24 @@ public class RefreshToken {
     private LocalDateTime expiresAt;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private boolean revoked = false;
 
-    @Column
+    @Column(name = "revoked_at")
     private LocalDateTime revokedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "revocation_reason", length = 30)
+    private RefreshTokenRevocationReason revocationReason;
+
+    @Column(name = "replaced_by_jti", length = 64)
+    private String replacedByJti;
+
+    @Column(name = "parent_jti", length = 64)
+    private String parentJti;
 
     // Información del dispositivo/contexto
     @Column(length = 50)

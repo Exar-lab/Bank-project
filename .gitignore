@@ -9,3 +9,6 @@
 
 # Claude agent worktrees (temporary, machine-specific)
 .claude/worktrees/
+
+# Agent Teams Lite registry artifacts
+.atl/

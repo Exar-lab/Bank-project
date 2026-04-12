@@ -5,8 +5,7 @@ on:
     inputs:
       target_ref:
         description: 'Branch or tag containing login-userdetails-refresh tests'
-        required: false
-        default: 'master'
+        required: true
 
 permissions:
   contents: read
@@ -32,7 +31,16 @@ jobs:
 
       - name: Run focused auth/userdetails/refresh verification suite
         working-directory: banco-service
-        run: >
-          mvn -B -ntp
-          -Dtest=com.banco.co.auth.service.AuthServiceTest,com.banco.co.auth.service.CustomUserDetailsServiceTest,com.banco.co.auth.controller.AuthControllerWebMvcTest,com.banco.co.user.repository.UserCredentialRepositoryIntegrationTest,com.banco.co.security.token.repository.RefreshTokenRepositoryIntegrationTest
-          test
+        run: |
+          tests=(
+            "AuthServiceTest"
+            "CustomUserDetailsServiceTest"
+            "AuthControllerWebMvcTest"
+            "UserCredentialRepositoryIntegrationTest"
+            "RefreshTokenRepositoryIntegrationTest"
+          )
+
+          for test_class in "${tests[@]}"; do
+            echo "Running $test_class"
+            mvn -B -ntp -Dtest="$test_class" test
+          done

@@ -76,13 +76,6 @@ public class UserCredential {
     )
     private Set<Role> roles = new HashSet<>();
 
-    // Tokens y sesiones
-    @Column(length = 500)
-    private String refreshToken;
-
-    @Column
-    private LocalDateTime refreshTokenExpiry;
-
     // Auditoría
     @CreatedDate
     @Column(nullable = false, updatable = false)

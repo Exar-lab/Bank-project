@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 public class AccountLockedException extends AuthenticationException {
 
     private static final String ERROR_CODE = "ACCOUNT_LOCKED";
-    private static final HttpStatus STATUS = HttpStatus.LOCKED;
+    private static final HttpStatus STATUS = HttpStatus.FORBIDDEN;
 
     public AccountLockedException(String email) {
         super(
