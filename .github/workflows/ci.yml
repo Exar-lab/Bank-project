@@ -53,6 +53,15 @@ jobs:
           -Dtest=ControllerSecurityAnnotationsTest,AccountControllerSecuritySliceWebMvcTest,CardControllerSecuritySliceWebMvcTest,EnvelopeControllerSecuritySliceWebMvcTest
           test
 
+      - name: Run integration test suite (PR backend changes)
+        # Covers Testcontainers DB tests and EmbeddedKafka consumer tests — previously only ran on push.
+        if: github.event_name == 'pull_request' && steps.changes.outputs.run_tests == 'true'
+        working-directory: banco-service
+        run: >
+          mvn -B -ntp
+          -Dtest=UserCredentialRepositoryIntegrationTest,RefreshTokenRepositoryIntegrationTest,FraudDetectionConsumerIntegrationTest,NotificationConsumerIntegrationTest,RiskProfileConsumerDltIntegrationTest
+          test
+
       - name: Skip tests (no backend changes in PR)
         if: github.event_name == 'pull_request' && steps.changes.outputs.run_tests != 'true'
         run: echo "No backend changes detected; skipping Maven tests for this PR."

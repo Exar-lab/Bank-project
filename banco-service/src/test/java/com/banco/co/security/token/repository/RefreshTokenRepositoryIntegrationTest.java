@@ -31,7 +31,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @ContextConfiguration(classes = com.banco.co.BancoServiceApplication.class)
 @Import(RefreshTokenRepositoryIntegrationTest.TestCryptoConfig.class)
 @TestPropertySource(properties = {
