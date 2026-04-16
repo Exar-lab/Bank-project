@@ -12,3 +12,9 @@
 
 # Agent Teams Lite registry artifacts
 .atl/
+
+# AI tool local artifacts (machine-specific, never commit)
+.agents/
+.claude/skills/
+.kiro/
+.trae/
