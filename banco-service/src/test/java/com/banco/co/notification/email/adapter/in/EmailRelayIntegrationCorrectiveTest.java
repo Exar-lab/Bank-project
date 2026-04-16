@@ -22,11 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -51,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(classes = EmailRelayIntegrationCorrectiveTest.IntegrationTestConfig.class)
+@SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 class EmailRelayIntegrationCorrectiveTest {
@@ -91,13 +87,6 @@ class EmailRelayIntegrationCorrectiveTest {
         registry.add("spring.mail.properties.mail.smtp.starttls.enable", () -> "false");
         registry.add("spring.mail.properties.mail.smtp.starttls.required", () -> "false");
         registry.add("spring.mail.properties.mail.smtp.auth", () -> "false");
-    }
-
-    @Configuration(proxyBeanMethods = false)
-    @EnableAutoConfiguration
-    @EnableKafka
-    @ComponentScan(basePackages = "com.banco.co")
-    static class IntegrationTestConfig {
     }
 
     @Autowired
