@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.autoconfigure.exclude=")
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 class EmailRelayIntegrationCorrectiveTest {
