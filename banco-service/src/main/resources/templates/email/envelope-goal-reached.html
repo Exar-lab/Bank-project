@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta de ahorro alcanzada</title>
+</head>
+<body>
+<h1>¡Felicitaciones!</h1>
+<p>
+    <span th:text="${recipientName}">Usuario</span>, alcanzaste la meta del sobre
+    <strong th:text="${envelopeCode}">ENV-001</strong>.
+</p>
+<p>Monto de la meta: <strong th:text="${goalAmount}">0</strong>.</p>
+<p>Seguimos acompañándote en <span th:text="${bankName}">Banco CO</span>.</p>
+</body>
+</html>

@@ -44,6 +44,8 @@ spring:
   task:
     scheduling:
       enabled: true
+  thymeleaf:
+    cache: true
 
 # =============================================
 # Dotenv (Opción C: .env compartido con Docker Compose)
@@ -89,3 +91,20 @@ fraud:
       high-score: 85.00
       restricted-score: 95.00
       rule-set-version: v1
+
+banco:
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    from: ${MAIL_FROM:no-reply@banco.co}
+    relay:
+      batch-size: ${MAIL_RELAY_BATCH_SIZE:50}
+      poll-delay-ms: ${MAIL_RELAY_POLL_DELAY_MS:10000}
+      max-attempts: ${MAIL_RELAY_MAX_ATTEMPTS:5}
+    executor:
+      core-pool-size: ${MAIL_EXECUTOR_CORE_POOL_SIZE:2}
+      max-pool-size: ${MAIL_EXECUTOR_MAX_POOL_SIZE:8}
+      queue-capacity: ${MAIL_EXECUTOR_QUEUE_CAPACITY:500}

@@ -135,7 +135,8 @@ public class UserService implements IUserService {
                 publishUserEvent(savedUser.getId().toString(), "UserCreated", Map.of(
                         "userId", savedUser.getId().toString(),
                         "email", savedUser.getEmail(),
-                        "userCode", savedUser.getUserCode()
+                        "userCode", savedUser.getUserCode(),
+                        "recipientName", savedUser.getFistName()
                 ));
 
                 return customerMapper.toDto(savedUser);
@@ -622,6 +623,7 @@ public class UserService implements IUserService {
         private void publishUserEvent(String aggregateId, String eventType, Map<String, Object> payloadData) {
                 try {
                         Map<String, Object> payload = new HashMap<>();
+                        payload.put("eventId", UUID.randomUUID().toString());
                         payload.put("eventType", eventType);
                         payload.putAll(payloadData);
                         outboxEventPort.save(new OutboxEvent(

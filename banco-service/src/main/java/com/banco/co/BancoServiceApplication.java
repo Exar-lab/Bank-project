@@ -2,6 +2,7 @@ package com.banco.co;
 
 import com.banco.co.fraud.config.FraudDetectionProperties;
 import com.banco.co.fraud.riskprofile.config.RiskProfileAsyncUpdaterProperties;
+import com.banco.co.notification.email.config.MailProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,7 +16,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableConfigurationProperties({
         FraudDetectionProperties.class,
-        RiskProfileAsyncUpdaterProperties.class
+        RiskProfileAsyncUpdaterProperties.class,
+        MailProperties.class
 })
 public class BancoServiceApplication {
 

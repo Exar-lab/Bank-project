@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS email_outbox_events (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    event_id VARCHAR(36) NOT NULL,
+    user_id BINARY(16) NOT NULL,
+    recipient_email VARCHAR(254) NOT NULL,
+    recipient_name VARCHAR(200) NOT NULL,
+    template_name VARCHAR(100) NOT NULL,
+    template_context_json TEXT NOT NULL,
+    subject VARCHAR(998) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    attempt_count INT NOT NULL DEFAULT 0,
+    available_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    sent_at DATETIME(6) NULL,
+    last_error TEXT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    claimed_by VARCHAR(100) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_email_outbox_events_event_id (event_id),
+    INDEX idx_email_outbox_status_available (status, available_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

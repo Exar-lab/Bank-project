@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -558,9 +559,12 @@ public class EnvelopeService implements IEnvelopeService {
     private String buildEnvelopePayload(Envelope envelope, String eventType) {
         try {
             Map<String, Object> payload = new HashMap<>();
+            payload.put("eventId", UUID.randomUUID().toString());
             payload.put("eventType", eventType);
             payload.put("envelopeId", envelope.getId().toString());
             payload.put("envelopeCode", envelope.getEnvelopeCode());
+            payload.put("userId", envelope.getAccount().getUser().getId().toString());
+            payload.put("recipientName", envelope.getAccount().getUser().getFistName());
             payload.put("name", envelope.getName());
             payload.put("type", envelope.getType().name());
             payload.put("status", envelope.getStatus().name());
