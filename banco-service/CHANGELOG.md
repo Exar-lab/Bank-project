@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/Exar-lab/Bank-project/compare/v0.7.0...v0.8.0) (2026-04-16)
+
+
+### Features
+
+* **notification:** durable email notification system via outbox pattern ([ff57577](https://github.com/Exar-lab/Bank-project/commit/ff57577dc55375258228300a5b8434c63b8901f1))
+* **notification:** implement durable email notification system via outbox pattern ([f9f88f5](https://github.com/Exar-lab/Bank-project/commit/f9f88f5093e7ec174820cded0cabbc7a9531ddc9))
+
+
+### Bug Fixes
+
+* **test:** skip Testcontainers tests gracefully when Docker is unavailable ([7fa198d](https://github.com/Exar-lab/Bank-project/commit/7fa198da1841b77092847a9bba2d8df888012f06))
+
 ## [0.7.0](https://github.com/Exar-lab/Bank-project/compare/v0.6.1...v0.7.0) (2026-04-12)
 
 
