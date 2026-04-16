@@ -84,7 +84,7 @@ class CardControllerSecuritySliceWebMvcTest {
     @EnableMethodSecurity
     static class MethodSecurityTestConfig {
 
-        @Bean
+        @Bean("cardControllerTestSecurityFilterChain")
         SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
             http
                     .csrf(AbstractHttpConfigurer::disable)

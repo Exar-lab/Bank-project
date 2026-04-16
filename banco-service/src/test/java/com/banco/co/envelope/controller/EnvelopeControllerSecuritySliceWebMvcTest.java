@@ -117,7 +117,7 @@ class EnvelopeControllerSecuritySliceWebMvcTest {
     @EnableMethodSecurity
     static class MethodSecurityTestConfig {
 
-        @Bean
+        @Bean("envelopeControllerTestSecurityFilterChain")
         SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
             http
                     .csrf(AbstractHttpConfigurer::disable)
