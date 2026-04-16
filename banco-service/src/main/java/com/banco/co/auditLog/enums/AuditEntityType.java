@@ -7,5 +7,6 @@ public enum AuditEntityType {
     TRANSACTION,
     SECURITY,
     ENVELOPE,
+    NOTIFICATION,
     SYSTEM
 }

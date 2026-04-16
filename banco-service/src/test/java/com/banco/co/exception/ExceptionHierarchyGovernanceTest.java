@@ -2,6 +2,9 @@ package com.banco.co.exception;
 
 import com.banco.co.envelope.exception.EnvelopeException;
 import com.banco.co.envelope.exception.EnvelopeNotFoundException;
+import com.banco.co.notification.email.exception.EmailDeliveryException;
+import com.banco.co.notification.email.exception.EmailSerializationException;
+import com.banco.co.notification.email.exception.NotificationException;
 import com.banco.co.role.exception.RoleException;
 import com.banco.co.role.exception.RoleNotFoundException;
 import com.banco.co.user.exception.user.UserException;
@@ -27,6 +30,18 @@ class ExceptionHierarchyGovernanceTest {
     @Test
     void testEnvelopeExceptionModifier_WhenIntermediateType_ThenIsAbstract() {
         assertThat(Modifier.isAbstract(EnvelopeException.class.getModifiers())).isTrue();
+    }
+
+    @Test
+    void testNotificationExceptionModifier_WhenIntermediateType_ThenIsAbstract() {
+        assertThat(Modifier.isAbstract(NotificationException.class.getModifiers())).isTrue();
+    }
+
+    @Test
+    void testNotificationExceptionHierarchy_WhenUsingConcreteLeaves_ThenInheritanceIsValid() {
+        assertThat(NotificationException.class.getSuperclass()).isEqualTo(BankingException.class);
+        assertThat(EmailDeliveryException.class.getSuperclass()).isEqualTo(NotificationException.class);
+        assertThat(EmailSerializationException.class.getSuperclass()).isEqualTo(NotificationException.class);
     }
 
     @Test

@@ -1,6 +1,66 @@
 {
   "version": 1,
   "skills": {
+    "java-concurrency": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "30a6a2994542103db7fb3b1531c742dd1e6b4801ca05db714a02099a28a385de"
+    },
+    "java-docker": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "42914a2680a30dc465ffb0110d20e0d94aab3f88e0d473c9d6f1e3016a16f833"
+    },
+    "java-fundamentals": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "ac351c260ab6c76ba8f728103dfcd432e16b5e2d28428c8684cf451c7f83e071"
+    },
+    "java-gradle": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "26d0d5576aa368eb8ab2cca872040820de23a0f611d8871d3e09aa910de8461d"
+    },
+    "java-jpa-hibernate": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "16d57e6fc655423b66191c0b9e9bca7b59080d8a06f9740a9f5cde9a2d9c082e"
+    },
+    "java-maven": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "7128cd4b59cc52c661a6a209af74063e1fc6523b70abaf19f28c885ed085c01b"
+    },
+    "java-maven-gradle": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "a8e0560d66900292507542ce63418e7de953351ea4f0ce058b36fddf16c0cba6"
+    },
+    "java-microservices": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "d4c0c5e302e75041d4eb9bf0782110d2fd1efcdf23efe650bac3122816aa9ec4"
+    },
+    "java-performance": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "e24625f8183d1615bcca5185796e943aecf84ce099b2683f4c7e40f92c9fdb01"
+    },
+    "java-spring-boot": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "c1d1523ec6ead1de3c7efd73e7a6041af983ef0dc38ae2050f75c6375ba6b7ae"
+    },
+    "java-testing": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "e58bdbcc271dfc689ce8b67c54a6dade5bcfb7c2c68e2615be2b39b8915ac1a0"
+    },
+    "java-testing-advanced": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "computedHash": "3fc54d8ca445eff764926e14c5260674750064872e568e89e977854bd71d2137"
+    },
     "skill-creator": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",

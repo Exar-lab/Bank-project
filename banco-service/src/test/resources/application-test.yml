@@ -2,6 +2,8 @@ spring:
   task:
     scheduling:
       enabled: false
+  thymeleaf:
+    cache: false
   autoconfigure:
     exclude:
       - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
@@ -10,3 +12,16 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+
+banco:
+  mail:
+    enabled: true
+    from: test-no-reply@banco.co
+    relay:
+      batch-size: 10
+      poll-delay-ms: 100
+      max-attempts: 3
+    executor:
+      core-pool-size: 1
+      max-pool-size: 2
+      queue-capacity: 20

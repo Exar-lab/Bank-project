@@ -14,10 +14,12 @@ import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +67,11 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
             try {
                 processAutoContribution(envelope);
                 successCount++;
-            } catch (Exception e) {
+            } catch (IllegalArgumentException
+                     | IllegalStateException
+                     | TransactionSystemException
+                     | PersistenceException
+                     | NoSuchElementException e) {
                 failedCount++;
                 log.error("Failed to process auto-contribution for envelope {}: {}",
                         envelope.getEnvelopeCode(), e.getMessage(), e);
@@ -199,9 +207,12 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
     private String buildAutoContributionPayload(Envelope envelope, BigDecimal amount, String eventType) {
         try {
             Map<String, Object> payload = new HashMap<>();
+            payload.put("eventId", UUID.randomUUID().toString());
             payload.put("eventType", eventType);
             payload.put("envelopeId", envelope.getId().toString());
             payload.put("envelopeCode", envelope.getEnvelopeCode());
+            payload.put("userId", envelope.getAccount().getUser().getId().toString());
+            payload.put("recipientName", envelope.getAccount().getUser().getFistName());
             payload.put("amount", amount);
             payload.put("accountCode", envelope.getAccount().getAccountCode());
             if (envelope.getTargetAmount() != null) {
