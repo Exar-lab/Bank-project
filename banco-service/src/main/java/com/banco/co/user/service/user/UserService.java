@@ -32,7 +32,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +51,7 @@ public class UserService implements IUserService {
 
         private final IUserRepository userRepository;
         private final IRoleService roleService;
-        private final BCryptPasswordEncoder bCryptPasswordEncoder;
+        private final PasswordEncoder bCryptPasswordEncoder;
         private final ICustomerMapper customerMapper;
         private final IEmployeeMapper employeeMapper;
         private final IAuditLogService auditLogService;
