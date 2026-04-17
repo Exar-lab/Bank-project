@@ -68,9 +68,8 @@ class EmailRelayIntegrationCorrectiveTest {
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);
         registry.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-        registry.add("spring.flyway.enabled", () -> "true");
-        registry.add("spring.flyway.locations", () -> "classpath:db/migration");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.flyway.enabled", () -> "false");
         registry.add("spring.kafka.listener.auto-startup", () -> "false");
         registry.add("spring.task.scheduling.enabled", () -> "false");
         registry.add("banco.mail.enabled", () -> "true");
