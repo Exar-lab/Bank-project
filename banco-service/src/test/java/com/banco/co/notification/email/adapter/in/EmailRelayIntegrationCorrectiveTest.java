@@ -37,8 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -106,6 +108,8 @@ class EmailRelayIntegrationCorrectiveTest {
     @EnableJpaAuditing
     @EnableAsync
     @EnableConfigurationProperties(MailProperties.class)
+    @EnableJpaRepositories(basePackages = "com.banco.co")
+    @EntityScan(basePackages = "com.banco.co")
     static class TestConfig {
         @Bean
         ObjectMapper objectMapper() {
