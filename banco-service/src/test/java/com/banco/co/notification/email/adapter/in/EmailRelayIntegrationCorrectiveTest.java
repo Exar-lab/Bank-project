@@ -87,6 +87,9 @@ class EmailRelayIntegrationCorrectiveTest {
         registry.add("spring.mail.properties.mail.smtp.starttls.enable", () -> "false");
         registry.add("spring.mail.properties.mail.smtp.starttls.required", () -> "false");
         registry.add("spring.mail.properties.mail.smtp.auth", () -> "false");
+        registry.add("security.jwt.secret-key", () -> "test-secret-key-for-integration-tests-minimum-256-bits-ok");
+        registry.add("security.jwt.issuer", () -> "test-issuer");
+        registry.add("jasypt.encryptor.password", () -> "test-encryptor-password");
     }
 
     @Autowired
