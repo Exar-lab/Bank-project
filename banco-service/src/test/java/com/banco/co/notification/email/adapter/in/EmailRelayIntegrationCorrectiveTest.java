@@ -1,5 +1,6 @@
 package com.banco.co.notification.email.adapter.in;
 
+import com.banco.co.BancoServiceApplication;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLog;
@@ -47,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(properties = "spring.autoconfigure.exclude=")
+@SpringBootTest(classes = BancoServiceApplication.class, properties = "spring.autoconfigure.exclude=")
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 class EmailRelayIntegrationCorrectiveTest {
