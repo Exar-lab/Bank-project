@@ -1,16 +1,27 @@
 package com.banco.co.notification.email.adapter.in;
 
-import com.banco.co.BancoServiceApplication;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLog;
 import com.banco.co.auditLog.model.AuditLogDetail;
 import com.banco.co.auditLog.repository.IAuditLogRepository;
+import com.banco.co.auditLog.service.AuditLogProcessor;
+import com.banco.co.auditLog.service.AuditLogService;
+import com.banco.co.notification.email.adapter.JavaMailEmailDispatcher;
+import com.banco.co.notification.email.adapter.ThymeleafEmailTemplateRenderer;
+import com.banco.co.notification.email.config.MailConfig;
+import com.banco.co.notification.email.config.MailExecutorConfig;
+import com.banco.co.notification.email.config.MailProperties;
+import com.banco.co.notification.email.config.ThymeleafEmailConfig;
 import com.banco.co.notification.email.model.EmailOutboxEvent;
 import com.banco.co.notification.email.model.EmailOutboxStatus;
-import com.banco.co.notification.email.repository.EmailOutboxEventJpaRepository;
 import com.banco.co.notification.email.relay.EmailOutboxDispatchWorker;
 import com.banco.co.notification.email.relay.EmailOutboxRelay;
+import com.banco.co.notification.email.repository.EmailOutboxEventJpaRepository;
+import com.banco.co.notification.email.repository.EmailOutboxRepositoryAdapter;
+import com.banco.co.notification.email.service.EmailAuditPublisher;
+import com.banco.co.notification.email.service.EmailServiceImpl;
+import com.banco.co.notification.email.service.RecipientHasher;
 import com.banco.co.user.enums.DocumentType;
 import com.banco.co.user.model.User;
 import com.banco.co.user.repository.IUserRepository;
@@ -23,7 +34,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -31,7 +47,6 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -48,10 +63,55 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(classes = BancoServiceApplication.class, properties = "spring.autoconfigure.exclude=")
+@SpringBootTest(
+        classes = {
+                // Email relay components
+                UserEventsConsumer.class,
+                EmailOutboxRelay.class,
+                EmailOutboxDispatchWorker.class,
+                EmailOutboxRepositoryAdapter.class,
+                // Email service
+                EmailServiceImpl.class,
+                EmailAuditPublisher.class,
+                RecipientHasher.class,
+                // Email infrastructure
+                JavaMailEmailDispatcher.class,
+                ThymeleafEmailTemplateRenderer.class,
+                // Email configs
+                MailConfig.class,
+                MailExecutorConfig.class,
+                ThymeleafEmailConfig.class,
+                // Audit log
+                AuditLogService.class,
+                AuditLogProcessor.class,
+                // Test config (ObjectMapper, @EnableJpaAuditing, @EnableAsync, @EnableConfigurationProperties)
+                EmailRelayIntegrationCorrectiveTest.TestConfig.class
+        },
+        properties = {
+                "spring.autoconfigure.exclude="
+                        + "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration,"
+                        + "org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration",
+                "spring.kafka.listener.auto-startup=false",
+                "spring.task.scheduling.enabled=false"
+        }
+)
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 class EmailRelayIntegrationCorrectiveTest {
+
+    @TestConfiguration
+    @EnableJpaAuditing
+    @EnableAsync
+    @EnableConfigurationProperties(MailProperties.class)
+    static class TestConfig {
+        @Bean
+        ObjectMapper objectMapper() {
+            return new ObjectMapper();
+        }
+    }
 
     @Container
     @SuppressWarnings("resource")
