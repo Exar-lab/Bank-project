@@ -34,6 +34,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -108,6 +109,7 @@ class EmailRelayIntegrationCorrectiveTest {
     @EnableAsync
     @EnableConfigurationProperties(MailProperties.class)
     @EnableJpaRepositories(basePackages = "com.banco.co")
+    @AutoConfigurationPackage(basePackages = "com.banco.co")
     static class TestConfig {
         @Bean
         ObjectMapper objectMapper() {
