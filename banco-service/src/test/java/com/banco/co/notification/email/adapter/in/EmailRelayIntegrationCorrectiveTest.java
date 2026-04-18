@@ -40,6 +40,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.boot.orm.jpa.hibernate.SpringBeanContainer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -116,7 +121,14 @@ class EmailRelayIntegrationCorrectiveTest {
     @EnableAsync
     @EnableConfigurationProperties(MailProperties.class)
     @EnableJpaRepositories(basePackages = "com.banco.co")
-    static class TestConfig {
+    static class TestConfig implements BeanFactoryAware {
+
+        private ConfigurableListableBeanFactory beanFactory;
+
+        @Override
+        public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+            this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
+        }
 
         @Bean
         ObjectMapper objectMapper() {
@@ -171,6 +183,7 @@ class EmailRelayIntegrationCorrectiveTest {
             jpaProperties.setProperty("hibernate.hbm2ddl.auto", "create-drop");
             jpaProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
             jpaProperties.setProperty("hibernate.show_sql", "false");
+            jpaProperties.put("hibernate.resource.beans.container", new SpringBeanContainer(this.beanFactory));
             emf.setJpaProperties(jpaProperties);
             return emf;
         }
