@@ -9,7 +9,6 @@ import com.banco.co.auditLog.service.AuditLogProcessor;
 import com.banco.co.auditLog.service.AuditLogService;
 import com.banco.co.notification.email.adapter.JavaMailEmailDispatcher;
 import com.banco.co.notification.email.adapter.ThymeleafEmailTemplateRenderer;
-import com.banco.co.notification.email.config.MailConfig;
 import com.banco.co.notification.email.config.MailExecutorConfig;
 import com.banco.co.notification.email.config.MailProperties;
 import com.banco.co.notification.email.config.ThymeleafEmailConfig;
@@ -34,6 +33,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jasypt.encryption.StringEncryptor;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -91,8 +92,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 // Email infrastructure
                 JavaMailEmailDispatcher.class,
                 ThymeleafEmailTemplateRenderer.class,
-                // Email configs
-                MailConfig.class,
+                // Email configs (MailConfig excluded — TestConfig provides a GreenMail-compatible JavaMailSender)
                 MailExecutorConfig.class,
                 ThymeleafEmailConfig.class,
                 // Audit log
@@ -133,6 +133,18 @@ class EmailRelayIntegrationCorrectiveTest {
         @Bean
         ObjectMapper objectMapper() {
             return new ObjectMapper();
+        }
+
+        @Bean
+        JavaMailSender javaMailSender(MailProperties mailProperties) {
+            JavaMailSenderImpl sender = new JavaMailSenderImpl();
+            sender.setHost(mailProperties.host());
+            sender.setPort(mailProperties.port());
+            java.util.Properties props = sender.getJavaMailProperties();
+            props.put("mail.smtp.auth", "false");
+            props.put("mail.smtp.starttls.enable", "false");
+            props.put("mail.smtp.starttls.required", "false");
+            return sender;
         }
 
         @Bean
@@ -311,7 +323,7 @@ class EmailRelayIntegrationCorrectiveTest {
         assertThat(dead.getStatus()).isEqualTo(EmailOutboxStatus.DEAD);
         assertThat(dead.getAttemptCount()).isEqualTo(3);
 
-        List<AuditLog> deadAudits = auditLogRepository.findAll().stream()
+        List<AuditLog> deadAudits = auditLogRepository.findAllWithDetails().stream()
                 .filter(audit -> audit.getAction() == AuditAction.EMAIL_DELIVERY_DEAD)
                 .toList();
         assertThat(deadAudits).isNotEmpty();
