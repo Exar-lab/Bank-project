@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -109,7 +108,6 @@ class EmailRelayIntegrationCorrectiveTest {
     @EnableAsync
     @EnableConfigurationProperties(MailProperties.class)
     @EnableJpaRepositories(basePackages = "com.banco.co")
-    @EntityScan(basePackages = "com.banco.co")
     static class TestConfig {
         @Bean
         ObjectMapper objectMapper() {
