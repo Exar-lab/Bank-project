@@ -141,7 +141,20 @@ class EmailRelayIntegrationCorrectiveTest {
         LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
             LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
             emf.setDataSource(dataSource);
-            emf.setPackagesToScan("com.banco.co");
+            emf.setPackagesToScan(
+                    "com.banco.co.account.model",
+                    "com.banco.co.auditLog.model",
+                    "com.banco.co.card.model",
+                    "com.banco.co.envelope.model",
+                    "com.banco.co.fraud.riskprofile.model",
+                    "com.banco.co.notification.email.model",
+                    "com.banco.co.outbox.model",
+                    "com.banco.co.permission.model",
+                    "com.banco.co.role.model",
+                    "com.banco.co.security.token.model",
+                    "com.banco.co.transaction.model",
+                    "com.banco.co.user.model"
+            );
             HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
             vendorAdapter.setGenerateDdl(true);
             emf.setJpaVendorAdapter(vendorAdapter);
