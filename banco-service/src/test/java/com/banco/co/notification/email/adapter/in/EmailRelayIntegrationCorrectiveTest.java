@@ -34,13 +34,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -49,7 +53,9 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -109,11 +115,49 @@ class EmailRelayIntegrationCorrectiveTest {
     @EnableAsync
     @EnableConfigurationProperties(MailProperties.class)
     @EnableJpaRepositories(basePackages = "com.banco.co")
-    @AutoConfigurationPackage(basePackages = "com.banco.co")
     static class TestConfig {
+
         @Bean
         ObjectMapper objectMapper() {
             return new ObjectMapper();
+        }
+
+        @Bean
+        DataSource dataSource(
+                @Value("${spring.datasource.url}") String url,
+                @Value("${spring.datasource.username}") String username,
+                @Value("${spring.datasource.password}") String password,
+                @Value("${spring.datasource.driver-class-name}") String driverClassName
+        ) {
+            return DataSourceBuilder.create()
+                    .url(url)
+                    .username(username)
+                    .password(password)
+                    .driverClassName(driverClassName)
+                    .build();
+        }
+
+        @Bean
+        LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+            LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+            emf.setDataSource(dataSource);
+            emf.setPackagesToScan("com.banco.co");
+            HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+            vendorAdapter.setGenerateDdl(true);
+            emf.setJpaVendorAdapter(vendorAdapter);
+            Properties jpaProperties = new Properties();
+            jpaProperties.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+            jpaProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+            jpaProperties.setProperty("hibernate.show_sql", "false");
+            emf.setJpaProperties(jpaProperties);
+            return emf;
+        }
+
+        @Bean
+        JpaTransactionManager transactionManager(LocalContainerEntityManagerFactoryBean entityManagerFactory) {
+            JpaTransactionManager txManager = new JpaTransactionManager();
+            txManager.setEntityManagerFactory(entityManagerFactory.getObject());
+            return txManager;
         }
     }
 
