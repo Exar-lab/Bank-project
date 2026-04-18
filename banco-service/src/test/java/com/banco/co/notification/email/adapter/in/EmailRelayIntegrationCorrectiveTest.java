@@ -33,6 +33,7 @@ import jakarta.mail.Message;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -120,6 +121,14 @@ class EmailRelayIntegrationCorrectiveTest {
         @Bean
         ObjectMapper objectMapper() {
             return new ObjectMapper();
+        }
+
+        @Bean
+        StringEncryptor stringEncryptor() {
+            return new StringEncryptor() {
+                @Override public String encrypt(String message) { return message; }
+                @Override public String decrypt(String encryptedMessage) { return encryptedMessage; }
+            };
         }
 
         @Bean
