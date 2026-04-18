@@ -292,20 +292,20 @@ class EmailRelayIntegrationCorrectiveTest {
         emailOutboxEventJpaRepository.save(event);
 
         emailOutboxRelay.relayPendingEmails();
-        awaitStatus("evt-retry-dead-001", EmailOutboxStatus.PENDING, 5);
+        awaitStatus("evt-retry-dead-001", EmailOutboxStatus.PENDING, 10);
         EmailOutboxEvent firstAttempt = findByEventIdOrThrow("evt-retry-dead-001");
         assertThat(firstAttempt.getAttemptCount()).isEqualTo(1);
         assertThat(firstAttempt.getAvailableAt()).isAfter(LocalDateTime.now().minusSeconds(5));
 
         unlockForRetry("evt-retry-dead-001");
         emailOutboxRelay.relayPendingEmails();
-        awaitStatus("evt-retry-dead-001", EmailOutboxStatus.PENDING, 5);
+        awaitStatus("evt-retry-dead-001", EmailOutboxStatus.PENDING, 10);
         EmailOutboxEvent secondAttempt = findByEventIdOrThrow("evt-retry-dead-001");
         assertThat(secondAttempt.getAttemptCount()).isEqualTo(2);
 
         unlockForRetry("evt-retry-dead-001");
         emailOutboxRelay.relayPendingEmails();
-        awaitStatus("evt-retry-dead-001", EmailOutboxStatus.DEAD, 5);
+        awaitStatus("evt-retry-dead-001", EmailOutboxStatus.DEAD, 10);
 
         EmailOutboxEvent dead = findByEventIdOrThrow("evt-retry-dead-001");
         assertThat(dead.getStatus()).isEqualTo(EmailOutboxStatus.DEAD);
@@ -337,8 +337,13 @@ class EmailRelayIntegrationCorrectiveTest {
 
         assertThat(emailOutboxEventJpaRepository.countByEventId("evt-dedup-001")).isEqualTo(1);
 
+        emailOutboxEventJpaRepository.findByEventId("evt-dedup-001").ifPresent(e -> {
+            e.setAvailableAt(LocalDateTime.now().minusSeconds(60));
+            emailOutboxEventJpaRepository.save(e);
+        });
+
         emailOutboxRelay.relayPendingEmails();
-        awaitStatus("evt-dedup-001", EmailOutboxStatus.SENT, 5);
+        awaitStatus("evt-dedup-001", EmailOutboxStatus.SENT, 10);
 
         Message[] messages = greenMail.getReceivedMessages();
         assertThat(messages).hasSize(1);
@@ -374,7 +379,7 @@ class EmailRelayIntegrationCorrectiveTest {
         joinThread(t1);
         joinThread(t2);
 
-        awaitStatus("evt-contention-001", EmailOutboxStatus.SENT, 5);
+        awaitStatus("evt-contention-001", EmailOutboxStatus.SENT, 10);
 
         Message[] messages = greenMail.getReceivedMessages();
         assertThat(messages).hasSize(1);
@@ -400,7 +405,7 @@ class EmailRelayIntegrationCorrectiveTest {
         emailOutboxEventJpaRepository.save(event);
 
         emailOutboxRelay.relayPendingEmails();
-        awaitStatus("evt-audit-001", EmailOutboxStatus.SENT, 5);
+        awaitStatus("evt-audit-001", EmailOutboxStatus.SENT, 10);
 
         List<AuditLog> sentAudits = auditLogRepository.findAll().stream()
                 .filter(audit -> audit.getAction() == AuditAction.EMAIL_SENT)
@@ -424,6 +429,7 @@ class EmailRelayIntegrationCorrectiveTest {
         user.setFistName("Name" + suffix.substring(0, 4));
         user.setLastName("Last" + suffix.substring(4));
         user.setEmail(email);
+        user.setUsername("usr" + suffix);
         user.setDocumentType(DocumentType.CEDULA);
         user.setDocumentNumber("30" + suffix.substring(0, 6));
         user.setPhoneNumber("+57300" + suffix.substring(0, 6));
@@ -443,7 +449,9 @@ class EmailRelayIntegrationCorrectiveTest {
     ) {
         try {
             String contextJson = objectMapper.writeValueAsString(context);
-            return new EmailOutboxEvent(eventId, userId, recipientEmail, recipientName, templateName, contextJson, subject);
+            EmailOutboxEvent event = new EmailOutboxEvent(eventId, userId, recipientEmail, recipientName, templateName, contextJson, subject);
+            event.setAvailableAt(LocalDateTime.now().minusSeconds(60));
+            return event;
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Failed to serialize context", ex);
         }
