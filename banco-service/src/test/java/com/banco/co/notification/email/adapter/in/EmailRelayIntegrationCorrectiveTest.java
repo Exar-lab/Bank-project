@@ -419,7 +419,7 @@ class EmailRelayIntegrationCorrectiveTest {
         emailOutboxRelay.relayPendingEmails();
         awaitStatus("evt-audit-001", EmailOutboxStatus.SENT, 10);
 
-        List<AuditLog> sentAudits = auditLogRepository.findAll().stream()
+        List<AuditLog> sentAudits = auditLogRepository.findAllWithDetails().stream()
                 .filter(audit -> audit.getAction() == AuditAction.EMAIL_SENT)
                 .toList();
         assertThat(sentAudits).isNotEmpty();
