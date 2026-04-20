@@ -29,6 +29,11 @@ public class EmailOutboxRepositoryAdapter implements IEmailOutboxRepository {
     }
 
     @Override
+    public Optional<EmailOutboxEvent> findByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id);
+    }
+
+    @Override
     public List<Long> lockNextPendingIds(int limit) {
         return jpaRepository.lockNextPendingIds(limit);
     }

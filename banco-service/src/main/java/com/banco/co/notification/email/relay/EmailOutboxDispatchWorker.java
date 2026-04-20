@@ -55,7 +55,7 @@ public class EmailOutboxDispatchWorker {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void dispatchSafely(Long eventId) {
-        emailOutboxRepository.findById(eventId).ifPresent(event -> {
+        emailOutboxRepository.findByIdForUpdate(eventId).ifPresent(event -> {
             if (event.getStatus() != EmailOutboxStatus.PROCESSING) {
                 return;
             }

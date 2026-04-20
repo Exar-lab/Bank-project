@@ -2,8 +2,10 @@ package com.banco.co.notification.email.repository;
 
 import com.banco.co.notification.email.model.EmailOutboxEvent;
 import com.banco.co.notification.email.model.EmailOutboxStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,11 @@ import java.util.Optional;
 public interface EmailOutboxEventJpaRepository extends JpaRepository<EmailOutboxEvent, Long> {
 
     Optional<EmailOutboxEvent> findByEventId(String eventId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM EmailOutboxEvent e WHERE e.id = :id")
+    @Transactional
+    Optional<EmailOutboxEvent> findByIdForUpdate(@Param("id") Long id);
 
     long countByEventId(String eventId);
 

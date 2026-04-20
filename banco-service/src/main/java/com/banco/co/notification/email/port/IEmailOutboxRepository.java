@@ -10,6 +10,8 @@ public interface IEmailOutboxRepository {
 
     Optional<EmailOutboxEvent> findById(Long id);
 
+    Optional<EmailOutboxEvent> findByIdForUpdate(Long id);
+
     List<Long> lockNextPendingIds(int limit);
 
     List<EmailOutboxEvent> findClaimedForProcessing(List<Long> ids, String owner, int limit);
