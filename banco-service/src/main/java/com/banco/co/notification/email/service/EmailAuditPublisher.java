@@ -2,7 +2,10 @@ package com.banco.co.notification.email.service;
 
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
+import com.banco.co.auditLog.enums.AuditSeverity;
+import com.banco.co.auditLog.enums.AuditStatus;
 import com.banco.co.auditLog.model.AuditLogDetail;
+import com.banco.co.auditLog.service.AuditLogProcessor;
 import com.banco.co.auditLog.service.IAuditLogService;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +16,11 @@ import java.util.UUID;
 public class EmailAuditPublisher {
 
     private final IAuditLogService auditLogService;
+    private final AuditLogProcessor auditLogProcessor;
 
-    public EmailAuditPublisher(IAuditLogService auditLogService) {
+    public EmailAuditPublisher(IAuditLogService auditLogService, AuditLogProcessor auditLogProcessor) {
         this.auditLogService = auditLogService;
+        this.auditLogProcessor = auditLogProcessor;
     }
 
     public void logDeduped(String eventId) {
@@ -27,12 +32,21 @@ public class EmailAuditPublisher {
         );
     }
 
+    /**
+     * Writes the EMAIL_SENT audit record synchronously in its own REQUIRES_NEW transaction.
+     * <p>
+     * Called from a background dispatch thread (not an HTTP request), so the record must be
+     * committed before the caller returns — using the async {@code AuditLogProcessor.log()}
+     * path would leave the record uncommitted by the time the test assertion runs.
+     */
     public void logSent(UUID userId, String recipientHash) {
-        auditLogService.logSuccess(
+        auditLogProcessor.logDirectly(
                 null,
                 AuditAction.EMAIL_SENT,
                 AuditEntityType.USER,
                 userId.toString(),
+                AuditStatus.SUCCESS,
+                AuditSeverity.INFO,
                 List.of(new AuditLogDetail("recipientHash", recipientHash))
         );
     }

@@ -52,6 +52,24 @@ public class AuditLogProcessor {
             AuditSeverity severity,
             List<AuditLogDetail> details
     ) {
+        logDirectly(user, action, entityType, entityId, status, severity, details);
+    }
+
+    /**
+     * Synchronous variant — no {@code @Async}. Commits in its own REQUIRES_NEW transaction
+     * before returning to the caller. Use this when the caller needs the audit record to be
+     * visible immediately (e.g. from a background thread that has no HTTP request context).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logDirectly(
+            User user,
+            AuditAction action,
+            AuditEntityType entityType,
+            String entityId,
+            AuditStatus status,
+            AuditSeverity severity,
+            List<AuditLogDetail> details
+    ) {
         try {
             AuditLog auditLog = new AuditLog();
 

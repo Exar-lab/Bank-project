@@ -17,6 +17,7 @@ public class MailExecutorConfig {
         executor.setQueueCapacity(mailProperties.executor().queueCapacity());
         executor.setThreadNamePrefix("email-dispatcher-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setDaemon(true);
         executor.initialize();
         return executor;
     }
