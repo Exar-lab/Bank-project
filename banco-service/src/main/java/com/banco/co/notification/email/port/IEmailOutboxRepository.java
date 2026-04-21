@@ -17,4 +17,6 @@ public interface IEmailOutboxRepository {
     List<EmailOutboxEvent> findClaimedForProcessing(List<Long> ids, String owner, int limit);
 
     int claimForProcessing(List<Long> ids, String owner);
+
+    int markSentIfStillProcessing(Long id);
 }

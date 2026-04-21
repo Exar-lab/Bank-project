@@ -49,4 +49,9 @@ public class EmailOutboxRepositoryAdapter implements IEmailOutboxRepository {
     public int claimForProcessing(List<Long> ids, String owner) {
         return jpaRepository.claimForProcessing(ids, owner);
     }
+
+    @Override
+    public int markSentIfStillProcessing(Long id) {
+        return jpaRepository.markSentIfStillProcessing(id);
+    }
 }

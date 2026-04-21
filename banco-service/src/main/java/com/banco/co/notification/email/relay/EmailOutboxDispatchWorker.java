@@ -55,51 +55,50 @@ public class EmailOutboxDispatchWorker {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void dispatchSafely(Long eventId) {
-        emailOutboxRepository.findByIdForUpdate(eventId).ifPresent(event -> {
-            if (event.getStatus() != EmailOutboxStatus.PROCESSING) {
+        EmailOutboxEvent event = emailOutboxRepository.findById(eventId).orElse(null);
+        if (event == null || event.getStatus() != EmailOutboxStatus.PROCESSING) {
+            return;
+        }
+
+        if (!mailProperties.enabled()) {
+            event.setStatus(EmailOutboxStatus.PENDING);
+            event.setClaimedBy(null);
+            emailOutboxRepository.save(event);
+            return;
+        }
+
+        try {
+            Map<String, Object> context = objectMapper.readValue(
+                    event.getTemplateContextJson(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            String htmlBody = templateRenderer.render(event.getTemplateName(), context);
+            EmailMessage message = new EmailMessage(
+                    event.getEventId(),
+                    event.getRecipientEmail(),
+                    event.getSubject(),
+                    htmlBody
+            );
+
+            int claimed = emailOutboxRepository.markSentIfStillProcessing(eventId);
+            if (claimed == 0) {
                 return;
             }
 
-            if (!mailProperties.enabled()) {
-                event.setStatus(EmailOutboxStatus.PENDING);
-                event.setClaimedBy(null);
-                emailOutboxRepository.save(event);
-                return;
-            }
+            emailDispatcher.dispatch(message);
 
-            try {
-                Map<String, Object> context = objectMapper.readValue(
-                        event.getTemplateContextJson(),
-                        new TypeReference<>() {
-                        }
-                );
+            String recipientHash = recipientHasher.hash(event.getRecipientEmail());
+            emailAuditPublisher.logSent(event.getUserId(), recipientHash);
 
-                String htmlBody = templateRenderer.render(event.getTemplateName(), context);
-                EmailMessage message = new EmailMessage(
-                        event.getEventId(),
-                        event.getRecipientEmail(),
-                        event.getSubject(),
-                        htmlBody
-                );
-                emailDispatcher.dispatch(message);
-
-                event.setStatus(EmailOutboxStatus.SENT);
-                event.setSentAt(LocalDateTime.now());
-                event.setClaimedBy(null);
-                event.setLastError(null);
-                emailOutboxRepository.save(event);
-
-                String recipientHash = recipientHasher.hash(event.getRecipientEmail());
-                emailAuditPublisher.logSent(event.getUserId(), recipientHash);
-
-                log.info("event=email_outbox_transition eventId={} templateName={} status={} attemptCount={}",
-                        event.getEventId(), event.getTemplateName(), event.getStatus(), event.getAttemptCount());
-            } catch (JsonProcessingException ex) {
-                handleFailure(event, ex);
-            } catch (NotificationException ex) {
-                handleFailure(event, ex);
-            }
-        });
+            log.info("event=email_outbox_transition eventId={} templateName={} status=SENT attemptCount={}",
+                    event.getEventId(), event.getTemplateName(), event.getAttemptCount());
+        } catch (JsonProcessingException ex) {
+            handleFailure(event, ex);
+        } catch (NotificationException ex) {
+            handleFailure(event, ex);
+        }
     }
 
     private void handleFailure(EmailOutboxEvent event, Exception ex) {

@@ -58,4 +58,17 @@ public interface EmailOutboxEventJpaRepository extends JpaRepository<EmailOutbox
                AND e.status = com.banco.co.notification.email.model.EmailOutboxStatus.PENDING
             """)
     int claimForProcessing(@Param("ids") List<Long> ids, @Param("owner") String owner);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            UPDATE email_outbox_events
+               SET status = 'SENT',
+                   sent_at = NOW(),
+                   claimed_by = NULL,
+                   last_error = NULL
+             WHERE id = :id
+               AND status = 'PROCESSING'
+            """, nativeQuery = true)
+    int markSentIfStillProcessing(@Param("id") Long id);
 }
