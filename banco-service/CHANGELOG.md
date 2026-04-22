@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.8.1](https://github.com/Exar-lab/Bank-project/compare/v0.8.0...v0.8.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **application:** inject PasswordEncoder interface instead of BCryptPasswordEncoder in UserService ([9c30fcf](https://github.com/Exar-lab/Bank-project/commit/9c30fcfb98933391b78847dac833f1935ebd401f))
+* **infrastructure:** add pessimistic write lock to dispatchSafely to prevent duplicate email sends under contention ([6873c4c](https://github.com/Exar-lab/Bank-project/commit/6873c4c3bcb2bd3e5ef274665bef2997f1ccb288))
+* **infrastructure:** replace @Lock PESSIMISTIC_WRITE with native FOR UPDATE in findByIdForUpdate ([3c205b6](https://github.com/Exar-lab/Bank-project/commit/3c205b615cd5b6bf8c3e1807e9898f0d428c7e4b))
+* **infrastructure:** replace pessimistic lock with atomic UPDATE guard in dispatchSafely ([8b387cf](https://github.com/Exar-lab/Bank-project/commit/8b387cf4cf063e558e519508d9e74c08307b4990))
+* **infrastructure:** write EMAIL_SENT audit synchronously to fix zero-audit race in contention test ([8435680](https://github.com/Exar-lab/Bank-project/commit/843568096d6c7eb47f1a737bba573a3f0e143a78))
+* **test:** add @EnableJpaRepositories and @EntityScan to relay integration TestConfig ([0a56b21](https://github.com/Exar-lab/Bank-project/commit/0a56b2156cb1fadf96d2250df76917b3030e513c))
+* **test:** configure SpringBeanContainer so Hibernate delegates JasyptEncryptor creation to Spring ([35c03d8](https://github.com/Exar-lab/Bank-project/commit/35c03d8ef4939cc39320485920c5f99f090cd450))
+* **test:** deduplicate securityFilterChain bean names in WebMvcTest security configs ([e8a400d](https://github.com/Exar-lab/Bank-project/commit/e8a400d7d89447cf378c5254b245e2e6bc01a9a8))
+* **test:** pin BancoServiceApplication class in EmailRelayIntegrationCorrectiveTest ([68c859b](https://github.com/Exar-lab/Bank-project/commit/68c859b7c798bd78e688a6ff37bb11c50a208515))
+* **test:** provide explicit entityManagerFactory in relay integration TestConfig ([153a885](https://github.com/Exar-lab/Bank-project/commit/153a88586d91ce84f90c0f54252e2c000c14cebe))
+* **test:** provide no-op StringEncryptor so Spring can wire JasyptEncryptor ([db0b548](https://github.com/Exar-lab/Bank-project/commit/db0b548345f315ec3a6654c387e2bf1858069b9a))
+* **test:** provide required env-var-backed properties for full app context ([19e38c2](https://github.com/Exar-lab/Bank-project/commit/19e38c2ded92a18e40665e62feae5edbe38dfe11))
+* **test:** re-enable DataSource/JPA/Flyway autoconfiguration for relay integration test ([f68627e](https://github.com/Exar-lab/Bank-project/commit/f68627ea4f7f55b69fa22c2d620c09a4e54baeb5))
+* **test:** register com.banco.co as autoconfiguration package in relay test ([9e845c8](https://github.com/Exar-lab/Bank-project/commit/9e845c8d23405b963edaf2db6b1403c22adcd7ee))
+* **test:** remove @EntityScan — package removed in Spring Boot 4.0.2 ([217e81f](https://github.com/Exar-lab/Bank-project/commit/217e81f457128f216c5841949e556b852f028749))
+* **test:** replace BancoServiceApplication with focused classes list in EmailRelayIntegrationCorrectiveTest ([6fb431d](https://github.com/Exar-lab/Bank-project/commit/6fb431d23e4d29fadd8e8062f9a8fcdd0532a3b5))
+* **test:** replace custom @ComponentScan config with @SpringBootTest auto-detection to avoid test bean conflicts ([2546bab](https://github.com/Exar-lab/Bank-project/commit/2546bab65f180bf9fe709ef8a76887cfa7c4e7a2))
+* **test:** replace MailConfig with GreenMail-compatible JavaMailSender and fix LazyInit on AuditLog details ([96d8bc0](https://github.com/Exar-lab/Bank-project/commit/96d8bc0545b1aa7e7906137df61fc9f387dd1254))
+* **test:** scan entity model packages explicitly to avoid JasyptEncryptor ([ba6f5c4](https://github.com/Exar-lab/Bank-project/commit/ba6f5c4199cb7fb0813cb3136363bb11a571d7d7))
+* **test:** set username and availableAt in EmailRelayIntegrationCorrectiveTest helpers ([efef1d3](https://github.com/Exar-lab/Bank-project/commit/efef1d3534ee8ae3fec20a276334bced85136a1e))
+* **test:** use create-drop instead of validate in EmailRelayIntegrationCorrectiveTest ([b418ac8](https://github.com/Exar-lab/Bank-project/commit/b418ac83c13e41171aaf63bc6b2f51c86ed6fc86))
+* **test:** use findAllWithDetails in testAuditContract to avoid LazyInitializationException ([5d9b676](https://github.com/Exar-lab/Bank-project/commit/5d9b676ef854f4099df75be552e0edd78fec1815))
+* **test:** use org.springframework.orm.jpa.hibernate.SpringBeanContainer (moved from spring-boot in SB4) ([97eb0a6](https://github.com/Exar-lab/Bank-project/commit/97eb0a6c55ba751111a292aaf1cc6bf03d6f8a42))
+
 ## [0.8.0](https://github.com/Exar-lab/Bank-project/compare/v0.7.0...v0.8.0) (2026-04-16)
 
 
