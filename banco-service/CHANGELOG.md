@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0](https://github.com/Exar-lab/Bank-project/compare/v0.8.1...v0.9.0) (2026-04-24)
+
+
+### Features
+
+* **notification:** add TransactionEventsEmailHandler, email context DTOs, and Thymeleaf templates ([6450e50](https://github.com/Exar-lab/Bank-project/commit/6450e503913470e8363247928ab70e44598e237c))
+* **notification:** transaction email notifications on completed transactions ([6cba4c7](https://github.com/Exar-lab/Bank-project/commit/6cba4c7c981a0d53eeccf0bf7a84a84ba3eb25d3))
+* **outbox:** add TRANSACTION_NOTIFICATION_EVENTS to KafkaTopic ([6c425ad](https://github.com/Exar-lab/Bank-project/commit/6c425ad1be3af70f1f27bb802535572087210c52))
+* **transaction:** emit notification OutboxEvent on COMPLETED transactions ([637354b](https://github.com/Exar-lab/Bank-project/commit/637354b7afe41911e5661e0e6609460e080c5301))
+
 ## [0.8.1](https://github.com/Exar-lab/Bank-project/compare/v0.8.0...v0.8.1) (2026-04-21)
 
 
