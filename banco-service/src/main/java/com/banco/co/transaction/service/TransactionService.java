@@ -170,6 +170,13 @@ public class TransactionService implements ITransactionService {
                 buildTransactionPayload(savedTransaction, "TransactionCompleted"),
                 KafkaTopic.TRANSACTION_EVENTS
         ));
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompletedNotification",
+                buildNotificationPayload(savedTransaction),
+                KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
+        ));
 
         log.info("Transfer completed: {} from {} to {}",
                 dto.amount(), fromAccount.getAccountCode(), toAccount.getAccountCode());
@@ -266,6 +273,13 @@ public class TransactionService implements ITransactionService {
                 buildTransactionPayload(savedTransaction, "TransactionCompleted"),
                 KafkaTopic.TRANSACTION_EVENTS
         ));
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompletedNotification",
+                buildNotificationPayload(savedTransaction),
+                KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
+        ));
 
         log.info("Payment completed: {} from card {} at merchant {}",
                 dto.amount(), dto.cardCode(), dto.merchantName());
@@ -354,6 +368,13 @@ public class TransactionService implements ITransactionService {
                 buildTransactionPayload(savedTransaction, "TransactionCompleted"),
                 KafkaTopic.TRANSACTION_EVENTS
         ));
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompletedNotification",
+                buildNotificationPayload(savedTransaction),
+                KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
+        ));
 
         log.info("Service payment completed: {} from {} to provider {}",
                 dto.amount(), dto.accountCode(), dto.serviceProvider());
@@ -425,8 +446,15 @@ public class TransactionService implements ITransactionService {
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompleted",
-                buildTransactionPayload(savedTransaction, null, toAccount, dto.amount()),
+                buildTransactionPayload(savedTransaction, "TransactionCompleted"),
                 KafkaTopic.TRANSACTION_EVENTS
+        ));
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompletedNotification",
+                buildNotificationPayload(savedTransaction),
+                KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
         log.info("Cash deposit completed: {} to {}", dto.amount(), toAccount.getAccountCode());
@@ -515,8 +543,15 @@ public class TransactionService implements ITransactionService {
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompleted",
-                buildTransactionPayload(savedTransaction, fromAccount, null, dto.amount()),
+                buildTransactionPayload(savedTransaction, "TransactionCompleted"),
                 KafkaTopic.TRANSACTION_EVENTS
+        ));
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompletedNotification",
+                buildNotificationPayload(savedTransaction),
+                KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
         log.info("Cash withdrawal completed: {} from {}", dto.amount(), fromAccount.getAccountCode());
@@ -592,8 +627,15 @@ public class TransactionService implements ITransactionService {
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompleted",
-                buildTransactionPayload(savedTransaction, null, toAccount, dto.amount()),
+                buildTransactionPayload(savedTransaction, "TransactionCompleted"),
                 KafkaTopic.TRANSACTION_EVENTS
+        ));
+        outboxEventPort.save(new OutboxEvent(
+                "Transaction",
+                savedTransaction.getId().toString(),
+                "TransactionCompletedNotification",
+                buildNotificationPayload(savedTransaction),
+                KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
         log.info("Check deposit completed: {} to {} (Check #{} from {})",
@@ -792,7 +834,7 @@ public class TransactionService implements ITransactionService {
         transaction.setStatus(TransactionStatus.CANCELLED);
         transactionRepository.save(transaction);
 
-        log.info("Scheduled transaction {} cancelled by {}", transactionId, userEmail);
+        log.info("Scheduled transaction {} cancelled", transactionId);
     }
 
     @Transactional
@@ -831,8 +873,7 @@ public class TransactionService implements ITransactionService {
         transaction.setReversalReason(reason);
         transactionRepository.save(transaction);
 
-        log.info("Reversal requested for transaction {} by {}: {}",
-                transactionId, userEmail, reason);
+        log.info("Reversal requested for transaction {}: {}", transactionId, reason);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -924,6 +965,15 @@ public class TransactionService implements ITransactionService {
                 buildTransactionPayload(savedTransaction, eventType),
                 KafkaTopic.TRANSACTION_EVENTS
         ));
+        if (transaction.isFlaggedForFraud()) {
+            outboxEventPort.save(new OutboxEvent(
+                    "Transaction",
+                    savedTransaction.getId().toString(),
+                    "TransactionCompletedNotification",
+                    buildNotificationPayload(savedTransaction),
+                    KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
+            ));
+        }
 
         log.info("Transaction {} approved by admin {} — status: {}", transactionId, adminEmail, savedTransaction.getStatus());
 
@@ -1084,19 +1134,37 @@ public class TransactionService implements ITransactionService {
         }
     }
 
-    private String buildTransactionPayload(Transaction transaction, Account fromAccount, Account toAccount, BigDecimal amount) {
+    private String buildNotificationPayload(Transaction transaction) {
         try {
+            LocalDateTime occurredAt = transaction.getCompletedAt() != null
+                    ? transaction.getCompletedAt()
+                    : transaction.getProcessedAt() != null
+                        ? transaction.getProcessedAt()
+                        : LocalDateTime.now();
+
             Map<String, Object> payload = new HashMap<>();
-            payload.put("eventType", "TransactionCompleted");
+            payload.put("eventType", "TransactionCompletedNotification");
             payload.put("transactionId", transaction.getId().toString());
-            payload.put("fromAccount", fromAccount != null ? fromAccount.getAccountCode() : null);
-            payload.put("toAccount", toAccount != null ? toAccount.getAccountCode() : null);
-            payload.put("amount", amount);
+            payload.put("transactionCode", transaction.getTransactionCode());
+            payload.put("type", transaction.getType() != null ? transaction.getType().name() : null);
+            payload.put("amount", transaction.getAmount());
             payload.put("currency", transaction.getCurrency());
-            payload.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : null);
+            payload.put("occurredAt", occurredAt.toString());
+            payload.put("fromAccount", buildAccountNode(transaction.getFromAccount()));
+            payload.put("toAccount", buildAccountNode(transaction.getToAccount()));
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize event payload", e);
+            throw new IllegalStateException("Failed to serialize notification payload", e);
         }
+    }
+
+    private Map<String, Object> buildAccountNode(Account account) {
+        if (account == null) return null;
+        Map<String, Object> node = new HashMap<>();
+        node.put("accountCode", account.getAccountCode());
+        node.put("userId", account.getUser().getId().toString());
+        node.put("userEmail", account.getUser().getEmail());
+        node.put("userFirstName", account.getUser().getFistName());
+        return node;
     }
 }

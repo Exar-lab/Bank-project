@@ -8,6 +8,14 @@
       "sessions": 7,
       "memories": 98,
       "prompts": 2
+    },
+    {
+      "id": "adeb3d46",
+      "created_by": "Exar1",
+      "created_at": "2026-04-24T19:35:34Z",
+      "sessions": 27,
+      "memories": 255,
+      "prompts": 11
     }
   ]
 }
