@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Has recibido una transferencia</title>
+</head>
+<body>
+<h1>Has recibido una transferencia</h1>
+<p>Hola <span th:text="${recipientName}">Usuario</span>,</p>
+<p>
+    Recibiste <strong th:text="${amount}">0</strong> <span th:text="${currency}">CRC</span>
+    de <strong th:text="${counterpartyName}">Remitente</strong>
+    (cuenta <span th:text="${counterpartyAccountCode}">ACC-000</span>).
+</p>
+<p>Cuenta destino: <strong th:text="${toAccountCode}">ACC-000</strong></p>
+<p>Código de transacción: <strong th:text="${transactionCode}">TXN-000</strong></p>
+<p>Fecha: <span th:text="${occurredAt}">2026-01-01</span></p>
+<p>Seguimos acompañándote en <span th:text="${bankName}">Banco CO</span>.</p>
+</body>
+</html>
