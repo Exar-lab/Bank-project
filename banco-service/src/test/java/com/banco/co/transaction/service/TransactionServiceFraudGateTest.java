@@ -101,8 +101,8 @@ class TransactionServiceFraudGateTest {
         assertThat(result).isEqualTo(expectedResponse);
 
         ArgumentCaptor<OutboxEvent> eventCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
-        verify(outboxEventPort).save(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getEventType()).isEqualTo("TransactionCompleted");
+        verify(outboxEventPort, times(2)).save(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getEventType()).isEqualTo("TransactionCompleted");
     }
 
     // ══════════════════════════════════════════════════════════
@@ -211,10 +211,10 @@ class TransactionServiceFraudGateTest {
         // Transaction is COMPLETED after flagged approval
         assertThat(flaggedTx.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
 
-        // Outbox event must be TransactionCompleted for fraud-reviewed path
+        // approveTransaction flagged path emits domain event + notification event
         ArgumentCaptor<OutboxEvent> eventCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
-        verify(outboxEventPort).save(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getEventType()).isEqualTo("TransactionCompleted");
+        verify(outboxEventPort, times(2)).save(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getEventType()).isEqualTo("TransactionCompleted");
     }
 
     // ══════════════════════════════════════════════════════════
