@@ -5,7 +5,8 @@ public enum KafkaTopic {
     TRANSACTION_EVENTS("banco.transaction.events"),
     ENVELOPE_EVENTS("banco.envelope.events"),
     USER_EVENTS("banco.user.events"),
-    CARD_EVENTS("banco.card.events");
+    CARD_EVENTS("banco.card.events"),
+    TRANSACTION_NOTIFICATION_EVENTS("banco.transaction.notification.events");
 
     private final String topicName;
 
