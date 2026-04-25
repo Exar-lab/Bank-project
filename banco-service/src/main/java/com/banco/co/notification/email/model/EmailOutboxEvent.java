@@ -22,7 +22,7 @@ public class EmailOutboxEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_id", nullable = false, length = 36, unique = true)
+    @Column(name = "event_id", nullable = false, length = 100, unique = true)
     private String eventId;
 
     @Column(name = "recipient_email", nullable = false, length = 254)
