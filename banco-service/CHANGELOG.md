@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/Exar-lab/Bank-project/compare/v0.9.0...v0.9.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **infrastructure:** expand email_outbox_events.event_id to VARCHAR(100) ([4564728](https://github.com/Exar-lab/Bank-project/commit/4564728cbdb697be34ac9bd3191c5a097e4a6073))
+
 ## [0.9.0](https://github.com/Exar-lab/Bank-project/compare/v0.8.1...v0.9.0) (2026-04-24)
 
 
