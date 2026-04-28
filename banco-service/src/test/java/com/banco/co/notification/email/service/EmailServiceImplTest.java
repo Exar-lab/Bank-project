@@ -2,7 +2,7 @@ package com.banco.co.notification.email.service;
 
 import com.banco.co.notification.email.model.EmailOutboxEvent;
 import com.banco.co.notification.email.port.IEmailOutboxRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

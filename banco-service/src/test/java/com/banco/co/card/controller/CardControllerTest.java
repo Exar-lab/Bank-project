@@ -14,9 +14,7 @@ import com.banco.co.card.enums.CardType;
 import com.banco.co.card.service.ICardService;
 import com.banco.co.exception.GlobalExceptionHandler;
 import com.banco.co.exception.support.ErrorResponseFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -66,9 +64,7 @@ class CardControllerTest {
                 .setValidator(validator)
                 .build();
 
-        objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper = new ObjectMapper();
 
         sampleResponse = new CardResponseDto(
                 "CARD-2024-X7K9P2", "****-****-****-0366",

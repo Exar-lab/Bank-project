@@ -1,7 +1,7 @@
 package com.banco.co.exception;
 
 import com.banco.co.exception.support.ErrorResponseFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotBlank;
@@ -135,9 +135,7 @@ class GlobalExceptionHandlerWebMvcTest {
         assertThat(payload.details()).containsEntry("resource", "account");
         assertThat(payload.timestamp()).isNotNull();
 
-        java.util.Iterator<String> fieldNames = objectMapper.readTree(responseBody).fieldNames();
-        Set<String> rootFields = new java.util.HashSet<>();
-        fieldNames.forEachRemaining(rootFields::add);
+        Set<String> rootFields = new java.util.HashSet<>(objectMapper.readTree(responseBody).propertyNames());
 
         assertThat(rootFields).containsExactlyInAnyOrder("errorCode", "message", "details", "timestamp");
         assertThat(rootFields).doesNotContain("code");

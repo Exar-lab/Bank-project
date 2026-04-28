@@ -7,7 +7,7 @@ import com.banco.co.user.enums.DocumentType;
 import com.banco.co.user.enums.KycStatus;
 import com.banco.co.user.enums.UserStatus;
 import com.banco.co.user.service.user.IUserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

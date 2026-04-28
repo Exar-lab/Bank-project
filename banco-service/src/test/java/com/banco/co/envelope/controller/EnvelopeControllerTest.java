@@ -6,7 +6,7 @@ import com.banco.co.envelope.enums.EnvelopeType;
 import com.banco.co.envelope.service.IEnvelopeService;
 import com.banco.co.exception.GlobalExceptionHandler;
 import com.banco.co.exception.support.ErrorResponseFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

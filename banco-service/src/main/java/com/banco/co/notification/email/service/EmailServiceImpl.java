@@ -2,8 +2,8 @@ package com.banco.co.notification.email.service;
 
 import com.banco.co.notification.email.model.EmailOutboxEvent;
 import com.banco.co.notification.email.port.IEmailOutboxRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -58,7 +58,7 @@ public class EmailServiceImpl implements IEmailService {
         } catch (DataIntegrityViolationException ex) {
             log.warn("EMAIL_ENQUEUE_DEDUPED eventId={}", eventId);
             emailAuditPublisher.logDeduped(eventId);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Failed to serialize email context for event " + eventId, ex);
         }
     }

@@ -23,7 +23,7 @@ import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
