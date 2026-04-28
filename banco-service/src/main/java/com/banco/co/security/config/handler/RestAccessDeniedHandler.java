@@ -2,7 +2,7 @@ package com.banco.co.security.config.handler;
 
 import com.banco.co.exception.ErrorResponseDto;
 import com.banco.co.exception.support.ErrorResponseFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;

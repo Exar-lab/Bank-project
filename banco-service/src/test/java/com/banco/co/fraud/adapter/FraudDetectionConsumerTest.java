@@ -2,7 +2,7 @@ package com.banco.co.fraud.adapter;
 
 import com.banco.co.fraud.enums.FraudAnalysisResult;
 import com.banco.co.fraud.service.IFraudDetectionService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

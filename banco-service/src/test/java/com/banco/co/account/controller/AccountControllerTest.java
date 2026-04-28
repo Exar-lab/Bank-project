@@ -7,7 +7,7 @@ import com.banco.co.account.enums.AccountType;
 import com.banco.co.account.service.IAccountService;
 import com.banco.co.exception.GlobalExceptionHandler;
 import com.banco.co.exception.support.ErrorResponseFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

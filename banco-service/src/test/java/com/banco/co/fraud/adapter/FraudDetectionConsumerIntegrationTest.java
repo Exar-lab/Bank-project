@@ -5,7 +5,7 @@ import com.banco.co.fraud.enums.FraudAnalysisResult;
 import com.banco.co.fraud.service.IFraudDetectionService;
 import com.banco.co.outbox.config.KafkaConsumerConfig;
 import com.banco.co.outbox.config.KafkaProducerConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;

@@ -20,8 +20,8 @@ import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -453,7 +453,7 @@ public class AccountService implements IAccountService {
             payload.put("status", account.getStatus().toString());
             payload.put("balance", account.getBalance());
             return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize event payload", e);
         }
     }

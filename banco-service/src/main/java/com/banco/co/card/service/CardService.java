@@ -19,8 +19,8 @@ import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.security.securityhasher.HashUtils;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -519,7 +519,7 @@ public class CardService implements ICardService {
                     objectMapper.writeValueAsString(payload),
                     KafkaTopic.CARD_EVENTS
             ));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize CardStatusChanged event payload", e);
         }
 
@@ -563,7 +563,7 @@ public class CardService implements ICardService {
                     objectMapper.writeValueAsString(payload),
                     KafkaTopic.CARD_EVENTS
             ));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize CardPinReset event payload", e);
         }
 
@@ -635,7 +635,7 @@ public class CardService implements ICardService {
                     objectMapper.writeValueAsString(payload),
                     KafkaTopic.CARD_EVENTS
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize CardLimitsUpdated event payload", e);
         }
     }
@@ -659,7 +659,7 @@ public class CardService implements ICardService {
                     objectMapper.writeValueAsString(payload),
                     KafkaTopic.CARD_EVENTS
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize CardFeaturesUpdated event payload", e);
         }
     }
@@ -677,7 +677,7 @@ public class CardService implements ICardService {
             payload.put("cardType", card.getCardType() != null ? card.getCardType().toString() : null);
             payload.put("status", card.getStatus().toString());
             return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize card event payload", e);
         }
     }

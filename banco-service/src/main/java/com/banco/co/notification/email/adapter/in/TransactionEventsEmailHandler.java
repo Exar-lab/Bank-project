@@ -1,9 +1,9 @@
 package com.banco.co.notification.email.adapter.in;
 
 import com.banco.co.notification.email.service.IEmailService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -42,7 +42,7 @@ public class TransactionEventsEmailHandler {
         JsonNode node;
         try {
             node = objectMapper.readTree(payload);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             log.warn("TransactionEventsEmailHandler: malformed payload (length={})", payload.length());
             return;
         }

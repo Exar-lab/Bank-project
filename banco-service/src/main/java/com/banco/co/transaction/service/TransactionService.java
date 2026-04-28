@@ -41,8 +41,8 @@ import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -1129,7 +1129,7 @@ public class TransactionService implements ITransactionService {
             payload.put("currency", transaction.getCurrency());
             payload.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : null);
             return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize event payload", e);
         }
     }
@@ -1153,7 +1153,7 @@ public class TransactionService implements ITransactionService {
             payload.put("fromAccount", buildAccountNode(transaction.getFromAccount()));
             payload.put("toAccount", buildAccountNode(transaction.getToAccount()));
             return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize notification payload", e);
         }
     }

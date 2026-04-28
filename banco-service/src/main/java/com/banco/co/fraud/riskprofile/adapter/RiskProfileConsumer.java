@@ -2,8 +2,8 @@ package com.banco.co.fraud.riskprofile.adapter;
 
 import com.banco.co.fraud.riskprofile.dto.TransactionCompletedRiskEvent;
 import com.banco.co.fraud.riskprofile.service.IRiskProfileAsyncUpdaterService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;

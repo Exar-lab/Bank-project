@@ -4,8 +4,7 @@ import com.banco.co.user.dto.employee.EmployeeRequestDto;
 import com.banco.co.user.dto.employee.EmployeeResponseDto;
 import com.banco.co.user.dto.employee.EmployeeUpdateDto;
 import com.banco.co.user.model.User;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

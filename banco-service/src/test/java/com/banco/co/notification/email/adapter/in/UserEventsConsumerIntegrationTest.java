@@ -3,7 +3,7 @@ package com.banco.co.notification.email.adapter.in;
 import com.banco.co.notification.email.service.IEmailService;
 import com.banco.co.outbox.config.KafkaConsumerConfig;
 import com.banco.co.outbox.config.KafkaProducerConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;

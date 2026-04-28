@@ -4,9 +4,9 @@ import com.banco.co.notification.email.dto.EnvelopeGoalReachedEmailContext;
 import com.banco.co.notification.email.service.IEmailService;
 import com.banco.co.user.model.User;
 import com.banco.co.user.repository.IUserRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -47,7 +47,7 @@ public class EnvelopeEventsEmailHandler {
         JsonNode node;
         try {
             node = objectMapper.readTree(payload);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             log.error("EnvelopeEventsEmailHandler failed to parse payload", ex);
             return;
         }

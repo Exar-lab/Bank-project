@@ -4,8 +4,8 @@ import com.banco.co.account.dto.AccountRequestDto;
 import com.banco.co.account.dto.AccountResponseDto;
 import com.banco.co.account.dto.AccountUpdateDto;
 import com.banco.co.account.model.Account;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
@@ -59,7 +59,7 @@ public interface IAccountMapper {
     default String toJsonString(Account account) {
         try {
             return OBJECT_MAPPER.writeValueAsString(account);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return "{\"error\":\"serialization_failed\"}";
         }
     }

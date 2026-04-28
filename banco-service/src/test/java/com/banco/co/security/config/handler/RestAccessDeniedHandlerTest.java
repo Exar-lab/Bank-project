@@ -1,12 +1,9 @@
 package com.banco.co.security.config.handler;
 
 import com.banco.co.exception.support.ErrorResponseFactory;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,10 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RestAccessDeniedHandlerTest {
 
-    private final ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json()
-            .modules(new JavaTimeModule())
-            .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final ErrorResponseFactory errorResponseFactory = new ErrorResponseFactory();
 
     @Test
@@ -36,8 +30,7 @@ class RestAccessDeniedHandlerTest {
         deniedHandler.handle(request, response, new AccessDeniedException("denied"));
 
         JsonNode body = objectMapper.readTree(response.getContentAsString());
-        List<String> rootFields = new ArrayList<>();
-        body.fieldNames().forEachRemaining(rootFields::add);
+        List<String> rootFields = new ArrayList<>(body.propertyNames());
 
         assertThat(response.getStatus()).isEqualTo(403);
         assertThat(response.getContentType()).isEqualTo("application/json");

@@ -4,7 +4,7 @@ import com.banco.co.notification.email.repository.EmailOutboxEventJpaRepository;
 import com.banco.co.notification.email.repository.EmailOutboxRepositoryAdapter;
 import com.banco.co.notification.email.service.EmailAuditPublisher;
 import com.banco.co.notification.email.service.EmailServiceImpl;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeansException;

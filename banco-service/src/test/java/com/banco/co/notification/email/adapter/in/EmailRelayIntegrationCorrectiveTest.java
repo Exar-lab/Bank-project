@@ -24,8 +24,8 @@ import com.banco.co.notification.email.service.RecipientHasher;
 import com.banco.co.user.enums.DocumentType;
 import com.banco.co.user.model.User;
 import com.banco.co.user.repository.IUserRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetup;
 import jakarta.mail.Message;
@@ -464,7 +464,7 @@ class EmailRelayIntegrationCorrectiveTest {
             EmailOutboxEvent event = new EmailOutboxEvent(eventId, userId, recipientEmail, recipientName, templateName, contextJson, subject);
             event.setAvailableAt(LocalDateTime.now().minusSeconds(60));
             return event;
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Failed to serialize context", ex);
         }
     }

@@ -2,7 +2,7 @@ package com.banco.co.fraud.riskprofile.adapter;
 
 import com.banco.co.fraud.riskprofile.dto.TransactionCompletedRiskEvent;
 import com.banco.co.fraud.riskprofile.service.IRiskProfileAsyncUpdaterService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

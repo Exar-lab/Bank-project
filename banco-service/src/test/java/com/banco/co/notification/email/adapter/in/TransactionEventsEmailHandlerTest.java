@@ -1,7 +1,7 @@
 package com.banco.co.notification.email.adapter.in;
 
 import com.banco.co.notification.email.service.IEmailService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
