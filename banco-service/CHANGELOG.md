@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.2](https://github.com/Exar-lab/Bank-project/compare/v0.9.1...v0.9.2) (2026-04-28)
+
+
+### Refactoring
+
+* **infrastructure:** migrate to Jackson 3 (tools.jackson.*) for Spring Boot 4 compatibility ([c8cd04c](https://github.com/Exar-lab/Bank-project/commit/c8cd04cc8f56de8c77fbb5e8a7a2d7b18e3551f4))
+* **infrastructure:** migrate to Jackson 3 (tools.jackson.*) for Spring Boot 4 compatibility ([6419933](https://github.com/Exar-lab/Bank-project/commit/6419933e58d2f34ee1bf4319e4898371ef3a3ad5))
+
 ## [0.9.1](https://github.com/Exar-lab/Bank-project/compare/v0.9.0...v0.9.1) (2026-04-25)
 
 
