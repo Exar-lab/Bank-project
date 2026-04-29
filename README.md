@@ -326,7 +326,7 @@ Levanta:
 | V9 | `V9__drop_legacy_refresh_columns.sql` | Limpieza de columnas legacy |
 | V10 | `V10__create_email_outbox_events.sql` | Tabla `email_outbox_events` (Email Outbox) |
 | V11 | `V11__expand_email_outbox_event_id.sql` | Expand `event_id` a VARCHAR(100) |
-| V11 | `V11__fix_permissions_column_lengths.sql` | Corrección de longitudes en permisos |
+| V12 | `V12__fix_permissions_column_lengths.sql` | Corrección de longitudes en permisos |
 
 Flyway busca migraciones en `classpath:db/migration`.
 
