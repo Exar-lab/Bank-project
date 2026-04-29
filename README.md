@@ -1,20 +1,21 @@
 <p align="center">
   <img
-    src="https://capsule-render.vercel.app/api?type=waving&color=0:0ea5e9,100:22c55e&height=180&section=header&text=Bank-project%20%E2%80%94%20banco-service&fontSize=38&fontColor=ffffff&animation=fadeIn&desc=Java%2021%2B%20%7C%20Spring%20Boot%20%7C%20MySQL%20%7C%20Kafka%20%7C%20Flyway%20%7C%20JWT&descAlignY=70"
+    src="https://capsule-render.vercel.app/api?type=waving&color=0:0ea5e9,100:22c55e&height=180&section=header&text=Bank-project%20%E2%80%94%20banco-service&fontSize=38&fontColor=ffffff&animation=fadeIn&desc=Java%2021%2B%20%7C%20Spring%20Boot%204%20%7C%20MySQL%20%7C%20Kafka%20%7C%20Flyway%20%7C%20JWT&descAlignY=70"
     alt="Bank-project — banco-service banner"
   />
 </p>
+
 # Bank-project — banco-service
 
-Proyecto backend de tipo **servicio bancario** construido con **Java + Spring Boot**, orientado a una arquitectura **Hexagonal (Ports & Adapters) + DDD** y organización **feature-first (Screaming Architecture)**.
+> **v0.9.3-SNAPSHOT** · Java 21 · Spring Boot 4.0.2
 
-Incluye persistencia en **MySQL**, mensajería asíncrona con **Kafka**, migraciones con **Flyway**, seguridad con **Spring Security + JWT**, encriptación de propiedades con **Jasypt**, tareas programadas (**Scheduling**) y ejecución asíncrona (**Async**).
+Servicio backend bancario construido con **Java 21 + Spring Boot 4**, siguiendo **Hexagonal Architecture**, **DDD** y **Screaming Architecture** (feature-first). Diseñado como proyecto de portafolio de nivel profesional.
 
 ---
 
-## Inicio rápido (5 minutos)
+## Inicio rápido
 
-### 1) Clonar y preparar variables
+### 1. Clonar y preparar variables
 
 Linux/macOS:
 ```bash
@@ -26,13 +27,15 @@ Windows (PowerShell):
 Copy-Item .env.example .env
 ```
 
-### 2) Levantar infraestructura local (MySQL + Kafka)
+### 2. Levantar infraestructura (MySQL + Kafka)
 
 ```bash
 docker compose up -d
 ```
 
-### 3) Ejecutar la app
+### 3. Ejecutar la aplicación
+
+Desde la **raíz** del repo:
 
 Linux/macOS:
 ```bash
@@ -44,313 +47,294 @@ Windows:
 banco-service\mvnw.cmd -f banco-service/pom.xml spring-boot:run
 ```
 
-### 4) Health check
+### 4. Verificar
 
 ```bash
 curl http://localhost:8080/actuator/health
 ```
 
-Respuesta esperada:
-
 ```json
-{
-  "status": "UP"
-}
+{ "status": "UP" }
 ```
 
 ---
 
-## Stack / Tecnologías
+## Stack
 
-- **Java**: 21+  
-- **Framework**: Spring Boot (parent `4.0.2`)
-- **Web**: Spring Web MVC
-- **Persistencia**: Spring Data JPA + **MySQL**
-- **Migraciones DB**: **Flyway**
-- **Mensajería**: **Kafka** (Spring Kafka)
-- **Seguridad**: Spring Security + JWT (`com.auth0:java-jwt`)
-- **Encriptación**: Jasypt
-- **Mapeo DTOs/Modelos**: MapStruct
-- **Observabilidad**: Spring Boot Actuator
-- **Testing** (dependencias previstas): JUnit 5, Mockito, Testcontainers (según lineamientos del repo)
-
----
-
-## Estructura del repositorio
-
-- `banco-service/` → servicio principal (Spring Boot + Maven)
-- `docker-compose.yml` → infraestructura local (MySQL + Kafka)
-- `.env.example` → plantilla de configuración local
-- `docs/` → documentación adicional del proyecto
+| Categoría | Tecnología |
+|-----------|-----------|
+| **Runtime** | Java 21 |
+| **Framework** | Spring Boot 4.0.2 |
+| **Web** | Spring Web MVC |
+| **Persistencia** | Spring Data JPA + MySQL |
+| **Migraciones** | Flyway (Core + MySQL) |
+| **Mensajería** | Spring Kafka |
+| **Seguridad** | Spring Security + JWT (`com.auth0:java-jwt`) + OAuth2 Client |
+| **Encriptación** | Jasypt |
+| **Email** | Spring Mail + Thymeleaf |
+| **Mapeo** | MapStruct + Lombok |
+| **Config local** | springboot4-dotenv (`.env` compartido) |
+| **Observabilidad** | Spring Boot Actuator |
+| **Testing** | JUnit 5, Mockito, Testcontainers, spring-kafka-test, GreenMail |
 
 ---
 
-## Novedades recientes (últimos PRs)
+## Dominios del servicio
 
-### Seguridad y autorización
+El servicio cubre **13 dominios**, organizados en paquetes feature-first bajo `com.banco.co.*`:
 
-- Se adoptó una estrategia **híbrida de autorización** en controladores de transacciones:
-  - validación por **scope** (token OAuth/JWT)
-  - validación por **rol** (`@PreAuthorize`)
-- Se reforzaron endpoints de operaciones de **teller/admin** para exigir scope + rol correcto.
-
-Archivos clave:
-
-- `banco-service/src/main/java/com/banco/co/transaction/controller/TransactionController.java`
-- `banco-service/src/main/java/com/banco/co/transaction/controller/TransactionEmployeeController.java`
-- `banco-service/src/main/java/com/banco/co/transaction/controller/TransactionAdminController.java`
-- `banco-service/src/main/java/com/banco/co/role/configuration/RolePermissionMatrix.java`
-
-### Configuración local
-
-- Se consolidó bootstrap de `.env` compartido entre Docker Compose y Spring Boot.
-- Se alineó la dependencia `springboot4-dotenv` vía BOM para reducir drift de versiones.
-
-Archivos clave:
-
-- `.env.example`
-- `banco-service/pom.xml`
-- `banco-service/src/main/resources/application.yml`
-
-### Estructura del proyecto
-
-- Se restauró la ubicación correcta de la clase principal en el paquete `com.banco.co`:
-  - `banco-service/src/main/java/com/banco/co/BancoServiceApplication.java`
+| Dominio | Responsabilidad |
+|---------|----------------|
+| `account` | Cuentas bancarias — creación, balance, estado, cierre |
+| `auditLog` | Auditoría — registro inmutable de acciones del sistema |
+| `auth` | Autenticación — login, logout, refresh tokens JWT |
+| `card` | Tarjetas — ciclo de vida (activar, bloquear, robar, cerrar) y límites |
+| `envelope` | Sobres de ahorro — metas, depósitos, retiros, búsqueda |
+| `fraud` | Detección de fraude — Risk Profile Gate (decisión síncrona + enriquecimiento async) |
+| `notification` | Notificaciones por email — Outbox Pattern, plantillas Thymeleaf |
+| `outbox` | Transactional Outbox — publicación durable de eventos a Kafka |
+| `permission` | Permisos — gestión y asignación |
+| `role` | Roles — RBAC, configuración de matriz de permisos |
+| `security` | Infraestructura de seguridad — JWT filter chain, token lifecycle, crypto |
+| `transaction` | Transacciones — transferencias, pagos, programación, reversión, fraude |
+| `user` | Usuarios — perfil, contraseña, administración de empleados |
 
 ---
 
-## Requisitos
+## Arquitectura
 
-- **Docker + Docker Compose** (para levantar MySQL y Kafka localmente)
-- **JDK 21+**
-- (Recomendado) Maven via wrapper incluido: `banco-service/mvnw`
+```
+com.banco.co.{feature}
+│
+├── model/        ← Domain: @Entity + lógica de negocio + value objects
+├── enums/        ← Domain: enumeraciones del dominio
+├── exception/    ← Domain: jerarquía de excepciones abstractas
+│
+├── service/      ← Application: casos de uso, orquestación
+├── dto/          ← Application: Records (inmutables)
+├── mapper/       ← Application: MapStruct mappers
+│
+├── repository/   ← Infrastructure: interfaces JPA
+│
+└── controller/   ← Presentation: REST endpoints, validaciones
+```
 
----
-
-## Configuración (variables de entorno) — Opción C
-
-Se implementó la **Opción C**: un único archivo `.env` compartido entre:
-
-- `docker-compose.yml` (infra local)
-- Spring Boot (`application.yml` vía `springboot4-dotenv`)
-
-### Prioridad de valores
-
-Para Spring Boot, los valores se resuelven con esta prioridad:
-
-1. **Variables de entorno reales del sistema/proceso**
-2. **Archivo `.env`**
-3. **Defaults definidos en `application.yml`** (si existen)
-
-Esto permite sobrescribir una variable puntual sin editar `.env`.
-
-### Archivo `.env` compartido
-
-- Plantilla versionada: `/.env.example`
-- Archivo local real: `/.env`
-- `.env` está ignorado por Git (no se commitea)
-
-#### Variables mínimas obligatorias para arrancar
-
-- `MYSQL_ROOT_PASSWORD` (Docker Compose / MySQL)
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `JWT_SECRET_KEY`
-- `ISSUER_GENERATOR`
-- `JASYPT_ENCRYPTOR_PASSWORD`
-
-`KAFKA_BOOTSTRAP_SERVERS` tiene default (`localhost:9092`), pero se recomienda definirlo igual en `.env`.
-
-> Importante: usar valores locales/no reales y no hardcodear secretos en el repo.
+**Convenciones no negociables**:
+- DTOs como `record` (nunca clases mutables)
+- Constructor injection (nunca `@Autowired` en campos)
+- `Optional` sin `.get()` — siempre `orElseThrow` / `orElse`
+- Excepciones base siempre `abstract`
+- Sin N+1: `JOIN FETCH` o proyección DTO en queries JPA
 
 ---
 
-## Levantar dependencias (MySQL + Kafka) con Docker
+## API Reference
 
-En la **raíz** del repo:
+**57 endpoints** organizados en tres niveles de acceso: `user`, `admin`, `teller`.
+Especificación completa en [`docs/api/openapi.yaml`](docs/api/openapi.yaml).
+
+### Accounts `/api/v1/accounts`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/v1/accounts` | Crear cuenta |
+| `GET` | `/api/v1/accounts/{id}` | Obtener cuenta por ID |
+| `GET` | `/api/v1/accounts/code/{code}` | Obtener cuenta por código |
+| `GET` | `/api/v1/accounts/{id}/balance` | Consultar balance |
+| `PUT` | `/api/v1/admin/accounts/{id}/status` | Cambiar estado (admin) |
+| `DELETE` | `/api/v1/admin/accounts/{id}/close` | Cerrar cuenta (admin) |
+
+### Cards `/api/v1/cards`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/v1/cards` | Emitir tarjeta |
+| `GET` | `/api/v1/cards/account/{accountCode}` | Tarjetas de una cuenta |
+| `GET` | `/api/v1/cards/{cardCode}` | Detalle de tarjeta |
+| `PATCH` | `/api/v1/cards/{cardCode}/activate` | Activar |
+| `PATCH` | `/api/v1/cards/{cardCode}/block` | Bloquear |
+| `PATCH` | `/api/v1/cards/{cardCode}/report-stolen` | Reportar robada |
+| `PATCH` | `/api/v1/cards/{cardCode}/report-lost` | Reportar perdida |
+| `PATCH` | `/api/v1/cards/{cardCode}/close` | Cerrar |
+| `PATCH` | `/api/v1/cards/{cardCode}/limits` | Actualizar límites |
+| `PATCH` | `/api/v1/cards/{cardCode}/features` | Actualizar características |
+| `GET` | `/api/v1/admin/cards` | Listar todas (admin) |
+| `PATCH` | `/api/v1/admin/cards/{cardCode}/status` | Cambiar estado (admin) |
+| `POST` | `/api/v1/admin/cards/{cardCode}/reset-pin` | Resetear PIN (admin) |
+
+### Transactions `/api/v1/transactions`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/v1/transactions/transfer` | Transferencia |
+| `POST` | `/api/v1/transactions/payment` | Pago |
+| `POST` | `/api/v1/transactions/pay-service` | Pago de servicio |
+| `POST` | `/api/v1/transactions/schedule` | Programar transacción |
+| `PATCH` | `/api/v1/transactions/{id}/schedule` | Modificar programación |
+| `POST` | `/api/v1/transactions/{id}/reversal` | Solicitar reversión |
+| `GET` | `/api/v1/transactions/me` | Mis transacciones |
+| `GET` | `/api/v1/transactions/{id}` | Detalle |
+| `GET` | `/api/v1/transactions/account/{code}` | Por cuenta |
+| `GET` | `/api/v1/transactions/categories` | Categorías disponibles |
+| `GET` | `/api/v1/transactions/summary` | Resumen |
+| `GET` | `/api/v1/admin/transactions` | Listar todas (admin) |
+| `GET` | `/api/v1/admin/transactions/suspicious` | Sospechosas (admin) |
+| `POST` | `/api/v1/admin/transactions/{id}/approve` | Aprobar (admin) |
+| `POST` | `/api/v1/admin/transactions/{id}/reject` | Rechazar (admin) |
+| `POST` | `/api/v1/admin/transactions/{id}/reverse` | Revertir (admin) |
+| `POST` | `/api/v1/admin/transactions/{id}/fraud` | Marcar fraude (admin) |
+| `POST` | `/api/v1/teller/transactions/cash-deposit` | Depósito en efectivo (teller) |
+| `POST` | `/api/v1/teller/transactions/cash-withdrawal` | Retiro en efectivo (teller) |
+| `POST` | `/api/v1/teller/transactions/check-deposit` | Depósito con cheque (teller) |
+
+### Envelopes `/api/v1/envelopes`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/v1/envelopes` | Crear sobre |
+| `GET` | `/api/v1/envelopes/{code}` | Detalle |
+| `GET` | `/api/v1/envelopes/account/{accountCode}` | Por cuenta |
+| `GET` | `/api/v1/envelopes/status/{status}` | Por estado |
+| `GET` | `/api/v1/envelopes/type/{type}` | Por tipo |
+| `GET` | `/api/v1/envelopes/search` | Búsqueda |
+| `GET` | `/api/v1/envelopes/created-after` | Creados después de fecha |
+| `POST` | `/api/v1/envelopes/deposit` | Depositar en sobre |
+| `POST` | `/api/v1/envelopes/withdraw` | Retirar de sobre |
+
+### Users `/api/v1/users`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/v1/public/users/register` | Registro (público) |
+| `GET` | `/api/v1/users/me` | Mi perfil |
+| `PATCH` | `/api/v1/users/me/password` | Cambiar contraseña |
+| `GET` | `/api/v1/admin/users/{id}` | Detalle usuario (admin) |
+| `PATCH` | `/api/v1/admin/users/{id}/suspend` | Suspender (admin) |
+| `PATCH` | `/api/v1/admin/users/{id}/activate` | Activar (admin) |
+| `PATCH` | `/api/v1/admin/users/{id}/status` | Cambiar estado (admin) |
+| `GET` | `/api/v1/admin/users/employees` | Listar empleados (admin) |
+
+---
+
+## Patrones de diseño notables
+
+### Transactional Outbox (Kafka)
+
+Los eventos de negocio se persisten en `outbox_events` dentro de la misma transacción que el cambio de estado. Un scheduler (`OutboxScheduler`) los publica a Kafka y los marca como procesados. Esto garantiza **exactly-once delivery** sin two-phase commit.
+
+```
+Transacción DB  →  outbox_events (PENDING)
+                       ↓ scheduler
+               Kafka publish → status = PUBLISHED
+```
+
+Documentación: [`docs/OUTBOX.md`](docs/OUTBOX.md)
+
+### Email Outbox Pattern
+
+Sistema análogo para emails. Los emails se encolan en `email_outbox_events` y un relay los despacha vía SMTP de forma asíncrona y resiliente.
+
+```
+Kafka Consumer (TransactionCompleted)
+       ↓
+email_outbox_events (PENDING)
+       ↓ EmailOutboxRelay
+SMTP send → status = SENT
+```
+
+Documentación: [`docs/email-notification-system.md`](docs/email-notification-system.md)
+
+### Risk Profile Gate (Antifraud)
+
+Decisión antifraude **síncrona** sobre un perfil de riesgo materializado. Kafka enriquece el perfil asincrónicamente; el gate consulta el read model para decidir en el camino crítico de autorización.
+
+- `CLEAR` → continúa flujo normal
+- `SUSPICIOUS` → marca para revisión (`PENDING_REVIEW`)
+- `BLOCKED` → bloquea y persiste traza de rechazo
+
+Documentación: [`docs/README-antifraud-risk-profile-gate.md`](docs/README-antifraud-risk-profile-gate.md)
+
+### Refresh Token Rotation
+
+Los JWT de acceso son de corta duración. Los refresh tokens se persisten en `refresh_tokens` con rotación en cada uso. Tokens legacy migrados en Flyway V8.
+
+---
+
+## Configuración
+
+Se usa un único `.env` compartido entre Docker Compose y Spring Boot (vía `springboot4-dotenv`).
+
+```bash
+cp .env.example .env   # Linux/macOS
+Copy-Item .env.example .env   # Windows PowerShell
+```
+
+### Variables obligatorias
+
+| Variable | Descripción |
+|----------|-------------|
+| `MYSQL_ROOT_PASSWORD` | Contraseña root MySQL (Docker) |
+| `DB_URL` | JDBC URL de la base de datos |
+| `DB_USERNAME` | Usuario de base de datos |
+| `DB_PASSWORD` | Contraseña de base de datos |
+| `JWT_SECRET_KEY` | Clave para firma de JWT |
+| `ISSUER_GENERATOR` | Issuer del JWT |
+| `JASYPT_ENCRYPTOR_PASSWORD` | Clave de encriptación de propiedades |
+
+### Variables opcionales (con defaults)
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Servidor Kafka |
+| `SPRINGDOTENV_DIRECTORY` | `..` (directorio padre) | Ruta al `.env` desde Spring Boot |
+
+### Prioridad de resolución
+
+1. Variables de entorno del sistema/proceso
+2. Archivo `.env`
+3. Defaults en `application.yml`
+
+> `.env` está en `.gitignore`. Nunca commitear secretos reales.
+
+---
+
+## Infraestructura local
 
 ```bash
 docker compose up -d
 ```
 
-Esto levanta:
-- **Kafka** en `localhost:9092`
+Levanta:
 - **MySQL** en `localhost:3306` (DB: `banco_db`)
-
-El `docker-compose.yml` permite configurar el root password vía:
-- `MYSQL_ROOT_PASSWORD` (si no se setea, usa `bankpassword` por defecto)
+- **Kafka** en `localhost:9092`
 
 ---
 
-## Ejecutar el servicio
+## Migraciones Flyway
 
-> Si ya seguiste la sección **Inicio rápido**, podés usar esta sección como referencia extendida.
+| Versión | Archivo | Descripción |
+|---------|---------|-------------|
+| V1 | `V1__create_outbox_events.sql` | Tabla `outbox_events` (Kafka Outbox) |
+| V2 | `V2__drop_available_balance_column.sql` | Limpieza de columna deprecada |
+| V3 | `V3__add_outbox_claim_columns.sql` | Columnas de claim para procesamiento concurrente |
+| V4 | `V4__create_risk_profile_tables.sql` | Tablas de perfil de riesgo (antifraud) |
+| V5 | `V5__add_risk_profile_event_processing_status.sql` | Estado de procesamiento de eventos |
+| V6 | `V6__create_cards_table.sql` | Tabla de tarjetas |
+| V7 | `V7__create_refresh_tokens_table.sql` | Tabla de refresh tokens |
+| V7_1 | `V7_1__fix_refresh_tokens_schema.sql` | Corrección de esquema |
+| V8 | `V8__migrate_legacy_refresh_tokens.sql` | Migración de tokens legacy |
+| V9 | `V9__drop_legacy_refresh_columns.sql` | Limpieza de columnas legacy |
+| V10 | `V10__create_email_outbox_events.sql` | Tabla `email_outbox_events` (Email Outbox) |
+| V11 | `V11__expand_email_outbox_event_id.sql` | Expand `event_id` a VARCHAR(100) |
+| V11 | `V11__fix_permissions_column_lengths.sql` | Corrección de longitudes en permisos |
 
-### Paso a paso local (recomendado)
-
-1) **Copiar plantilla de entorno**
-
-Linux/macOS:
-```bash
-cp .env.example .env
-```
-
-Windows (PowerShell):
-```powershell
-Copy-Item .env.example .env
-```
-
-2) **Levantar infraestructura**
-
-```bash
-docker compose up -d
-```
-
-3) **Ejecutar la app Spring Boot**
-
-> Recomendado: ejecutar Maven desde la **raíz** para que Spring tome el mismo `.env` compartido.
-
-Linux/macOS:
-```bash
-./banco-service/mvnw -f banco-service/pom.xml spring-boot:run
-```
-
-Windows (PowerShell o CMD):
-```bat
-banco-service\mvnw.cmd -f banco-service/pom.xml spring-boot:run
-```
-
-### Si ejecutás desde `banco-service/`
-
-`application.yml` define:
-
-```yaml
-springdotenv:
-  directory: ${SPRINGDOTENV_DIRECTORY:..}
-```
-
-Con eso, por defecto busca `.env` en el directorio padre (la raíz del repo).
-
-Si cambiás el directorio de ejecución, podés sobreescribirlo con:
-
-- Linux/macOS:
-  ```bash
-  export SPRINGDOTENV_DIRECTORY=/ruta/al/directorio/que/contiene/env
-  ```
-- Windows PowerShell:
-  ```powershell
-  $env:SPRINGDOTENV_DIRECTORY="C:\ruta\al\directorio\que\contiene\env"
-  ```
-
-### Ejecución directa desde `banco-service/` (alternativa)
-
-### Linux/macOS
-```bash
-./mvnw spring-boot:run
-```
-
-### Windows
-```bat
-mvnw.cmd spring-boot:run
-```
+Flyway busca migraciones en `classpath:db/migration`.
 
 ---
 
-## Migraciones (Flyway)
+## Error Handling Contract
 
-Flyway está habilitado y buscará migraciones en:
-
-- `classpath:db/migration`
-
-Actualmente existe al menos esta migración:
-
-- `V1__create_outbox_events.sql` → crea la tabla `outbox_events` para soporte de publicación de eventos.
-
----
-
-## ¿Cómo funciona? (visión general)
-
-### 1) API + Capas (arquitectura)
-El proyecto está planteado para separar responsabilidades por capas, típicamente:
-
-- **Domain**: modelos/entidades del dominio, reglas de negocio, enums, excepciones
-- **Application**: casos de uso / orquestación, DTOs (records), mappers (MapStruct)
-- **Infrastructure**: repositorios JPA, adaptadores (p.ej. Kafka), configuración técnica (security, etc.)
-- **Presentation**: controladores REST, handlers/exception handlers, validaciones de entrada
-
-> Convención de paquetes: `com.banco.co.{feature}.*` (feature-first).
-
-### 2) Persistencia en MySQL
-El servicio usa Spring Data JPA para leer/escribir en MySQL. Las migraciones Flyway inicializan estructuras necesarias.
-
-### 3) Mensajería asíncrona con Kafka (event publishing)
-El servicio está configurado para conectarse a Kafka y publicar/consumir mensajes.
-
-Además, existe una tabla `outbox_events` (creada por Flyway) con campos como:
-- `aggregate_type`, `aggregate_id`, `event_type`, `kafka_topic`, `payload`
-- `status` (por defecto `PENDING`)
-- timestamps (`created_at`, `published_at`)
-
-Esto sugiere un patrón tipo **Outbox**, donde:
-1. Se persiste un evento pendiente en DB dentro del flujo transaccional.
-2. Un proceso/tarea (posiblemente programada) publica a Kafka y marca como publicado.
-
-### 4) Seguridad (JWT)
-La seguridad está pensada para JWT en el header:
-- `Authorization: Bearer <token>`
-
-Y se contempla control de acceso por roles con anotaciones tipo `@PreAuthorize` en endpoints.
-
-### 5) Scheduling + Async
-La clase principal habilita:
-- scheduling (`@EnableScheduling`)
-- ejecución asíncrona (`@EnableAsync`)
-- auditoría JPA (`@EnableJpaAuditing`)
-- properties para fraude (`@EnableConfigurationProperties`)
-
----
-
-## Clase principal (entrypoint)
-
-- `banco-service/src/main/java/com/banco/co/BancoServiceApplication.java`
-
----
-
-## Desarrollo / Convenciones (resumen)
-
-Lineamientos importantes del proyecto:
-- DTOs como **`record`** (evitar DTOs mutables)
-- Inyección por **constructor** (evitar `@Autowired` en campos)
-- No usar `Optional.get()` sin control (usar `orElseThrow`, etc.)
-- Excepciones base **abstractas** (jerarquía de `RuntimeException`)
-- Evitar N+1 en JPA (`JOIN FETCH`, `@Transactional(readOnly = true)`, etc.)
-
----
-
-## Error Handling Contract (actualizado)
-
-Para respuestas de error HTTP, el contrato canónico del servicio es:
-
-- `errorCode` (string)
-- `message` (string)
-- `details` (map)
-- `timestamp` (datetime)
-
-Este contrato se construye de forma centralizada para mantener consistencia entre:
-
-- Excepciones manejadas en MVC (`GlobalExceptionHandler`)
-- Errores de seguridad (`401/403`) vía handlers dedicados en `SecurityConfig`
-
-Componentes principales:
-
-- `banco-service/src/main/java/com/banco/co/exception/ErrorResponseDto.java`
-- `banco-service/src/main/java/com/banco/co/exception/support/ErrorResponseFactory.java`
-- `banco-service/src/main/java/com/banco/co/exception/catalog/ErrorCodeCatalog.java`
-- `banco-service/src/main/java/com/banco/co/security/config/handler/RestAuthenticationEntryPoint.java`
-- `banco-service/src/main/java/com/banco/co/security/config/handler/RestAccessDeniedHandler.java`
-
-Ejemplo de payload:
+Todas las respuestas de error del servicio siguen este contrato uniforme:
 
 ```json
 {
@@ -359,46 +343,89 @@ Ejemplo de payload:
   "details": {
     "field": "must not be blank"
   },
-  "timestamp": "2026-03-31T21:00:00"
+  "timestamp": "2026-04-29T10:00:00"
 }
 ```
 
-> Nota: el contrato vigente usa `errorCode` (no `code`) y `details` como mapa para compatibilidad y consistencia.
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `errorCode` | `string` | Código semántico del error |
+| `message` | `string` | Descripción legible |
+| `details` | `map` | Detalle por campo (validaciones) o contexto adicional |
+| `timestamp` | `datetime` | Momento del error |
+
+**Componentes clave**:
+- `GlobalExceptionHandler` — maneja errores MVC
+- `RestAuthenticationEntryPoint` — respuestas `401`
+- `RestAccessDeniedHandler` — respuestas `403`
+- `ErrorResponseFactory` — construcción centralizada del payload
+- `ErrorCodeCatalog` — catálogo de códigos semánticos
 
 ---
 
-## Governance de excepciones
+## Seguridad
 
-Se reforzó la jerarquía de excepciones para cumplir reglas del proyecto:
+- **JWT** en header `Authorization: Bearer <token>`
+- **Refresh Token Rotation** — tokens de corta duración con rotación persistida
+- **RBAC** — `@PreAuthorize` con roles y scopes (estrategia híbrida)
+- **Jasypt** — encriptación de propiedades sensibles en `application.yml`
+- **SecurityFilterChain** bean (nunca `WebSecurityConfigurerAdapter`)
+- **Datos sensibles** no loggeados (contraseñas, tokens, PANs)
 
-- `UserException` es abstracta
-- `RoleException` es abstracta
-- `EnvelopeException` es abstracta
-
-Esto evita instanciación intermedia y fuerza excepciones concretas por caso de negocio.
+ADR sobre convergencia de authorities y scopes: [`docs/adr-0001-security-authorities-scope-convergence.md`](docs/adr-0001-security-authorities-scope-convergence.md)
 
 ---
 
-## Verificación focalizada recomendada
+## Testing
 
-Para validar rápidamente el contrato de errores y seguridad sin ejecutar una batería completa:
+### Cobertura mínima por capa
+
+| Capa | Mínimo | Herramienta |
+|------|--------|-------------|
+| Domain | 90% | JUnit 5, sin mocks |
+| Application | 85% | JUnit 5 + Mockito |
+| Infrastructure | 70% | Testcontainers |
+| Presentation | 75% | `@WebMvcTest` |
+
+### Suite focalizada (error contract + seguridad)
 
 ```bash
-./mvnw -Dtest=ExceptionHierarchyGovernanceTest,GlobalExceptionHandlerWebMvcTest,RestAuthenticationEntryPointTest,RestAccessDeniedHandlerTest test
+./banco-service/mvnw -Dtest=ExceptionHierarchyGovernanceTest,GlobalExceptionHandlerWebMvcTest,RestAuthenticationEntryPointTest,RestAccessDeniedHandlerTest test -f banco-service/pom.xml
 ```
 
-Cobertura de esta suite focalizada:
+### Naming convention
 
-- contrato de error en handlers MVC
-- contrato de error en `401/403`
-- regresión de consumidor legacy (parser de payload)
-- cumplimiento de jerarquía abstracta de excepciones
+```
+Unit:         test<Method>_<Condition>_<Expected>
+              testWithdraw_InsufficientFunds_ThrowsException
+
+Integration:  test<Scenario>_<Expected>
+              testCreateAccount_ValidData_ReturnsCreatedAndPublishesEvent
+```
+
+---
+
+## Requisitos
+
+- **Docker + Docker Compose** (MySQL + Kafka local)
+- **JDK 21+**
+- Maven via wrapper incluido: `banco-service/mvnw`
 
 ---
 
-## Notas
+## Documentación adicional
 
-- El proyecto incluye `docker-compose.yml` para desarrollo local (Kafka + MySQL).
-- Si necesitas que el README también documente **endpoints** (rutas REST) y ejemplos de request/response, hace falta listar/controlar los controllers del servicio para armar una sección de “API Reference”.
+| Documento | Descripción |
+|-----------|-------------|
+| [`docs/api/openapi.yaml`](docs/api/openapi.yaml) | Especificación OpenAPI completa (57 endpoints) |
+| [`docs/OUTBOX.md`](docs/OUTBOX.md) | Transactional Outbox Pattern — Kafka |
+| [`docs/email-notification-system.md`](docs/email-notification-system.md) | Email Outbox Pattern — notificaciones por email |
+| [`docs/README-antifraud-risk-profile-gate.md`](docs/README-antifraud-risk-profile-gate.md) | Risk Profile Gate — detección de fraude |
+| [`docs/adr-0001-security-authorities-scope-convergence.md`](docs/adr-0001-security-authorities-scope-convergence.md) | ADR: convergencia de authorities y scopes |
+| [`docs/diagrams/`](docs/diagrams/) | Diagramas de flujo (auth, account lifecycle, etc.) |
 
 ---
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:22c55e,100:0ea5e9&height=100&section=footer" />
+</p>
