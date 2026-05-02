@@ -408,7 +408,7 @@ Integration:  test<Scenario>_<Expected>
 ## Requisitos
 
 - **Docker + Docker Compose** (MySQL + Kafka local)
-- **JDK 24**
+- **JDK 24+**
 - Maven via wrapper incluido: `banco-service/mvnw`
 
 ---

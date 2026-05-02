@@ -158,7 +158,7 @@ Se ejecutan pruebas focalizadas (sin build completo):
 
 Síntoma: tests de integración fallan en runtime porque la JVM de tests usa una versión menor que la configurada en Maven.
 
-Solución aplicada en Maven:
+Solución aplicada en build/CI:
 - `maven-compiler-plugin` compila con `release` alineado a `java.version`.
 - GitHub Actions instala el mismo JDK que declara `java.version`.
 
