@@ -98,7 +98,7 @@ public class CreateAccountDto {
 }
 ```
 
-**Why it's wrong**: Mutable DTOs can be modified after validation, require Lombok which hides behavior, and break immutability guarantees. Records are canonical for DTOs in Java 21+.
+**Why it's wrong**: Mutable DTOs can be modified after validation, require Lombok which hides behavior, and break immutability guarantees. Records are canonical for DTOs in Java 24.
 
 ---
 

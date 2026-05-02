@@ -1,15 +1,15 @@
 <p align="center">
   <img
-    src="https://capsule-render.vercel.app/api?type=waving&color=0:0ea5e9,100:22c55e&height=180&section=header&text=Bank-project%20%E2%80%94%20banco-service&fontSize=38&fontColor=ffffff&animation=fadeIn&desc=Java%2021%2B%20%7C%20Spring%20Boot%204%20%7C%20MySQL%20%7C%20Kafka%20%7C%20Flyway%20%7C%20JWT&descAlignY=70"
+    src="https://capsule-render.vercel.app/api?type=waving&color=0:0ea5e9,100:22c55e&height=180&section=header&text=Bank-project%20%E2%80%94%20banco-service&fontSize=38&fontColor=ffffff&animation=fadeIn&desc=Java%2024%20%7C%20Spring%20Boot%204%20%7C%20MySQL%20%7C%20Kafka%20%7C%20Flyway%20%7C%20JWT&descAlignY=70"
     alt="Bank-project — banco-service banner"
   />
 </p>
 
 # Bank-project — banco-service
 
-> **v0.9.3-SNAPSHOT** · Java 21 · Spring Boot 4.0.2
+> **v0.9.3-SNAPSHOT** · Java 24 · Spring Boot 4.0.2
 
-Servicio backend bancario construido con **Java 21 + Spring Boot 4**, siguiendo **Hexagonal Architecture**, **DDD** y **Screaming Architecture** (feature-first). Diseñado como proyecto de portafolio de nivel profesional.
+Servicio backend bancario construido con **Java 24 + Spring Boot 4**, siguiendo **Hexagonal Architecture**, **DDD** y **Screaming Architecture** (feature-first). Diseñado como proyecto de portafolio de nivel profesional.
 
 ---
 
@@ -63,7 +63,7 @@ curl http://localhost:8080/actuator/health
 
 | Categoría | Tecnología |
 |-----------|-----------|
-| **Runtime** | Java 21 |
+| **Runtime** | Java 24 |
 | **Framework** | Spring Boot 4.0.2 |
 | **Web** | Spring Web MVC |
 | **Persistencia** | Spring Data JPA + MySQL |
@@ -408,7 +408,7 @@ Integration:  test<Scenario>_<Expected>
 ## Requisitos
 
 - **Docker + Docker Compose** (MySQL + Kafka local)
-- **JDK 21+**
+- **JDK 24**
 - Maven via wrapper incluido: `banco-service/mvnw`
 
 ---

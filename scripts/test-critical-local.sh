@@ -14,7 +14,7 @@ if [[ ! -f "$MODULE_DIR/mvnw" ]]; then
 fi
 
 if ! command -v java >/dev/null 2>&1; then
-  echo "❌ Java no está disponible en PATH. Configurá Java 21 en WSL/Linux."
+  echo "❌ Java no está disponible en PATH. Configurá Java 24 en WSL/Linux."
   exit 1
 fi
 

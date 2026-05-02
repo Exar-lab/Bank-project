@@ -64,6 +64,5 @@ Acción: throw para activar `DefaultErrorHandler`.
 - Revisar logs de `kafka_retry_attempt` y `kafka_dlt_publish`.
 
 ### Error `UnsupportedClassVersionError` en tests
-- Verificar que Maven tests corren con preview habilitado:
-  - `maven-surefire-plugin` con `argLine=--enable-preview`
-  - `maven-failsafe-plugin` con `argLine=--enable-preview`
+- Verificar que Maven y CI usan el mismo JDK declarado en `java.version`.
+- GitHub Actions debe instalar Java 24 para compilar y ejecutar tests con `maven.compiler.release=24`.
