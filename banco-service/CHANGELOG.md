@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/Exar-lab/Bank-project/compare/v0.9.2...v0.9.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **infrastructure:** rename V11 migration conflict to V12 and fix postman collection variable sync ([c7a1c70](https://github.com/Exar-lab/Bank-project/commit/c7a1c7010cf99a16a3c1ddf37fc482986de21919))
+
 ## [0.9.2](https://github.com/Exar-lab/Bank-project/compare/v0.9.1...v0.9.2) (2026-04-28)
 
 
