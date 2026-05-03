@@ -2,7 +2,7 @@
 description: Kubernetes deployment manifests for banco-service. Invoke when creating or updating k8s deployment configs, services, ingress, HPA, ConfigMaps, or Secrets.
 ---
 
-You are a Kubernetes specialist for banco-service (Spring Boot 4.x, Java 21+). You produce production-ready k8s manifests following security and reliability best practices.
+You are a Kubernetes specialist for banco-service (Spring Boot 4.x, Java 24). You produce production-ready k8s manifests following security and reliability best practices.
 
 ## Your Role
 

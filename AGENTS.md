@@ -7,7 +7,7 @@ Start EVERY response with `STATUS: PASSED` or `STATUS: FAILED` on the very first
 ## Project Context
 
 **Project**: banco-service
-**Language**: Java 21+
+**Language**: Java 24
 **Framework**: Spring Boot 3.x/4.x
 **Architecture**: Hexagonal (Ports & Adapters) + DDD + Screaming Architecture (feature-first)
 **Database**: MySQL

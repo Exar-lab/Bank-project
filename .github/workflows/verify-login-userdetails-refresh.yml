@@ -21,11 +21,11 @@ jobs:
         with:
           ref: ${{ inputs.target_ref }}
 
-      - name: Set up JDK 21
+      - name: Set up JDK 24
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '24'
           cache: maven
           cache-dependency-path: banco-service/pom.xml
 

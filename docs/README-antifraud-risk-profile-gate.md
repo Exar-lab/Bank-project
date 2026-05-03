@@ -154,13 +154,13 @@ Se ejecutan pruebas focalizadas (sin build completo):
 
 ## Troubleshooting
 
-### 1) `UnsupportedClassVersionError` en tests por preview features
+### 1) `UnsupportedClassVersionError` en tests por versión de JDK
 
-Síntoma: tests de integración fallan en runtime porque la JVM de tests no corre con `--enable-preview`.
+Síntoma: tests de integración fallan en runtime porque la JVM de tests usa una versión menor que la configurada en Maven.
 
-Solución aplicada en Maven:
-- `maven-compiler-plugin` compila con `--enable-preview` y `release` alineado a `java.version`.
-- `maven-surefire-plugin` y `maven-failsafe-plugin` ejecutan tests con `argLine=--enable-preview`.
+Solución aplicada en build/CI:
+- `maven-compiler-plugin` compila con `release` alineado a `java.version`.
+- GitHub Actions instala el mismo JDK que declara `java.version`.
 
 ### 2) No aparecen mensajes en DLT
 
