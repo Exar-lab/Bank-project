@@ -2,7 +2,6 @@ package com.banco.co.user.model;
 
 import com.banco.co.account.model.Account;
 import com.banco.co.auditLog.model.AuditLog;
-import com.banco.co.security.codeGenerator.CodeGenerator;
 import com.banco.co.user.generator.UserCodeGenerator;
 import com.banco.co.user.enums.DocumentType;
 import com.banco.co.user.enums.KycStatus;
@@ -93,7 +92,7 @@ public class User {
             this.userCode = UserCodeGenerator.generate();
         }
         if(this.username == null){
-            this.username = CodeGenerator.generateWithPrefix(this.fistName,10);
+            this.username = UserCodeGenerator.generateUsername(this.fistName);
         }
     }
 }

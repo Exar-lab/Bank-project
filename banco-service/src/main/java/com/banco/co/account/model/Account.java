@@ -1,10 +1,11 @@
 package com.banco.co.account.model;
 
+import com.banco.co.account.generator.AccountCodeGenerator;
+import com.banco.co.account.generator.AccountNumberGenerator;
 import com.banco.co.account.exception.account.AccountBlockedFundsException;
 import com.banco.co.account.exception.account.AccountInsufficientFundsException;
 import com.banco.co.account.exception.account.AccountInvalidAmountException;
 import com.banco.co.account.exception.account.AccountMaxWithdrawExceededException;
-import com.banco.co.security.codeGenerator.CodeGenerator;
 import com.banco.co.security.cryptoLib.JasyptEncryptor;
 import com.banco.co.account.enums.AccountStatus;
 import com.banco.co.account.enums.AccountType;
@@ -113,11 +114,11 @@ public class Account {
     @PrePersist
     public void generateAccountCode() {
         if (this.accountCode == null) {
-            this.accountCode = CodeGenerator.generateWithPrefix("CR",20);
+            this.accountCode = AccountCodeGenerator.generate();
         }
         // Generar número de cuenta aleatorio si no existe
         if (this.accountNumber == null) {
-            this.accountNumber = CodeGenerator.generateRandomNumeric(12);
+            this.accountNumber = AccountNumberGenerator.generate();
         }
     }
 
