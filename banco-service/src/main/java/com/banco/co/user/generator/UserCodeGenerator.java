@@ -17,10 +17,10 @@ public class UserCodeGenerator {
         return String.format("%s-%d-%s", PREFIX, year, randomPart);
     }
 
-    public static String generateUsername(String firstName) {
+    public static String generateUsername(String fistName) {
         int year = LocalDate.now().getYear();
         String randomPart = generateRandomNumeric(USERNAME_NUMERIC_LENGTH);
-        return String.format("%s-%d-%s", firstName, year, randomPart);
+        return String.format("%s-%d-%s", fistName, year, randomPart);
     }
 
     private static String generateRandomAlphanumeric() {

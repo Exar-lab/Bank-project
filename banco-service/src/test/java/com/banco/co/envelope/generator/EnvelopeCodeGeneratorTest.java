@@ -10,9 +10,10 @@ class EnvelopeCodeGeneratorTest {
 
     @Test
     void testGenerate_WhenCalled_ReturnsEnvelopeCodeWithSafeCharacters() {
+        int currentYear = LocalDate.now().getYear();
         String code = EnvelopeCodeGenerator.generate();
 
         assertThat(code)
-                .matches("ENV-" + LocalDate.now().getYear() + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}");
+                .matches("ENV-" + currentYear + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}");
     }
 }

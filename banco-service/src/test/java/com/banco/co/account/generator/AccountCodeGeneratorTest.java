@@ -10,9 +10,10 @@ class AccountCodeGeneratorTest {
 
     @Test
     void testGenerate_WhenCalled_ReturnsAccountCodeWithExpectedFormat() {
+        int currentYear = LocalDate.now().getYear();
         String code = AccountCodeGenerator.generate();
 
         assertThat(code)
-                .matches("CR-" + LocalDate.now().getYear() + "-\\d{20}");
+                .matches("CR-" + currentYear + "-\\d{20}");
     }
 }

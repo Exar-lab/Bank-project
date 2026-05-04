@@ -11,13 +11,14 @@ class EnvelopeLifecycleTest {
 
     @Test
     void testGenerateEnvelopeData_WhenEnvelopeCodeIsNull_FillsEnvelopeCode() {
+        int currentYear = LocalDate.now().getYear();
         Envelope envelope = new Envelope();
         envelope.setType(EnvelopeType.SAVINGS);
 
         envelope.generateEnvelopeData();
 
         assertThat(envelope.getEnvelopeCode())
-                .matches("ENV-" + LocalDate.now().getYear() + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}");
+                .matches("ENV-" + currentYear + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}");
     }
 
     @Test

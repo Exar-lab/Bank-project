@@ -30,7 +30,7 @@ class TransactionLifecycleTest {
     }
 
     @Test
-    void testGenerateTransactionData_WhenFeeIsNull_UsesDefaultZeroFeeForNetAmount() {
+    void testGenerateTransactionData_WhenFeeUsesDefaultZero_CalculatesNetAmountFromAmount() {
         Transaction transaction = new Transaction();
         transaction.setAmount(new BigDecimal("100.00"));
 

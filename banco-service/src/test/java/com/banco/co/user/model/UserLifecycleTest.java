@@ -10,15 +10,16 @@ class UserLifecycleTest {
 
     @Test
     void testGenerateData_WhenGeneratedFieldsAreNull_FillsUserCodeAndUsername() {
+        int currentYear = LocalDate.now().getYear();
         User user = new User();
         user.setFistName("Ana");
 
         user.generateData();
 
         assertThat(user.getUserCode())
-                .matches("USR-" + LocalDate.now().getYear() + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
+                .matches("USR-" + currentYear + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
         assertThat(user.getUsername())
-                .matches("Ana-" + LocalDate.now().getYear() + "-\\d{10}");
+                .matches("Ana-" + currentYear + "-\\d{10}");
     }
 
     @Test

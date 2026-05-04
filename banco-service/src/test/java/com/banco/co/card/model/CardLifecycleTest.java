@@ -12,6 +12,7 @@ class CardLifecycleTest {
 
     @Test
     void testGenerateCardData_WhenGeneratedFieldsAreNull_FillsCardCodeCardNumberAndSecurityCode() {
+        int currentYear = LocalDate.now().getYear();
         Card card = new Card();
         card.setBrand(CardBrand.VISA);
         card.setTier(CardTier.CLASSIC);
@@ -19,7 +20,7 @@ class CardLifecycleTest {
         card.generateCardData();
 
         assertThat(card.getCardCode())
-                .matches("CARD-" + LocalDate.now().getYear() + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
+                .matches("CARD-" + currentYear + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
         assertThat(card.getCardNumber()).matches("4\\d{15}");
         assertThat(card.getSecurityCode()).matches("\\d{3}");
     }

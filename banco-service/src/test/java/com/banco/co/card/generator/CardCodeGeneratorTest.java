@@ -10,9 +10,10 @@ class CardCodeGeneratorTest {
 
     @Test
     void testGenerate_WhenCalled_ReturnsCardCodeWithSafeCharacters() {
+        int currentYear = LocalDate.now().getYear();
         String code = CardCodeGenerator.generate();
 
         assertThat(code)
-                .matches("CARD-" + LocalDate.now().getYear() + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
+                .matches("CARD-" + currentYear + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
     }
 }

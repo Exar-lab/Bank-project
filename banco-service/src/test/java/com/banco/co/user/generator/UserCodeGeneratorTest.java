@@ -10,17 +10,19 @@ class UserCodeGeneratorTest {
 
     @Test
     void testGenerate_WhenCalled_ReturnsUserCodeWithSafeCharacters() {
+        int currentYear = LocalDate.now().getYear();
         String code = UserCodeGenerator.generate();
 
         assertThat(code)
-                .matches("USR-" + LocalDate.now().getYear() + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
+                .matches("USR-" + currentYear + "-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}");
     }
 
     @Test
     void testGenerateUsername_WhenCalled_ReturnsNamePrefixedNumericUsername() {
+        int currentYear = LocalDate.now().getYear();
         String username = UserCodeGenerator.generateUsername("Ana");
 
         assertThat(username)
-                .matches("Ana-" + LocalDate.now().getYear() + "-\\d{10}");
+                .matches("Ana-" + currentYear + "-\\d{10}");
     }
 }

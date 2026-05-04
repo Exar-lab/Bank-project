@@ -10,12 +10,13 @@ class AccountLifecycleTest {
 
     @Test
     void testGenerateAccountCode_WhenGeneratedFieldsAreNull_FillsAccountCodeAndAccountNumber() {
+        int currentYear = LocalDate.now().getYear();
         Account account = new Account();
 
         account.generateAccountCode();
 
         assertThat(account.getAccountCode())
-                .matches("CR-" + LocalDate.now().getYear() + "-\\d{20}");
+                .matches("CR-" + currentYear + "-\\d{20}");
         assertThat(account.getAccountNumber()).matches("\\d{12}");
     }
 
