@@ -27,6 +27,7 @@ import com.banco.co.user.model.UserCredential;
 import com.banco.co.outbox.enums.KafkaTopic;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
+import com.banco.co.user.domain.port.in.IUserUseCase;
 import com.banco.co.user.repository.IUserRepository;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -47,7 +48,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class UserService implements IUserService {
+public class UserService implements IUserService, IUserUseCase {
 
         private final IUserRepository userRepository;
         private final IRoleService roleService;
