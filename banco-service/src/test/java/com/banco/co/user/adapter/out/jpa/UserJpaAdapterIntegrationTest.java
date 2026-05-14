@@ -7,12 +7,12 @@ import com.banco.co.user.enums.KycStatus;
 import com.banco.co.user.enums.UserStatus;
 import org.jasypt.encryption.StringEncryptor;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -37,7 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.test.database.replace=NONE"
 })
 @Transactional
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class UserJpaAdapterIntegrationTest {
+
+    private final UserJpaAdapter adapter;
+
+    UserJpaAdapterIntegrationTest(UserJpaAdapter adapter) {
+        this.adapter = adapter;
+    }
 
     @TestConfiguration
     static class TestCryptoConfig {
@@ -71,9 +78,6 @@ class UserJpaAdapterIntegrationTest {
         registry.add("spring.datasource.password", MYSQL::getPassword);
         registry.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
     }
-
-    @Autowired
-    private UserJpaAdapter adapter;
 
     // ══════════════════════════════════════════════════════════
     //  T7 — UserJpaAdapter integration tests
