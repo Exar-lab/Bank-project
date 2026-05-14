@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.4](https://github.com/Exar-lab/Bank-project/compare/v0.9.3...v0.9.4) (2026-05-14)
+
+
+### Refactoring
+
+* **code-generation:** move entity codes to feature generators ([#118](https://github.com/Exar-lab/Bank-project/issues/118)) ([02abefa](https://github.com/Exar-lab/Bank-project/commit/02abefa0bce131a00ac46ab8c32cedd9d7c24f4a))
+
 ## [0.9.3](https://github.com/Exar-lab/Bank-project/compare/v0.9.2...v0.9.3) (2026-05-03)
 
 
