@@ -1,5 +1,6 @@
 package com.banco.co.account.service;
 
+import com.banco.co.account.domain.port.in.IAccountUseCase;
 import com.banco.co.account.dto.AccountRequestDto;
 import com.banco.co.account.dto.AccountResponseDto;
 import com.banco.co.account.dto.AccountUpdateDto;
@@ -18,11 +19,12 @@ import com.banco.co.exception.authentication.UnauthorizedException;
 import com.banco.co.outbox.enums.KafkaTopic;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
+import com.banco.co.user.domain.model.UserSnapshot;
+import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,16 +35,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Implements both IAccountService (legacy, kept during transition) and
+ * IAccountUseCase (domain input port, added in hexagonal migration Phase 2).
+ *
+ * The legacy IAccountRepository (Spring Data JPA) is kept for the internal
+ * methods that return the legacy Account entity (required by IAccountService).
+ * IUserRepository (domain port) is injected alongside IUserService so that
+ * user snapshots can be retrieved without going through the legacy service.
+ *
+ * Once the full domain migration is complete, IAccountService and the legacy
+ * repository can be removed.
+ */
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class AccountService implements IAccountService {
+public class AccountService implements IAccountService, IAccountUseCase {
+
     private final IAccountRepository accountRepository;
+    private final IUserRepository userDomainRepository;
     private final IUserService userService;
     private final IAuditLogService auditLogService;
     private final IAccountMapper mapper;
     private final IOutboxEventPort outboxEventPort;
     private final ObjectMapper objectMapper;
+
+    public AccountService(
+            IAccountRepository accountRepository,
+            IUserRepository userDomainRepository,
+            IUserService userService,
+            IAuditLogService auditLogService,
+            IAccountMapper mapper,
+            IOutboxEventPort outboxEventPort,
+            ObjectMapper objectMapper) {
+        this.accountRepository = accountRepository;
+        this.userDomainRepository = userDomainRepository;
+        this.userService = userService;
+        this.auditLogService = auditLogService;
+        this.mapper = mapper;
+        this.outboxEventPort = outboxEventPort;
+        this.objectMapper = objectMapper;
+    }
 
     // ══════════════════════════════════════════════════════════
     //  CREAR CUENTA
@@ -52,6 +84,8 @@ public class AccountService implements IAccountService {
     @Transactional
     public AccountResponseDto createAccount(AccountRequestDto dto, String userEmail) {
 
+        // Domain port: use UserSnapshot to check identity without loading the full User entity
+        UserSnapshot userSnapshot = userDomainRepository.findSnapshotByEmail(userEmail);
         User user = userService.getEntityUserByEmail(userEmail);
 
         // Validar que no tenga ya una cuenta de este tipo
@@ -103,7 +137,7 @@ public class AccountService implements IAccountService {
                 KafkaTopic.ACCOUNT_EVENTS
         ));
 
-        log.info("Account {} created for user {}", savedAccount.getAccountCode(), userEmail);
+        log.info("Account {} created for user {} (userId={})", savedAccount.getAccountCode(), userEmail, userSnapshot.userId());
 
         return mapper.toDto(savedAccount);
     }
@@ -403,7 +437,7 @@ public class AccountService implements IAccountService {
 
         if (account.getBalance().compareTo(amount) < 0) {
             throw new AccountInsufficientFundsException(
-                    account.getAccountCode(),amount,account.getAvailableBalance()
+                    account.getAccountCode(), amount, account.getAvailableBalance()
             );
         }
     }
