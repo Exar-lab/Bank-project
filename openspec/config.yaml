@@ -1,0 +1,63 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Java 24, Spring Boot 4.0.2, Maven module at banco-service/.
+  Architecture: Hexagonal + DDD + Screaming Architecture, feature-first under com.banco.co.{feature}.*.
+  Persistence/messaging: MySQL, Spring Data JPA, Flyway, Kafka async events, Outbox patterns present.
+  Testing: JUnit 5, Mockito, Spring Boot test slices, Testcontainers, Spring Kafka Test, GreenMail.
+  Style: Constructor injection, records for DTOs, abstract RuntimeException bases, no Optional.get(), no field @Autowired.
+
+strict_tdd: true
+
+testing:
+  strict_tdd: true
+  detected: 2026-05-02
+  runner:
+    framework: JUnit 5 via Maven/Spring Boot starter test
+    command: mvn test
+    working_directory: banco-service
+  layers:
+    unit:
+      available: true
+      tool: JUnit 5 + Mockito + AssertJ
+    integration:
+      available: true
+      tool: Spring Boot Test + Testcontainers + Spring Kafka Test + GreenMail
+    e2e:
+      available: false
+      tool: null
+  coverage:
+    available: false
+    command: null
+  quality_tools:
+    linter:
+      available: false
+      command: null
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: false
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes.
+    - Identify affected feature packages and entity lifecycle callbacks.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 keywords: MUST, SHALL, SHOULD, MAY.
+  design:
+    - Document architecture decisions with rationale.
+    - Preserve feature-first package boundaries.
+  tasks:
+    - Group tasks by discovery, tests, implementation, verification.
+    - Keep tasks small enough to complete in one session.
+  apply:
+    - STRICT TDD MODE: write or update failing tests before production changes.
+    - Follow existing Java/Spring/JPA project rules.
+  verify:
+    - Run relevant Maven tests from banco-service/ unless user forbids execution.
+    - Compare implementation against every spec scenario.
+  archive:
+    - Persist final state in openspec and Engram.

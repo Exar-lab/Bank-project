@@ -10,8 +10,9 @@ import com.banco.co.card.exception.card.CardBlockedException;
 import com.banco.co.card.exception.card.CardClosedException;
 import com.banco.co.card.exception.card.CardExpiredException;
 import com.banco.co.card.exception.card.CardNotActiveException;
+import com.banco.co.card.generator.CardCodeGenerator;
 import com.banco.co.card.generator.CardNumberGenerator;
-import com.banco.co.security.codeGenerator.CodeGenerator;
+import com.banco.co.card.generator.CardSecurityCodeGenerator;
 import com.banco.co.security.cryptoLib.JasyptEncryptor;
 import com.banco.co.security.securityhasher.HashUtils;
 import jakarta.persistence.*;
@@ -140,7 +141,7 @@ public class Card {
     public void generateCardData() {
         // Generar código visible
         if (this.cardCode == null) {
-            this.cardCode = CodeGenerator.generateWithChars(6,"CARD");
+            this.cardCode = CardCodeGenerator.generate();
         }
 
         // Generar número de tarjeta válido (con Luhn)
@@ -150,8 +151,7 @@ public class Card {
 
         // Generar CVV según tipo de tarjeta
         if (this.securityCode == null) {
-            int cvvLength = (this.brand == CardBrand.AMEX) ? 4 : 3;
-            this.securityCode = CodeGenerator.generateRandomNumeric(cvvLength);
+            this.securityCode = CardSecurityCodeGenerator.generateFor(this.brand);
         }
 
         // Fecha de expiración: 6 años

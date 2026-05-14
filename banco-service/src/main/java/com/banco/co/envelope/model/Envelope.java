@@ -7,8 +7,8 @@ import com.banco.co.envelope.enums.EnvelopeStatus;
 import com.banco.co.envelope.enums.EnvelopeType;
 import com.banco.co.envelope.exception.EnvelopeInsufficientFundsException;
 import com.banco.co.envelope.exception.EnvelopeLockedException;
+import com.banco.co.envelope.generator.EnvelopeCodeGenerator;
 import com.banco.co.transaction.exception.transaction.TransactionInvalidAmountException;
-import com.banco.co.security.codeGenerator.CodeGenerator;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -161,7 +161,7 @@ public class Envelope {
     @PrePersist
     public void generateEnvelopeData() {
         if (this.envelopeCode == null) {
-            this.envelopeCode = CodeGenerator.generateWithChars(10, "ENV");
+            this.envelopeCode = EnvelopeCodeGenerator.generate();
         }
         if (this.icon == null) {
             this.icon = getDefaultIcon();
