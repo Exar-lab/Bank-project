@@ -15,6 +15,21 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    env:
+      MYSQL_ROOT_PASSWORD: ci-root-password
+      DB_URL: jdbc:mysql://localhost:3306/banco_ci?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: ci-db-password
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+      JWT_SECRET_KEY: ci-jwt-secret-minimum-32-characters
+      ISSUER_GENERATOR: banco-service-ci
+      JASYPT_ENCRYPTOR_PASSWORD: ci-jasypt-password
+      MAIL_ENABLED: "false"
+      MAIL_HOST: localhost
+      MAIL_PORT: "2525"
+      MAIL_USERNAME: ci-mail-user
+      MAIL_PASSWORD: ci-mail-password
+      MAIL_FROM: no-reply@example.com
 
     steps:
       - name: Checkout repository
@@ -35,7 +50,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '24'
+          java-version: "24"
           cache: maven
           cache-dependency-path: banco-service/pom.xml
 
