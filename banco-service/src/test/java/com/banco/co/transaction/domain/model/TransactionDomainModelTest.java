@@ -356,6 +356,21 @@ class TransactionDomainModelTest {
     }
 
     @Test
+    void testInitializeTransactionData_WhenCreatedAtIsNull_SetsCreatedAtBeforeIdempotencyKey() {
+        Transaction fresh = new Transaction();
+        fresh.setFromAccountId(UUID.randomUUID());
+        fresh.setToAccountId(UUID.randomUUID());
+        fresh.setAmount(new BigDecimal("500.00"));
+        fresh.setFee(BigDecimal.ZERO);
+        fresh.setCreatedAt(null);
+
+        fresh.initializeTransactionData();
+
+        assertThat(fresh.getCreatedAt()).isNotNull();
+        assertThat(fresh.getIdempotencyKey()).isNotNull();
+    }
+
+    @Test
     void testInitializeTransactionData_WhenNetAmountIsNull_CalculatesNetAmount() {
         transaction.setAmount(new BigDecimal("1000.00"));
         transaction.setFee(new BigDecimal("10.00"));
