@@ -18,3 +18,9 @@
 .claude/skills/
 .kiro/
 .trae/
+.pi/
+context.md
+sdd-verify-*.md
+
+# Local memory snapshots — never commit
+.engram/
