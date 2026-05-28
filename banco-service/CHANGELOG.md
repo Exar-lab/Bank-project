@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.5](https://github.com/Exar-lab/Bank-project/compare/v0.9.4...v0.9.5) (2026-05-28)
+
+
+### Refactoring
+
+* **account:** introduce hexagonal structure — Phase 2 (additive) ([#124](https://github.com/Exar-lab/Bank-project/issues/124)) ([3406d21](https://github.com/Exar-lab/Bank-project/commit/3406d21aeb2e79f38962df0d7bae151b36dabaf5))
+
 ## [0.9.4](https://github.com/Exar-lab/Bank-project/compare/v0.9.3...v0.9.4) (2026-05-14)
 
 
