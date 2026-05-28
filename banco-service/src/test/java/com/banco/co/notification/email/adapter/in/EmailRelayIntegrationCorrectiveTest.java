@@ -120,7 +120,11 @@ class EmailRelayIntegrationCorrectiveTest {
     @EnableJpaAuditing
     @EnableAsync
     @EnableConfigurationProperties(MailProperties.class)
-    @EnableJpaRepositories(basePackages = "com.banco.co")
+    @EnableJpaRepositories(basePackageClasses = {
+            IAuditLogRepository.class,
+            EmailOutboxEventJpaRepository.class,
+            IUserRepository.class
+    })
     static class TestConfig implements BeanFactoryAware {
 
         private ConfigurableListableBeanFactory beanFactory;
