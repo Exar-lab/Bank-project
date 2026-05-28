@@ -1,0 +1,24 @@
+change: hexagonal-arch-phase-3-transaction
+status: verified-additive-slice
+execution_mode: auto
+artifact_store: both
+review_budget_lines: 400
+review_workload:
+  size_exception: true
+  approved_by_user: true
+  approved_at: 2026-05-28
+policy_decisions:
+  entity_placement: "Hexagonal migrated slices place JPA entities under {feature}/adapter/out/jpa/; legacy {feature}/model/ is not required for migrated entities."
+strict_tdd: true
+tests:
+  command: "cd banco-service && ./mvnw test -DskipTests=false"
+  result: "346 tests, 0 failures, 0 errors, 23 skipped"
+  focused_command: "cd banco-service && ./mvnw test -DskipTests=false -Dtest=TransactionDomainModelTest"
+  focused_result: "34 tests, 0 failures, 0 errors, 0 skipped"
+deferred:
+  - "TransactionService domain/output-port rewrite"
+  - "ITransactionMapper import swap"
+  - "ITransactionMetadataEnricher import swap"
+  - "TransactionMetadataEnricher import swap"
+  - "legacy transaction model/repository/controller/ITransactionService deletion"
+next_recommended: hexagonal-arch-phase-3-transaction-service-rewrite

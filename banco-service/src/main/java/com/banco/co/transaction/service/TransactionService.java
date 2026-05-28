@@ -38,6 +38,7 @@ import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.outbox.enums.KafkaTopic;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
+import com.banco.co.transaction.domain.port.in.ITransactionUseCase;
 import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
@@ -62,7 +63,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TransactionService implements ITransactionService {
+public class TransactionService implements ITransactionService, ITransactionUseCase {
 
     private final IAccountService accountService;
     private final ITransactionRepository transactionRepository;
