@@ -23,7 +23,7 @@ cd banco-service && ./mvnw test -DskipTests=false
 Result from verifier:
 
 ```text
-Tests run: 346, Failures: 0, Errors: 0, Skipped: 23
+Tests run: 347, Failures: 0, Errors: 0, Skipped: 23
 ```
 
 ```bash
@@ -33,7 +33,7 @@ cd banco-service && ./mvnw test -DskipTests=false -Dtest=TransactionDomainModelT
 Result from verifier:
 
 ```text
-Tests run: 34, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 ## Red-flag audit

@@ -14,7 +14,7 @@ Strict TDD: RED → GREEN → TRIANGULATE → REFACTOR.
 
 | Task | RED | GREEN | REFACTOR |
 | --- | --- | --- | --- |
-| 1.1 Domain model | `TransactionDomainModelTest.java` added with 34 tests | `./mvnw test -DskipTests=false -Dtest=TransactionDomainModelTest` passes 34/34 | Explicit getters/setters and pure domain behavior preserved |
+| 1.1 Domain model | `TransactionDomainModelTest.java` added with 35 tests | `./mvnw test -DskipTests=false -Dtest=TransactionDomainModelTest` passes 35/35 | Explicit getters/setters and pure domain behavior preserved; `createdAt` is initialized before idempotency key generation |
 | 1.2 Input port | Interface only; compile gate | Full suite passes | N/A |
 | 1.3 Output port | Interface only; compile gate | Full suite passes | N/A |
 | 2.1 TransactionEntity | Persistence scaffold; compile gate | Full suite passes | Entity kept anemic, no `@Data` |
@@ -35,7 +35,7 @@ cd banco-service && ./mvnw test -DskipTests=false
 Result:
 
 ```text
-Tests run: 346, Failures: 0, Errors: 0, Skipped: 23
+Tests run: 347, Failures: 0, Errors: 0, Skipped: 23
 ```
 
 Focused domain command:
@@ -47,7 +47,7 @@ cd banco-service && ./mvnw test -DskipTests=false -Dtest=TransactionDomainModelT
 Result:
 
 ```text
-Tests run: 34, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 ## Completed files

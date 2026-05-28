@@ -127,6 +127,10 @@ public class Transaction {
     // ══════════════════════════════════════════════════════════
 
     public void initializeTransactionData() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+
         if (this.transactionCode == null) {
             this.transactionCode = TransactionCodeGenerator.generate();
         }
