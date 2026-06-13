@@ -14,7 +14,7 @@ import java.util.UUID;
  * Spring Data JPA repository for AccountEntity.
  * Package-private: only AccountJpaAdapter should access this directly.
  */
-interface IAccountJpaRepository extends JpaRepository<AccountEntity, UUID> {
+public interface IAccountJpaRepository extends JpaRepository<AccountEntity, UUID> {
 
     @Query("SELECT a FROM AccountEntity a LEFT JOIN FETCH a.user WHERE a.accountCode = :code AND a.status = 'ACTIVE'")
     @Transactional(readOnly = true)

@@ -30,10 +30,10 @@ Start EVERY response with `STATUS: PASSED` or `STATUS: FAILED` on the very first
 
 | Layer | Allowed | Forbidden |
 |-------|---------|-----------|
-| **Domain** (`model/`, `enums/`, `exception/`) | Business logic, @Entity, enums, abstract exceptions | @Service, @RestController |
+| **Domain** (`domain/model/`, `domain/port/`, `enums/`, `exception/`) | Business logic, ports, enums, abstract exceptions | @Entity, @Service, @RestController, JPA/Spring Data imports |
 | **Application** (`service/`, `dto/`, `mapper/`) | Use cases, record DTOs, MapStruct mappers | @Entity, @RestController, JPA queries |
-| **Infrastructure** (`repository/`, `config/`, `adapter/`) | JPA repos, Kafka publishers, security config | Business logic, DTOs |
-| **Presentation** (`controller/`, `handler/`) | REST endpoints, HTTP mapping | Business logic, JPA queries |
+| **Infrastructure** (`adapter/out/`, `repository/`, `config/`) | JPA entities/repos/adapters, Kafka publishers, security config | Business logic, DTOs |
+| **Presentation** (`adapter/in/rest/`, `controller/`, `handler/`) | REST endpoints, HTTP mapping | Business logic, JPA queries |
 
 ---
 
@@ -92,7 +92,7 @@ Start EVERY response with `STATUS: PASSED` or `STATUS: FAILED` on the very first
 🚩 Missing `@Transactional(readOnly = true)` on read methods
 🚩 Hardcoded secret or password in source
 🚩 Stack trace exposed in HTTP response body
-🚩 `@Entity` outside `{feature}/model/`
+🚩 `@Entity` outside infrastructure persistence packages (`{feature}/adapter/out/jpa/` for hexagonal slices; legacy `{feature}/model/` only until migrated)
 🚩 Business logic in `@RestController`
 
 ---

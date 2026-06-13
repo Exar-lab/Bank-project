@@ -43,7 +43,7 @@ import java.util.UUID;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "account")
-class AccountEntity {
+public class AccountEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
