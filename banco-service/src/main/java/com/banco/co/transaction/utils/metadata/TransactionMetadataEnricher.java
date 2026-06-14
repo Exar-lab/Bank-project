@@ -2,7 +2,7 @@ package com.banco.co.transaction.utils.metadata;
 
 import com.banco.co.transaction.dto.TransactionRequestMetadataDto;
 import com.banco.co.transaction.enums.TransactionChannel;
-import com.banco.co.transaction.model.Transaction;
+import com.banco.co.transaction.domain.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

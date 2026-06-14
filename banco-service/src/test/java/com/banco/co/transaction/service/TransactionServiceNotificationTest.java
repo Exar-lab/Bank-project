@@ -13,6 +13,8 @@ import com.banco.co.fraud.service.IFraudDetectionService;
 import com.banco.co.outbox.enums.KafkaTopic;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
+import com.banco.co.transaction.domain.model.Transaction;
+import com.banco.co.transaction.domain.port.out.ITransactionRepository;
 import com.banco.co.transaction.dto.TransactionRequestMetadataDto;
 import com.banco.co.transaction.dto.TransactionResponseDto;
 import com.banco.co.transaction.dto.movement.CashDepositRequestDto;
@@ -22,8 +24,6 @@ import com.banco.co.transaction.dto.movement.TransferRequestDto;
 import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.enums.TransactionType;
 import com.banco.co.transaction.mapper.ITransactionMapper;
-import com.banco.co.transaction.model.Transaction;
-import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
@@ -228,6 +228,10 @@ class TransactionServiceNotificationTest {
         when(transactionRepository.findByIdWithAccounts(txId)).thenReturn(Optional.of(completedTx));
         when(transactionRepository.save(any())).thenReturn(completedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto("TXN-BCR-REV-001"));
+        // reverseTransaction loads accounts by ID
+        when(accountService.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
+        when(accountService.getAccountById(toAccount.getId())).thenReturn(toAccount);
+        doNothing().when(accountService).validateCanWithdraw(any(), any());
 
         transactionService.reverseTransaction(txId, "Refund", "admin@banco.co");
 
@@ -302,11 +306,15 @@ class TransactionServiceNotificationTest {
         account.setStatus(AccountStatus.ACTIVE);
         account.setAccountType(AccountType.SAVINGS);
         try {
-            var field = Account.class.getDeclaredField("accountCode");
-            field.setAccessible(true);
-            field.set(account, accountCode);
+            var codeField = Account.class.getDeclaredField("accountCode");
+            codeField.setAccessible(true);
+            codeField.set(account, accountCode);
+            // id is @GeneratedValue (JPA) — force a UUID for unit tests
+            var idField = Account.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(account, UUID.randomUUID());
         } catch (Exception e) {
-            throw new IllegalStateException("Could not set accountCode", e);
+            throw new IllegalStateException("Could not set Account field", e);
         }
         if (balance.compareTo(BigDecimal.ZERO) > 0) {
             account.deposit(balance);
@@ -321,8 +329,14 @@ class TransactionServiceNotificationTest {
         tx.setStatus(status);
         tx.setCurrency("CRC");
         tx.setAmount(new BigDecimal("100000"));
-        tx.setFromAccount(from);
-        tx.setToAccount(to);
+        if (from != null) {
+            tx.setFromAccountId(from.getId());
+            tx.setFromAccountCode(from.getAccountCode());
+        }
+        if (to != null) {
+            tx.setToAccountId(to.getId());
+            tx.setToAccountCode(to.getAccountCode());
+        }
         tx.setType(type);
         return tx;
     }
@@ -332,8 +346,10 @@ class TransactionServiceNotificationTest {
         tx.setId(UUID.randomUUID());
         tx.setTransactionCode("TXN-BCR-REV-001");
         tx.setStatus(TransactionStatus.COMPLETED);
-        tx.setFromAccount(from);
-        tx.setToAccount(to);
+        tx.setFromAccountId(from.getId());
+        tx.setFromAccountCode(from.getAccountCode());
+        tx.setToAccountId(to.getId());
+        tx.setToAccountCode(to.getAccountCode());
         tx.setAmount(new BigDecimal("100000"));
         tx.setCurrency("CRC");
         tx.setType(TransactionType.TRANSFER);

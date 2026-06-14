@@ -33,13 +33,13 @@ import com.banco.co.transaction.exception.transaction.TransactionInvalidExceptio
 import com.banco.co.transaction.exception.transaction.TransactionNotFoundException;
 import com.banco.co.transaction.exception.transaction.TransactionStatusException;
 import com.banco.co.transaction.mapper.ITransactionMapper;
-import com.banco.co.transaction.model.Transaction;
+import com.banco.co.transaction.domain.model.Transaction;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.outbox.enums.KafkaTopic;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.transaction.domain.port.in.ITransactionUseCase;
-import com.banco.co.transaction.repository.ITransactionRepository;
+import com.banco.co.transaction.domain.port.out.ITransactionRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.core.JacksonException;
@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TransactionService implements ITransactionService, ITransactionUseCase {
+public class TransactionService implements ITransactionUseCase {
 
     private final IAccountService accountService;
     private final ITransactionRepository transactionRepository;
@@ -109,8 +109,10 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.TRANSFER);
-        transaction.setFromAccount(fromAccount);
-        transaction.setToAccount(toAccount);
+        transaction.setFromAccountId(fromAccount.getId());
+        transaction.setFromAccountCode(fromAccount.getAccountCode());
+        transaction.setToAccountId(toAccount.getId());
+        transaction.setToAccountCode(toAccount.getAccountCode());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description() != null ? dto.description() : "Transferencia");
         transaction.setStatus(TransactionStatus.PENDING);
@@ -130,7 +132,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        // Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        // Save BEFORE fraud gate so initializeTransactionData fires (generates transactionCode + UUID)
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
@@ -175,7 +177,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompletedNotification",
-                buildNotificationPayload(savedTransaction),
+                buildNotificationPayload(savedTransaction, fromAccount, toAccount),
                 KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
@@ -212,8 +214,9 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.PAYMENT);
-        transaction.setFromAccount(fromAccount);
-        transaction.setCard(card);
+        transaction.setFromAccountId(fromAccount.getId());
+        transaction.setFromAccountCode(fromAccount.getAccountCode());
+        transaction.setCardId(card.getId());
         transaction.setCardLastFourDigits(card.getCardNumber() != null
                 ? card.getCardNumber().substring(Math.max(0, card.getCardNumber().length() - 4))
                 : null);
@@ -237,7 +240,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        // Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        // Save BEFORE fraud gate so initializeTransactionData fires (generates transactionCode + UUID)
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
@@ -278,7 +281,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompletedNotification",
-                buildNotificationPayload(savedTransaction),
+                buildNotificationPayload(savedTransaction, fromAccount, null),
                 KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
@@ -312,7 +315,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.PAYMENT);
-        transaction.setFromAccount(fromAccount);
+        transaction.setFromAccountId(fromAccount.getId());
+        transaction.setFromAccountCode(fromAccount.getAccountCode());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description() != null ? dto.description() : description);
         transaction.setMerchantName(dto.serviceProvider());
@@ -332,7 +336,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        // Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        // Save BEFORE fraud gate so initializeTransactionData fires (generates transactionCode + UUID)
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
@@ -373,7 +377,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompletedNotification",
-                buildNotificationPayload(savedTransaction),
+                buildNotificationPayload(savedTransaction, fromAccount, null),
                 KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
@@ -398,8 +402,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         // 4. Crear transacción
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
-        transaction.setFromAccount(null);
-        transaction.setToAccount(toAccount);
+        transaction.setToAccountId(toAccount.getId());
+        transaction.setToAccountCode(toAccount.getAccountCode());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description() != null ? dto.description() : "Cash deposit at branch");
         transaction.setStatus(TransactionStatus.PENDING);
@@ -454,7 +458,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompletedNotification",
-                buildNotificationPayload(savedTransaction),
+                buildNotificationPayload(savedTransaction, null, toAccount),
                 KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
@@ -483,8 +487,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         // 5. Crear transacción
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.WITHDRAWAL);
-        transaction.setFromAccount(fromAccount);
-        transaction.setToAccount(null);
+        transaction.setFromAccountId(fromAccount.getId());
+        transaction.setFromAccountCode(fromAccount.getAccountCode());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description() != null ? dto.description() : "Cash withdrawal at branch");
         transaction.setStatus(TransactionStatus.PENDING);
@@ -507,7 +511,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         // 10. Guardar balance después del bloqueo
         transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
 
-        // 11. Save BEFORE fraud gate so @PrePersist fires (generates transactionCode + UUID)
+        // 11. Save BEFORE fraud gate so initializeTransactionData fires (generates transactionCode + UUID)
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // 12. Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
@@ -526,7 +530,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         transactionRepository.save(savedTransaction);
         accountService.updateBalance(fromAccount);
 
-        // 13. Auditar
+        // 15. Auditar
         auditLogService.logSuccess(
                 employee,
                 AuditAction.TRANSACTION_CREATED,
@@ -539,7 +543,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 )
         );
 
-        // 14. Publicar evento al outbox
+        // 16. Publicar evento al outbox
         outboxEventPort.save(new OutboxEvent(
                 "Transaction",
                 savedTransaction.getId().toString(),
@@ -551,7 +555,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompletedNotification",
-                buildNotificationPayload(savedTransaction),
+                buildNotificationPayload(savedTransaction, fromAccount, null),
                 KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
@@ -576,8 +580,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         String checkDescription = "Check #" + dto.checkNumber() + " from " + dto.bankName();
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
-        transaction.setFromAccount(null);
-        transaction.setToAccount(toAccount);
+        transaction.setToAccountId(toAccount.getId());
+        transaction.setToAccountCode(toAccount.getAccountCode());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description() != null ? dto.description() : checkDescription);
         transaction.setNotes(checkDescription);
@@ -635,7 +639,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 "Transaction",
                 savedTransaction.getId().toString(),
                 "TransactionCompletedNotification",
-                buildNotificationPayload(savedTransaction),
+                buildNotificationPayload(savedTransaction, null, toAccount),
                 KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
         ));
 
@@ -772,8 +776,10 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.TRANSFER);
-        transaction.setFromAccount(fromAccount);
-        transaction.setToAccount(toAccount);
+        transaction.setFromAccountId(fromAccount.getId());
+        transaction.setFromAccountCode(fromAccount.getAccountCode());
+        transaction.setToAccountId(toAccount.getId());
+        transaction.setToAccountCode(toAccount.getAccountCode());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description() != null ? dto.description() : "Transferencia programada");
         transaction.setStatus(TransactionStatus.SCHEDULED);
@@ -817,8 +823,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         Transaction transaction = transactionRepository.findByIdWithFromAccount(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId.toString()));
 
-        boolean ownsFromAccount = transaction.getFromAccount() != null
-                && transaction.getFromAccount().getUser().getId().equals(user.getId());
+        boolean ownsFromAccount = transaction.getFromAccountId() != null
+                && ownsAccount(transaction.getFromAccountId(), user.getId());
 
         if (!ownsFromAccount) {
             throw new UnauthorizedException("You don't own this transaction");
@@ -846,10 +852,10 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         Transaction transaction = transactionRepository.findByIdWithAccounts(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId.toString()));
 
-        boolean ownsTransaction = (transaction.getFromAccount() != null
-                && transaction.getFromAccount().getUser().getId().equals(user.getId()))
-                || (transaction.getToAccount() != null
-                && transaction.getToAccount().getUser().getId().equals(user.getId()));
+        boolean ownsTransaction = (transaction.getFromAccountId() != null
+                && ownsAccount(transaction.getFromAccountId(), user.getId()))
+                || (transaction.getToAccountId() != null
+                && ownsAccount(transaction.getToAccountId(), user.getId()));
 
         if (!ownsTransaction) {
             throw new UnauthorizedException("You don't own this transaction");
@@ -924,8 +930,12 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         // If the transaction was flagged for fraud, the funds were already blocked during
         // the original call. Completing it here moves money and settles the transaction.
         if (transaction.isFlaggedForFraud()) {
-            Account fromAccount = transaction.getFromAccount();
-            Account toAccount = transaction.getToAccount();
+            Account fromAccount = transaction.getFromAccountId() != null
+                    ? accountService.getAccountById(transaction.getFromAccountId())
+                    : null;
+            Account toAccount = transaction.getToAccountId() != null
+                    ? accountService.getAccountById(transaction.getToAccountId())
+                    : null;
             BigDecimal amount = transaction.getAmount();
 
             if (fromAccount != null) {
@@ -941,17 +951,11 @@ public class TransactionService implements ITransactionService, ITransactionUseC
             // Update balance-after fields after fund movements
             if (fromAccount != null) {
                 transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
-            }
-
-            if (toAccount != null) {
-                transaction.setToAccountBalanceAfter(toAccount.getBalance());
-            }
-
-            if (fromAccount != null) {
                 accountService.updateBalance(fromAccount);
             }
 
             if (toAccount != null) {
+                transaction.setToAccountBalanceAfter(toAccount.getBalance());
                 accountService.updateBalance(toAccount);
             }
         }
@@ -967,11 +971,17 @@ public class TransactionService implements ITransactionService, ITransactionUseC
                 KafkaTopic.TRANSACTION_EVENTS
         ));
         if (transaction.isFlaggedForFraud()) {
+            Account fromAccount = transaction.getFromAccountId() != null
+                    ? accountService.getAccountById(transaction.getFromAccountId())
+                    : null;
+            Account toAccount = transaction.getToAccountId() != null
+                    ? accountService.getAccountById(transaction.getToAccountId())
+                    : null;
             outboxEventPort.save(new OutboxEvent(
                     "Transaction",
                     savedTransaction.getId().toString(),
                     "TransactionCompletedNotification",
-                    buildNotificationPayload(savedTransaction),
+                    buildNotificationPayload(savedTransaction, fromAccount, toAccount),
                     KafkaTopic.TRANSACTION_NOTIFICATION_EVENTS
             ));
         }
@@ -1009,15 +1019,17 @@ public class TransactionService implements ITransactionService, ITransactionUseC
 
         transaction.reverse(reason);
 
-        if (transaction.getFromAccount() != null) {
-            transaction.getFromAccount().deposit(transaction.getAmount());
-            accountService.updateBalance(transaction.getFromAccount());
+        if (transaction.getFromAccountId() != null) {
+            Account fromAccount = accountService.getAccountById(transaction.getFromAccountId());
+            fromAccount.deposit(transaction.getAmount());
+            accountService.updateBalance(fromAccount);
         }
 
-        if (transaction.getToAccount() != null) {
-            accountService.validateCanWithdraw(transaction.getToAccount(), transaction.getAmount());
-            transaction.getToAccount().withdraw(transaction.getAmount());
-            accountService.updateBalance(transaction.getToAccount());
+        if (transaction.getToAccountId() != null) {
+            Account toAccount = accountService.getAccountById(transaction.getToAccountId());
+            accountService.validateCanWithdraw(toAccount, transaction.getAmount());
+            toAccount.withdraw(transaction.getAmount());
+            accountService.updateBalance(toAccount);
         }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
@@ -1062,7 +1074,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         TransactionFraudContext context = new TransactionFraudContext(
                 savedTx.getId() != null ? savedTx.getId().toString() : null,
                 fromAccount.getAccountCode(),
-                savedTx.getToAccount() != null ? savedTx.getToAccount().getAccountCode() : null,
+                savedTx.getToAccountCode(),
                 amount,
                 savedTx.getCurrency() != null ? savedTx.getCurrency() : "CRC",
                 savedTx.getTransactionCode(),
@@ -1107,12 +1119,26 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         };
     }
 
+    /**
+     * Checks whether the given account (by UUID) belongs to the specified user.
+     * Used for ownership checks in read-then-act operations where only IDs are available.
+     */
+    private boolean ownsAccount(UUID accountId, UUID userId) {
+        Account account = accountService.getAccountById(accountId);
+        return account.getUser() != null && account.getUser().getId().equals(userId);
+    }
+
     private boolean isTransactionOwner(Transaction transaction, String userEmail) {
-        boolean isFromOwner = transaction.getFromAccount() != null
-                && transaction.getFromAccount().getUser().getEmail().equals(userEmail);
-        boolean isToOwner = transaction.getToAccount() != null
-                && transaction.getToAccount().getUser().getEmail().equals(userEmail);
+        boolean isFromOwner = transaction.getFromAccountCode() != null
+                && isAccountOwnedByEmail(transaction.getFromAccountCode(), userEmail);
+        boolean isToOwner = transaction.getToAccountCode() != null
+                && isAccountOwnedByEmail(transaction.getToAccountCode(), userEmail);
         return isFromOwner || isToOwner;
+    }
+
+    private boolean isAccountOwnedByEmail(String accountCode, String userEmail) {
+        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+        return account.getUser() != null && account.getUser().getEmail().equals(userEmail);
     }
 
     private String buildTransactionPayload(Transaction transaction, String eventType) {
@@ -1122,10 +1148,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
             payload.put("transactionId", transaction.getId().toString());
             payload.put("transactionCode", transaction.getTransactionCode());
             payload.put("type", transaction.getType() != null ? transaction.getType().name() : null);
-            payload.put("fromAccountCode", transaction.getFromAccount() != null
-                    ? transaction.getFromAccount().getAccountCode() : null);
-            payload.put("toAccountCode", transaction.getToAccount() != null
-                    ? transaction.getToAccount().getAccountCode() : null);
+            payload.put("fromAccountCode", transaction.getFromAccountCode());
+            payload.put("toAccountCode", transaction.getToAccountCode());
             payload.put("amount", transaction.getAmount());
             payload.put("currency", transaction.getCurrency());
             payload.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : null);
@@ -1135,7 +1159,7 @@ public class TransactionService implements ITransactionService, ITransactionUseC
         }
     }
 
-    private String buildNotificationPayload(Transaction transaction) {
+    private String buildNotificationPayload(Transaction transaction, Account fromAccount, Account toAccount) {
         try {
             LocalDateTime occurredAt = transaction.getCompletedAt() != null
                     ? transaction.getCompletedAt()
@@ -1151,8 +1175,8 @@ public class TransactionService implements ITransactionService, ITransactionUseC
             payload.put("amount", transaction.getAmount());
             payload.put("currency", transaction.getCurrency());
             payload.put("occurredAt", occurredAt.toString());
-            payload.put("fromAccount", buildAccountNode(transaction.getFromAccount()));
-            payload.put("toAccount", buildAccountNode(transaction.getToAccount()));
+            payload.put("fromAccount", buildAccountNode(fromAccount));
+            payload.put("toAccount", buildAccountNode(toAccount));
             return objectMapper.writeValueAsString(payload);
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize notification payload", e);

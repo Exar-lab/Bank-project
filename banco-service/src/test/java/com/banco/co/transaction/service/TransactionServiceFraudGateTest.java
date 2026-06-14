@@ -11,6 +11,8 @@ import com.banco.co.fraud.enums.FraudAnalysisResult;
 import com.banco.co.fraud.service.IFraudDetectionService;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
+import com.banco.co.transaction.domain.model.Transaction;
+import com.banco.co.transaction.domain.port.out.ITransactionRepository;
 import com.banco.co.transaction.dto.TransactionRequestMetadataDto;
 import com.banco.co.transaction.dto.TransactionResponseDto;
 import com.banco.co.transaction.dto.movement.TransferRequestDto;
@@ -18,8 +20,6 @@ import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.exception.transaction.TransactionNotFoundException;
 import com.banco.co.transaction.exception.transaction.TransactionStatusException;
 import com.banco.co.transaction.mapper.ITransactionMapper;
-import com.banco.co.transaction.model.Transaction;
-import com.banco.co.transaction.repository.ITransactionRepository;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
@@ -199,6 +199,9 @@ class TransactionServiceFraudGateTest {
         when(transactionRepository.findByIdWithAccounts(txId)).thenReturn(Optional.of(flaggedTx));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(flaggedTx);
         when(transactionMapper.toDto(any())).thenReturn(expectedResponse);
+        // Service now loads accounts by ID for flagged approval
+        when(accountService.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
+        when(accountService.getAccountById(toAccount.getId())).thenReturn(toAccount);
 
         TransactionResponseDto result = transactionService.approveTransaction(txId, "admin@banco.co");
 
@@ -359,13 +362,17 @@ class TransactionServiceFraudGateTest {
         account.setUser(user);
         account.setStatus(AccountStatus.ACTIVE);
         account.setAccountType(AccountType.SAVINGS);
-        // accountCode has no @Setter — set via reflection to avoid @PrePersist dependency
         try {
-            var field = Account.class.getDeclaredField("accountCode");
-            field.setAccessible(true);
-            field.set(account, accountCode);
+            // accountCode has no @Setter — set via reflection
+            var codeField = Account.class.getDeclaredField("accountCode");
+            codeField.setAccessible(true);
+            codeField.set(account, accountCode);
+            // id is @GeneratedValue (JPA), not set in-memory — force a UUID for unit tests
+            var idField = Account.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(account, UUID.randomUUID());
         } catch (Exception e) {
-            throw new IllegalStateException("Could not set accountCode on Account", e);
+            throw new IllegalStateException("Could not set Account field", e);
         }
         if (balance.compareTo(BigDecimal.ZERO) > 0) {
             account.deposit(balance);
@@ -387,8 +394,10 @@ class TransactionServiceFraudGateTest {
         tx.setStatus(status);
         tx.setCurrency("CRC");
         tx.setAmount(new BigDecimal("100000"));
-        tx.setFromAccount(fromAccount);
-        tx.setToAccount(toAccount);
+        tx.setFromAccountId(fromAccount.getId());
+        tx.setFromAccountCode(fromAccount.getAccountCode());
+        tx.setToAccountId(toAccount.getId());
+        tx.setToAccountCode(toAccount.getAccountCode());
         tx.setType(com.banco.co.transaction.enums.TransactionType.TRANSFER);
         return tx;
     }
@@ -399,8 +408,10 @@ class TransactionServiceFraudGateTest {
         tx.setTransactionCode("TXN-BCR-FLAGGED");
         // flagForFraud sets status to PENDING_REVIEW (required by approveTransaction)
         tx.flagForFraud(BigDecimal.valueOf(75), "Suspicious activity detected");
-        tx.setFromAccount(from);
-        tx.setToAccount(to);
+        tx.setFromAccountId(from.getId());
+        tx.setFromAccountCode(from.getAccountCode());
+        tx.setToAccountId(to.getId());
+        tx.setToAccountCode(to.getAccountCode());
         tx.setAmount(new BigDecimal("100000"));
         tx.setCurrency("CRC");
         tx.setType(com.banco.co.transaction.enums.TransactionType.TRANSFER);

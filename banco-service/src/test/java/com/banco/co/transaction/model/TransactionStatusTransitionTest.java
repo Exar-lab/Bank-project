@@ -1,5 +1,6 @@
 package com.banco.co.transaction.model;
 
+import com.banco.co.transaction.domain.model.Transaction;
 import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.exception.transaction.TransactionStatusException;
 import org.junit.jupiter.api.Test;

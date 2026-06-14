@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "hexagonal-architecture": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "skillPath": "skills/hexagonal-architecture/SKILL.md",
+      "computedHash": "74bb41df595b6b2b70569fec4c63180a936254377d81f2d3d44aa3a0d2bd6d5d"
+    },
     "java-concurrency": {
       "source": "pluginagentmarketplace/custom-plugin-java",
       "sourceType": "github",
