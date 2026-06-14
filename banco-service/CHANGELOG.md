@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.6](https://github.com/Exar-lab/Bank-project/compare/v0.9.5...v0.9.6) (2026-06-13)
+
+
+### Refactoring
+
+* **transaction:** introduce hexagonal additive slice (Phase 3) ([#134](https://github.com/Exar-lab/Bank-project/issues/134)) ([5204a24](https://github.com/Exar-lab/Bank-project/commit/5204a246fc366527e743ccdef78e2427f3579a17))
+
 ## [0.9.5](https://github.com/Exar-lab/Bank-project/compare/v0.9.4...v0.9.5) (2026-05-28)
 
 
