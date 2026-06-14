@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.7](https://github.com/Exar-lab/Bank-project/compare/v0.9.6...v0.9.7) (2026-06-14)
+
+
+### Refactoring
+
+* **transaction:** hexagonal architecture — Phase 3 (additive + contraction) ([#136](https://github.com/Exar-lab/Bank-project/issues/136)) ([bd7806a](https://github.com/Exar-lab/Bank-project/commit/bd7806a4b99ea690ce86387fa2b5f6219884db01))
+
 ## [0.9.6](https://github.com/Exar-lab/Bank-project/compare/v0.9.5...v0.9.6) (2026-06-13)
 
 
