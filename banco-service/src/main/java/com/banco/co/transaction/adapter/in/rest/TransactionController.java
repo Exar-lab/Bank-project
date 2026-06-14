@@ -37,16 +37,11 @@ import java.util.UUID;
 
 /**
  * Hexagonal adapter — REST input port for Transaction use cases.
- *
- * NOTE: @RestController is intentionally commented out to avoid duplicate URL
- * mapping with com.banco.co.transaction.controller.TransactionController during the
- * additive migration phase. Uncomment once the legacy controller is removed (Phase 6).
- *
  * Depends on ITransactionUseCase (domain input port) instead of legacy ITransactionService.
  */
 @Validated
-// @RestController   ← uncomment after removing legacy com.banco.co.transaction.controller.TransactionController
-// @RequestMapping("/api/v1/transactions")
+@RestController
+@RequestMapping("/api/v1/transactions")
 public class TransactionController {
 
     private final ITransactionUseCase transactionUseCase;

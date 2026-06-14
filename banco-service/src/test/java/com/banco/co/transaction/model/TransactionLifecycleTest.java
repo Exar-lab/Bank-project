@@ -1,5 +1,6 @@
 package com.banco.co.transaction.model;
 
+import com.banco.co.transaction.domain.model.Transaction;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -13,7 +14,7 @@ class TransactionLifecycleTest {
         Transaction transaction = new Transaction();
         transaction.setAmount(new BigDecimal("100.00"));
 
-        transaction.generateTransactionData();
+        transaction.initializeTransactionData();
 
         assertThat(transaction.getTransactionCode()).matches("TXN-\\d{8}-\\d{8}");
     }
@@ -24,7 +25,7 @@ class TransactionLifecycleTest {
         transaction.setAmount(new BigDecimal("100.00"));
         transaction.setTransactionCode("TXN-EXISTING-001");
 
-        transaction.generateTransactionData();
+        transaction.initializeTransactionData();
 
         assertThat(transaction.getTransactionCode()).isEqualTo("TXN-EXISTING-001");
     }
@@ -34,7 +35,7 @@ class TransactionLifecycleTest {
         Transaction transaction = new Transaction();
         transaction.setAmount(new BigDecimal("100.00"));
 
-        transaction.generateTransactionData();
+        transaction.initializeTransactionData();
 
         assertThat(transaction.getNetAmount()).isEqualByComparingTo("100.00");
     }

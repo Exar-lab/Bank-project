@@ -20,14 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Hexagonal adapter — REST input port for teller/employee Transaction use cases.
- *
- * NOTE: @RestController is intentionally commented out to avoid duplicate URL
- * mapping with com.banco.co.transaction.controller.TransactionEmployeeController during the
- * additive migration phase. Uncomment once the legacy controller is removed (Phase 6).
  */
 @Validated
-// @RestController   ← uncomment after removing legacy com.banco.co.transaction.controller.TransactionEmployeeController
-// @RequestMapping("/api/v1/teller/transactions")
+@RestController
+@RequestMapping("/api/v1/teller/transactions")
 public class TransactionEmployeeController {
 
     private final ITransactionUseCase transactionUseCase;

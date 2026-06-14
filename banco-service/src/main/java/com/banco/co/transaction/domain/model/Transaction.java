@@ -23,7 +23,7 @@ import java.util.UUID;
  *   - envelopeId instead of Envelope entity
  *   - originalTransactionId instead of Transaction self-reference
  * Business methods preserved exactly from transaction/model/Transaction.java.
- * Coexists with com.banco.co.transaction.model.Transaction during the additive migration phase.
+ * Migration complete (Phase 5+6): legacy com.banco.co.transaction.model.Transaction deleted.
  */
 public class Transaction {
 
@@ -50,6 +50,10 @@ public class Transaction {
     private UUID cardId;          // Tarjeta usada (si aplica)
     private UUID envelopeId;      // Sobre (si aplica)
     private UUID originalTransactionId;  // Si es reversión, apunta a la original
+
+    // Denormalized account codes — populated by service/adapter for DTO mapping
+    private String fromAccountCode;   // Human-readable bank code (e.g. "BCR-001-2024")
+    private String toAccountCode;     // Human-readable bank code (e.g. "BCR-002-2024")
 
     private String cardLastFourDigits;  // Últimos 4 dígitos de la tarjeta
     private String authorizationCode;  // Código de autorización
@@ -341,6 +345,22 @@ public class Transaction {
 
     public void setOriginalTransactionId(UUID originalTransactionId) {
         this.originalTransactionId = originalTransactionId;
+    }
+
+    public String getFromAccountCode() {
+        return fromAccountCode;
+    }
+
+    public void setFromAccountCode(String fromAccountCode) {
+        this.fromAccountCode = fromAccountCode;
+    }
+
+    public String getToAccountCode() {
+        return toAccountCode;
+    }
+
+    public void setToAccountCode(String toAccountCode) {
+        this.toAccountCode = toAccountCode;
     }
 
     public String getCardLastFourDigits() {

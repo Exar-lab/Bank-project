@@ -21,6 +21,8 @@ interface TransactionEntityMapper {
 
     @Mapping(target = "fromAccountId", expression = "java(entity.getFromAccount() != null ? entity.getFromAccount().getId() : null)")
     @Mapping(target = "toAccountId", expression = "java(entity.getToAccount() != null ? entity.getToAccount().getId() : null)")
+    @Mapping(target = "fromAccountCode", expression = "java(entity.getFromAccount() != null ? entity.getFromAccount().getAccountCode() : null)")
+    @Mapping(target = "toAccountCode", expression = "java(entity.getToAccount() != null ? entity.getToAccount().getAccountCode() : null)")
     @Mapping(target = "cardId", expression = "java(entity.getCard() != null ? entity.getCard().getId() : null)")
     @Mapping(target = "envelopeId", expression = "java(entity.getEnvelope() != null ? entity.getEnvelope().getId() : null)")
     @Mapping(target = "originalTransactionId", expression = "java(entity.getOriginalTransaction() != null ? entity.getOriginalTransaction().getId() : null)")
