@@ -100,4 +100,9 @@ public class AccountJpaAdapter implements IAccountRepository {
     public boolean existsByUserEmailAndAccountType(String email, AccountType accountType) {
         return jpaRepository.existsByUserEmailAndAccountType(email, accountType);
     }
+
+    @Override
+    public Optional<Account> findByAccountCodeWithUser(String accountCode) {
+        return jpaRepository.findAccountWithUser(accountCode).map(mapper::toDomain);
+    }
 }
