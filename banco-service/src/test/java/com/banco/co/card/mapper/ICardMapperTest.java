@@ -1,6 +1,6 @@
 package com.banco.co.card.mapper;
 
-import com.banco.co.account.model.Account;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
 import com.banco.co.card.dto.CardResponseDto;
 import com.banco.co.card.dto.CardSummaryDto;
 import com.banco.co.card.enums.CardBrand;
@@ -114,8 +114,8 @@ class ICardMapperTest {
     // ══════════════════════════════════════════════════════════
 
     private Card buildCard(String cardNumber) throws Exception {
-        Account account = new Account();
-        setField(account, "accountCode", "ACC-001");
+        AccountEntity account = new AccountEntity();
+        account.setAccountCode("ACC-001");
 
         Card card = new Card();
         card.setCardCode("CARD-2024-X7K9P2");

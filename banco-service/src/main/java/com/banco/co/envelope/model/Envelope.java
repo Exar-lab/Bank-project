@@ -1,7 +1,7 @@
 package com.banco.co.envelope.model;
 
 import com.banco.co.transaction.enums.TransactionType;
-import com.banco.co.account.model.Account;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
 import com.banco.co.envelope.enums.AutoContributeFrequency;
 import com.banco.co.envelope.enums.EnvelopeStatus;
 import com.banco.co.envelope.enums.EnvelopeType;
@@ -60,7 +60,7 @@ public class Envelope {
     // Relación con cuenta - SIN CASCADE
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
+    private AccountEntity account;
 
     // Balance actual
     @Column(nullable = false, precision = 19, scale = 2)

@@ -1,7 +1,10 @@
 package com.banco.co.envelope.service;
 
-import com.banco.co.account.model.Account;
-import com.banco.co.account.service.IAccountService;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
+import com.banco.co.account.adapter.out.jpa.IAccountJpaRepository;
+import com.banco.co.account.domain.model.Account;
+import com.banco.co.account.domain.port.in.IAccountUseCase;
+import com.banco.co.account.exception.account.AccountNotFoundException;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLogDetail;
@@ -38,7 +41,8 @@ import java.util.UUID;
 @Slf4j
 public class EnvelopeService implements IEnvelopeService {
     private final IEnvelopeRepository repository;
-    private final IAccountService accountService;
+    private final IAccountUseCase accountUseCase;
+    private final IAccountJpaRepository accountJpaRepository;
     private final IUserService userService;
     private final IEnvelopeMapper mapper;
     private final IAuditLogService auditLogService;
@@ -54,10 +58,10 @@ public class EnvelopeService implements IEnvelopeService {
     public EnvelopeResponseDto create(EnvelopeRequestDto dto, String userEmail) {
 
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountEntityByCode(dto.accountCode());
+        Account account = accountUseCase.findAccountWithUserByAccountCode(dto.accountCode());
 
         // Validar ownership
-        if (!account.getUser().getId().equals(user.getId())) {
+        if (!account.getUserId().equals(user.getId())) {
             throw new UnauthorizedException("You don't own this account");
         }
 
@@ -72,8 +76,11 @@ public class EnvelopeService implements IEnvelopeService {
             );
         }
 
+        AccountEntity accountEntity = accountJpaRepository.findById(account.getId())
+                .orElseThrow(() -> new AccountNotFoundException(account.getId().toString()));
+
         Envelope envelope = mapper.toEntity(dto);
-        envelope.setAccount(account);
+        envelope.setAccount(accountEntity);
 
         // Si tiene auto-contribute, calcular próxima fecha
         if (envelope.getAutoContribute()) {
@@ -142,10 +149,10 @@ public class EnvelopeService implements IEnvelopeService {
     @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> getActiveAllByAccountCode(String accountCode, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountEntityByCode(accountCode);
+        Account account = accountUseCase.findAccountWithUserByAccountCode(accountCode);
 
         // Validar ownership
-        if (!account.getUser().getId().equals(user.getId())) {
+        if (!account.getUserId().equals(user.getId())) {
             throw new UnauthorizedException("You don't own this account");
         }
 
@@ -188,10 +195,10 @@ public class EnvelopeService implements IEnvelopeService {
             String userEmail
     ) {
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountEntityByCode(accountCode);
+        Account account = accountUseCase.findAccountWithUserByAccountCode(accountCode);
 
         // Validar ownership
-        if (!account.getUser().getId().equals(user.getId())) {
+        if (!account.getUserId().equals(user.getId())) {
             throw new UnauthorizedException("You don't own this account");
         }
 
@@ -211,10 +218,10 @@ public class EnvelopeService implements IEnvelopeService {
             String userEmail
     ) {
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountEntityByCode(accountCode);
+        Account account = accountUseCase.findAccountWithUserByAccountCode(accountCode);
 
         // Validar ownership
-        if (!account.getUser().getId().equals(user.getId())) {
+        if (!account.getUserId().equals(user.getId())) {
             throw new UnauthorizedException("You don't own this account");
         }
 
@@ -318,7 +325,7 @@ public class EnvelopeService implements IEnvelopeService {
     public EnvelopeResponseDto deposit(EnvelopeDepositDto dto, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
         Envelope envelope = findActiveWithAccountByCode(dto.envelopeCode());
-        Account account = envelope.getAccount();
+        AccountEntity account = envelope.getAccount();
         try {
             String oldValues = mapper.toJsonString(envelope);
 
@@ -401,7 +408,7 @@ public class EnvelopeService implements IEnvelopeService {
     public EnvelopeResponseDto withdraw(EnvelopeWithdrawDto dto, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
         Envelope envelope = findActiveWithAccountByCode(dto.envelopeCode());
-        Account account = envelope.getAccount();
+        AccountEntity account = envelope.getAccount();
         try {
             validateOwnership(envelope, user,AuditAction.ENVELOPE_WITHDRAWAL);
             String oldValues = mapper.toJsonString(envelope);

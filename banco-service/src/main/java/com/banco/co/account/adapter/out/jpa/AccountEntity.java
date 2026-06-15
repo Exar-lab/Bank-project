@@ -252,4 +252,45 @@ public class AccountEntity {
     public void setMoneyFromEnvelope(BigDecimal moneyFromEnvelope) {
         this.moneyFromEnvelope = moneyFromEnvelope;
     }
+
+    // ══════════════════════════════════════════════════════════
+    // Business methods — mirrors legacy Account for EnvelopeService + EnvelopeScheduleService
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Returns the available balance (full balance — no blocked funds tracked at entity level).
+     * Mirrors com.banco.co.account.model.Account#getAvailableBalance().
+     */
+    public BigDecimal getAvailableBalance() {
+        return this.balance;
+    }
+
+    /**
+     * Withdraws an amount from the account balance.
+     * Used by EnvelopeScheduleService auto-contribution flow.
+     */
+    public void withdraw(BigDecimal amount) {
+        if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Withdrawal amount must be positive");
+        }
+        this.balance = this.balance.subtract(amount);
+    }
+
+    /**
+     * Returns funds from an envelope back to the account balance.
+     * Used by EnvelopeService.deposit() (envelope → account return flow).
+     */
+    public void depositFromEnvelope(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+        this.moneyFromEnvelope = this.moneyFromEnvelope.subtract(amount);
+    }
+
+    /**
+     * Moves funds from account balance to an envelope.
+     * Used by EnvelopeService.withdraw() (account → envelope allocation flow).
+     */
+    public void withdrawFromEnvelope(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
+        this.moneyFromEnvelope = this.moneyFromEnvelope.add(amount);
+    }
 }

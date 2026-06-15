@@ -1,7 +1,7 @@
 package com.banco.co.card.model;
 
 import com.banco.co.transaction.enums.TransactionType;
-import com.banco.co.account.model.Account;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
 import com.banco.co.card.enums.CardBrand;
 import com.banco.co.card.enums.CardStatus;
 import com.banco.co.card.enums.CardTier;
@@ -71,7 +71,7 @@ public class Card {
     // Relación con cuenta - SIN CASCADE
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
+    private AccountEntity account;
 
     /**
      * Read-only UUID projection of the account FK column.

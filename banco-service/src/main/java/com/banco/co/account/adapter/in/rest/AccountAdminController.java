@@ -10,22 +10,19 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
 /**
  * Hexagonal adapter — REST input port for Account admin use cases.
- *
- * NOTE: @RestController is intentionally commented out to avoid duplicate URL
- * mapping with com.banco.co.account.controller.AccountAdminController during the
- * additive migration phase. Uncomment once the legacy controller is removed.
- *
- * Depends on IAccountUseCase (domain input port) instead of legacy IAccountService.
+ * Legacy com.banco.co.account.controller.AccountAdminController has been removed — this is now the active controller.
  */
+@RestController
+@RequestMapping("/api/v1/admin/accounts")
 @Validated
-// @RestController   ← uncomment after removing legacy com.banco.co.account.controller.AccountAdminController
-// @RequestMapping("/api/v1/admin/accounts")
 public class AccountAdminController {
 
     private final IAccountUseCase accountUseCase;

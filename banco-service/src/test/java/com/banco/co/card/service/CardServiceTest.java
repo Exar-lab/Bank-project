@@ -1,7 +1,9 @@
 package com.banco.co.card.service;
 
-import com.banco.co.account.model.Account;
-import com.banco.co.account.service.IAccountService;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
+import com.banco.co.account.adapter.out.jpa.IAccountJpaRepository;
+import com.banco.co.account.domain.model.Account;
+import com.banco.co.account.domain.port.in.IAccountUseCase;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLogDetail;
@@ -18,6 +20,8 @@ import com.banco.co.card.repository.ICardRepository;
 import com.banco.co.exception.authentication.UnauthorizedException;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
+import com.banco.co.user.domain.model.UserSnapshot;
+import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.databind.ObjectMapper;
@@ -43,16 +47,19 @@ import static org.mockito.Mockito.*;
 /**
  * Unit tests for CardService — Mockito, no Spring context.
  * Covers TASK-10: 9 customer use cases.
+ * Phase 3: migrated to IAccountUseCase + domain Account.
  */
 class CardServiceTest {
 
     private ICardRepository cardRepository;
-    private IAccountService accountService;
+    private IAccountUseCase accountUseCase;
+    private IAccountJpaRepository accountJpaRepository;
     private IUserService userService;
     private IAuditLogService auditLogService;
     private ICardMapper cardMapper;
     private IOutboxEventPort outboxEventPort;
     private ObjectMapper objectMapper;
+    private IUserRepository userDomainRepository;
 
     private CardService cardService;
 
@@ -66,21 +73,25 @@ class CardServiceTest {
     @BeforeEach
     void setUp() {
         cardRepository = mock(ICardRepository.class);
-        accountService = mock(IAccountService.class);
+        accountUseCase = mock(IAccountUseCase.class);
+        accountJpaRepository = mock(IAccountJpaRepository.class);
         userService = mock(IUserService.class);
         auditLogService = mock(IAuditLogService.class);
         cardMapper = mock(ICardMapper.class);
         outboxEventPort = mock(IOutboxEventPort.class);
         objectMapper = new ObjectMapper();
+        userDomainRepository = mock(IUserRepository.class);
 
         cardService = new CardService(
                 cardRepository,
-                accountService,
+                accountUseCase,
+                accountJpaRepository,
                 userService,
                 auditLogService,
                 cardMapper,
                 outboxEventPort,
-                objectMapper
+                objectMapper,
+                userDomainRepository
         );
     }
 
@@ -92,13 +103,17 @@ class CardServiceTest {
     void testCreateCard_ValidRequest_ReturnsDto() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card savedCard = buildCard(CARD_CODE, CardStatus.INACTIVE, account);
+        Account account = buildDomainAccount(ACCOUNT_CODE, user.getId());
+        AccountEntity accountEntity = buildAccountEntity(ACCOUNT_CODE, user);
+        accountEntity.setId(account.getId());
+        AccountEntity legacyAccount = accountEntity;
+        Card savedCard = buildCardWithAccountEntity(CARD_CODE, CardStatus.INACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
         CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
 
         when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
-        when(accountService.findAccountEntityByCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountJpaRepository.findById(account.getId())).thenReturn(Optional.of(accountEntity));
         when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
         when(cardMapper.toDto(savedCard)).thenReturn(expectedDto);
         when(outboxEventPort.save(any())).thenReturn(mock(OutboxEvent.class));
@@ -117,12 +132,14 @@ class CardServiceTest {
     void testCreateCard_AccountNotOwned_ThrowsUnauthorized() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        User otherUser = buildUser(OTHER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, otherUser); // owned by someone else
+        UUID otherUserId = UUID.randomUUID();
+        Account account = buildDomainAccount(ACCOUNT_CODE, otherUserId); // owned by someone else
         CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
+        UserSnapshot snapshot = new UserSnapshot(otherUserId.toString(), OTHER_EMAIL, "otherUser", "USER");
 
         when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
-        when(accountService.findAccountEntityByCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(userDomainRepository.findSnapshotByUserId(otherUserId)).thenReturn(snapshot);
 
         // Act & Assert
         assertThatThrownBy(() -> cardService.createCard(dto, USER_EMAIL))
@@ -133,6 +150,83 @@ class CardServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════
+    //  Phase 3 RED tests — ownership uses getUserId()
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Phase 3 RED test: createCard ownership check must use account.getUserId()
+     * (domain Account POJO), NOT account.getUser().getId() (JPA entity graph).
+     * GREEN: CardService injects IAccountUseCase and checks account.getUserId().
+     */
+    @Test
+    void testCreateCard_ValidData_OwnershipUsesUserId() {
+        // Arrange
+        User user = buildUser(USER_EMAIL);
+        // Domain account — getUserId() returns user.getId() directly
+        Account account = buildDomainAccount(ACCOUNT_CODE, user.getId());
+
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        legacyAccount.setId(account.getId());
+        Card savedCard = buildCardWithAccountEntity(CARD_CODE, CardStatus.INACTIVE, legacyAccount);
+        CardResponseDto expectedDto = buildCardResponseDto();
+        CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
+
+        when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountJpaRepository.findById(account.getId())).thenReturn(Optional.of(legacyAccount));
+        when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
+        when(cardMapper.toDto(savedCard)).thenReturn(expectedDto);
+        when(outboxEventPort.save(any())).thenReturn(mock(OutboxEvent.class));
+
+        // Act — should NOT throw; user.getId() equals account.getUserId()
+        CardResponseDto result = cardService.createCard(dto, USER_EMAIL);
+
+        // Assert
+        assertThat(result).isNotNull();
+        // Verify ownership was checked via domain port (not IAccountService)
+        verify(accountUseCase).findAccountWithUserByAccountCode(ACCOUNT_CODE);
+        verify(cardRepository).save(any(Card.class));
+    }
+
+    /**
+     * Phase 3 RED test: when unauthorized, audit log must include ownerEmail from UserSnapshot,
+     * NOT from account.getUser().getEmail() (JPA entity graph is gone).
+     * GREEN: CardService uses userDomainRepository.findSnapshotByUserId(account.getUserId()).email().
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testCreateCard_WrongOwner_AuditEmailFromSnapshot() {
+        // Arrange
+        User user = buildUser(USER_EMAIL);
+        UUID ownerId = UUID.randomUUID();
+        Account account = buildDomainAccount(ACCOUNT_CODE, ownerId);
+        UserSnapshot ownerSnapshot = new UserSnapshot(ownerId.toString(), "owner@banco.co", "realOwner", "USER");
+        CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
+
+        when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(userDomainRepository.findSnapshotByUserId(ownerId)).thenReturn(ownerSnapshot);
+
+        // Act & Assert
+        assertThatThrownBy(() -> cardService.createCard(dto, USER_EMAIL))
+                .isInstanceOf(UnauthorizedException.class);
+
+        // Verify snapshot was fetched from domain port
+        verify(userDomainRepository).findSnapshotByUserId(ownerId);
+
+        // Capture audit log details and verify ownerEmail comes from snapshot
+        ArgumentCaptor<List<AuditLogDetail>> detailsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(auditLogService).logFailure(eq(user), eq(AuditAction.CARD_CREATED_FAILED), eq(AuditEntityType.CARD), detailsCaptor.capture());
+
+        List<AuditLogDetail> details = detailsCaptor.getValue();
+        boolean hasOwnerEmail = details.stream()
+                .anyMatch(d -> "ownerEmail".equals(d.getKey()) && "owner@banco.co".equals(d.getValue()));
+        assertThat(hasOwnerEmail)
+                .as("ownerEmail in audit must come from UserSnapshot.email(), not JPA entity graph")
+                .isTrue();
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  getMyCards
     // ══════════════════════════════════════════════════════════
 
@@ -140,9 +234,9 @@ class CardServiceTest {
     void testGetMyCards_ReturnsAllCards() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card1 = buildCard("CARD-001", CardStatus.ACTIVE, account);
-        Card card2 = buildCard("CARD-002", CardStatus.INACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card1 = buildCardWithAccountEntity("CARD-001", CardStatus.ACTIVE, legacyAccount);
+        Card card2 = buildCardWithAccountEntity("CARD-002", CardStatus.INACTIVE, legacyAccount);
         CardSummaryDto summary1 = buildCardSummaryDto("CARD-001");
         CardSummaryDto summary2 = buildCardSummaryDto("CARD-002");
 
@@ -158,6 +252,50 @@ class CardServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════
+    //  getMyCardsByAccount
+    // ══════════════════════════════════════════════════════════
+
+    @Test
+    void testGetMyCardsByAccount_OwnedAccount_ReturnsCards() {
+        // Arrange
+        User user = buildUser(USER_EMAIL);
+        Account account = buildDomainAccount(ACCOUNT_CODE, user.getId());
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card1 = buildCardWithAccountEntity("CARD-001", CardStatus.ACTIVE, legacyAccount);
+        CardSummaryDto summary1 = buildCardSummaryDto("CARD-001");
+
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
+        when(cardRepository.findAllByAccountAccountCode(ACCOUNT_CODE)).thenReturn(List.of(card1));
+        when(cardMapper.toSummaryDto(card1)).thenReturn(summary1);
+
+        // Act
+        List<CardSummaryDto> result = cardService.getMyCardsByAccount(ACCOUNT_CODE, USER_EMAIL);
+
+        // Assert
+        assertThat(result).hasSize(1).containsExactly(summary1);
+    }
+
+    @Test
+    void testGetMyCardsByAccount_NotOwned_ThrowsUnauthorized() {
+        // Arrange
+        User user = buildUser(USER_EMAIL);
+        UUID ownerId = UUID.randomUUID();
+        Account account = buildDomainAccount(ACCOUNT_CODE, ownerId);
+        UserSnapshot snapshot = new UserSnapshot(ownerId.toString(), OTHER_EMAIL, "owner", "USER");
+
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
+        when(userDomainRepository.findSnapshotByUserId(ownerId)).thenReturn(snapshot);
+
+        // Act & Assert
+        assertThatThrownBy(() -> cardService.getMyCardsByAccount(ACCOUNT_CODE, USER_EMAIL))
+                .isInstanceOf(UnauthorizedException.class);
+
+        verify(cardRepository, never()).findAllByAccountAccountCode(any());
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  getCardByCode
     // ══════════════════════════════════════════════════════════
 
@@ -165,8 +303,8 @@ class CardServiceTest {
     void testGetCardByCode_OwnedCard_ReturnsDto() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
 
         when(cardRepository.findByCardCodeWithAccount(CARD_CODE)).thenReturn(Optional.of(card));
@@ -188,8 +326,8 @@ class CardServiceTest {
     void testActivateCard_ValidPin_ReturnsActiveCard() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.INACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.INACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
         ActivateCardRequestDto dto = new ActivateCardRequestDto("123456");
 
@@ -213,8 +351,8 @@ class CardServiceTest {
         // Arrange
         String secretPin = "999888";
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.INACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.INACTIVE, legacyAccount);
         ActivateCardRequestDto dto = new ActivateCardRequestDto(secretPin);
 
         when(cardRepository.findByCardCodeWithAccount(CARD_CODE)).thenReturn(Optional.of(card));
@@ -243,8 +381,8 @@ class CardServiceTest {
         // Arrange
         String secretPin = "777666";
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.INACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.INACTIVE, legacyAccount);
         ActivateCardRequestDto dto = new ActivateCardRequestDto(secretPin);
 
         when(cardRepository.findByCardCodeWithAccount(CARD_CODE)).thenReturn(Optional.of(card));
@@ -277,8 +415,8 @@ class CardServiceTest {
     void testBlockCard_ValidReason_ReturnsBlockedCard() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
         BlockCardRequestDto dto = new BlockCardRequestDto("Suspicious activity");
 
@@ -305,8 +443,8 @@ class CardServiceTest {
     void testReportStolen_OwnedCard_ReturnsDto() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
 
         when(cardRepository.findByCardCodeWithAccount(CARD_CODE)).thenReturn(Optional.of(card));
@@ -331,8 +469,8 @@ class CardServiceTest {
     void testReportLost_OnActiveCard_ReturnsDto() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
 
         when(cardRepository.findByCardCodeWithAccount(CARD_CODE)).thenReturn(Optional.of(card));
@@ -357,8 +495,8 @@ class CardServiceTest {
     void testCloseCard_OnActiveCard_ReturnsDto() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
 
         when(cardRepository.findByCardCodeWithAccount(CARD_CODE)).thenReturn(Optional.of(card));
@@ -383,8 +521,8 @@ class CardServiceTest {
     void testUpdateLimits_ValidRequest_ReturnsDto() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
         UpdateCardLimitsRequestDto dto = new UpdateCardLimitsRequestDto(
                 new BigDecimal("300000"), new BigDecimal("9000000"));
@@ -411,8 +549,8 @@ class CardServiceTest {
     void testUpdateLimits_DailyExceedsMonthly_ThrowsException() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         UpdateCardLimitsRequestDto dto = new UpdateCardLimitsRequestDto(
                 new BigDecimal("5000000"), new BigDecimal("1000000")); // daily > monthly
 
@@ -433,8 +571,8 @@ class CardServiceTest {
         // Arrange
         User owner = buildUser(USER_EMAIL);
         User intruder = buildUser(OTHER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, owner);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, owner);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         UpdateCardLimitsRequestDto dto = new UpdateCardLimitsRequestDto(
                 new BigDecimal("300000"), new BigDecimal("9000000"));
 
@@ -456,8 +594,8 @@ class CardServiceTest {
     void testUpdateFeatures_PartialUpdate_OnlyChangesNonNullFields() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         // Initial state: contactless=true, online=true, international=false
         card.setContactlessEnabled(true);
         card.setOnlinePaymentsEnabled(true);
@@ -494,9 +632,9 @@ class CardServiceTest {
     void testAdminGetAllByStatus_ReturnsPaginatedPage() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
-        Card card1 = buildCard("CARD-001", CardStatus.BLOCKED, account);
-        Card card2 = buildCard("CARD-002", CardStatus.BLOCKED, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        Card card1 = buildCardWithAccountEntity("CARD-001", CardStatus.BLOCKED, legacyAccount);
+        Card card2 = buildCardWithAccountEntity("CARD-002", CardStatus.BLOCKED, legacyAccount);
         CardSummaryDto summary1 = buildCardSummaryDto("CARD-001");
         CardSummaryDto summary2 = buildCardSummaryDto("CARD-002");
 
@@ -520,8 +658,8 @@ class CardServiceTest {
     void testAdminChangeStatus_ValidAdmin_ReturnsDto() {
         // Arrange
         User owner = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, owner);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, owner);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         CardResponseDto expectedDto = buildCardResponseDto();
         AdminChangeCardStatusRequestDto dto = new AdminChangeCardStatusRequestDto(CardStatus.BLOCKED, "Fraud investigation");
 
@@ -559,8 +697,8 @@ class CardServiceTest {
     void testAdminResetPin_ValidAdmin_NoException() {
         // Arrange
         User owner = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, owner);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, owner);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         AdminResetPinRequestDto dto = new AdminResetPinRequestDto("654321");
 
         when(cardRepository.findByCardCode(CARD_CODE)).thenReturn(Optional.of(card));
@@ -582,8 +720,8 @@ class CardServiceTest {
         // Arrange
         String newPin = "987654";
         User owner = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, owner);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, owner);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         AdminResetPinRequestDto dto = new AdminResetPinRequestDto(newPin);
 
         when(cardRepository.findByCardCode(CARD_CODE)).thenReturn(Optional.of(card));
@@ -610,8 +748,8 @@ class CardServiceTest {
         // Arrange
         String newPin = "112233";
         User owner = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, owner);
-        Card card = buildCard(CARD_CODE, CardStatus.ACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, owner);
+        Card card = buildCardWithAccountEntity(CARD_CODE, CardStatus.ACTIVE, legacyAccount);
         AdminResetPinRequestDto dto = new AdminResetPinRequestDto(newPin);
 
         when(cardRepository.findByCardCode(CARD_CODE)).thenReturn(Optional.of(card));
@@ -639,28 +777,29 @@ class CardServiceTest {
     // ══════════════════════════════════════════════════════════
 
     /**
-     * Task 1.4 RED: Card.accountId does not exist yet.
-     * Fails to compile until the field is added to Card with insertable=false, updatable=false.
-     * GREEN: card.getAccountId() returns non-null after save, matching the account's UUID.
+     * Task 1.4 GREEN: Card.accountId is populated from the FK column after save.
+     * Phase 3: uses IAccountUseCase.findAccountWithUserByAccountCode().
      */
     @Test
     void testCreateCard_ValidData_CardHasAccountId() {
         // Arrange
         User user = buildUser(USER_EMAIL);
-        Account account = buildAccount(ACCOUNT_CODE, user);
+        Account account = buildDomainAccount(ACCOUNT_CODE, user.getId());
         UUID expectedAccountId = account.getId();
 
         // Build a saved card that mirrors what would come back from the repository
-        Card savedCard = buildCard(CARD_CODE, CardStatus.INACTIVE, account);
+        AccountEntity legacyAccount = buildAccountEntity(ACCOUNT_CODE, user);
+        legacyAccount.setId(expectedAccountId);
+        Card savedCard = buildCardWithAccountEntity(CARD_CODE, CardStatus.INACTIVE, legacyAccount);
         // Simulate the JPA-populated accountId (insertable=false, updatable=false column)
-        // After save the DB populates account_id from the FK; we set it on the returned card
         setField(savedCard, "accountId", expectedAccountId);
 
         CardResponseDto expectedDto = buildCardResponseDto();
         CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
 
         when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
-        when(accountService.findAccountEntityByCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountUseCase.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountJpaRepository.findById(expectedAccountId)).thenReturn(Optional.of(legacyAccount));
         when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
         when(cardMapper.toDto(savedCard)).thenReturn(expectedDto);
         when(outboxEventPort.save(any())).thenReturn(mock(OutboxEvent.class));
@@ -669,7 +808,6 @@ class CardServiceTest {
         cardService.createCard(dto, USER_EMAIL);
 
         // Assert — the saved card has accountId populated
-        // RED: Card.getAccountId() does not exist yet — compilation error
         assertThat(savedCard.getAccountId()).isNotNull();
         assertThat(savedCard.getAccountId()).isEqualTo(expectedAccountId);
     }
@@ -685,10 +823,27 @@ class CardServiceTest {
         return user;
     }
 
-    private Account buildAccount(String accountCode, User owner) {
+    /**
+     * Builds a domain Account POJO (com.banco.co.account.domain.model.Account).
+     * Used for IAccountUseCase method stubs (createCard, getMyCardsByAccount ownership checks).
+     */
+    private Account buildDomainAccount(String accountCode, UUID userId) {
         Account account = new Account();
-        setField(account, "id", UUID.randomUUID());
-        setField(account, "accountCode", accountCode);
+        account.setId(UUID.randomUUID());
+        account.setAccountCode(accountCode);
+        account.setUserId(userId);
+        return account;
+    }
+
+    /**
+     * Builds a JPA AccountEntity (com.banco.co.account.adapter.out.jpa.AccountEntity).
+     * Used where the JPA entity graph is needed (validateCardOwnershipByCard paths).
+     * Phase 4: Card.account is now AccountEntity — no more legacy Account.
+     */
+    private AccountEntity buildAccountEntity(String accountCode, User owner) {
+        AccountEntity account = new AccountEntity();
+        account.setId(UUID.randomUUID());
+        account.setAccountCode(accountCode);
         account.setUser(owner);
         return account;
     }
@@ -703,7 +858,8 @@ class CardServiceTest {
         }
     }
 
-    private Card buildCard(String cardCode, CardStatus status, Account account) {
+    private Card buildCardWithAccountEntity(String cardCode, CardStatus status,
+                                             AccountEntity account) {
         Card card = new Card();
         card.setId(UUID.randomUUID());
         card.setCardCode(cardCode);
