@@ -80,16 +80,21 @@ public interface IAccountService {
     void validateCanWithdraw(Account account, BigDecimal amount);
 
     /**
-     * Obtener cuenta por ID (sin validar ownership)
-     * USO INTERNO: Para TransactionService
+     * Obtener cuenta por ID (sin validar ownership) — returns legacy Account entity.
+     * USO INTERNO: Para TransactionService (migración Phase 3 → IAccountUseCase.getAccountById).
+     * @deprecated Use IAccountUseCase.getAccountById(UUID) for domain-typed access.
      */
-    Account getAccountById(UUID accountId);
+    @Deprecated
+    Account getAccountEntityById(UUID accountId);
 
     /**
-     * Obtener cuenta por código (sin validar ownership)
-     * USO INTERNO: Para TransactionService
+     * Obtener cuenta por código con contexto de usuario — returns legacy Account entity.
+     * USO INTERNO: Para TransactionService, EnvelopeService, CardService.
+     * Migración Phase 3 → IAccountUseCase.findAccountWithUserByAccountCode.
+     * @deprecated Use IAccountUseCase.findAccountWithUserByAccountCode(String) for domain-typed access.
      */
-    Account findAccountWithUserByAccountCode(String accountCode);
+    @Deprecated
+    Account findAccountEntityByCode(String accountCode);
 
     /**
      * Actualizar balance de cuenta

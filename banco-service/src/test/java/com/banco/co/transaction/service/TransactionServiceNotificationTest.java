@@ -129,7 +129,7 @@ class TransactionServiceNotificationTest {
         Transaction savedTx = buildSavedTx("TXN-BCR-DEP-001", TransactionStatus.COMPLETED, null, toAccount, TransactionType.DEPOSIT);
 
         when(userService.getEntityUserByEmail("employee@banco.co")).thenReturn(employee);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        when(accountService.findAccountEntityByCode("ACC-TO-001")).thenReturn(toAccount);
         doNothing().when(accountService).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
@@ -160,7 +160,7 @@ class TransactionServiceNotificationTest {
         Transaction savedTx = buildSavedTx("TXN-BCR-WD-001", TransactionStatus.PROCESSING, fromAccount, null, TransactionType.WITHDRAWAL);
 
         when(userService.getEntityUserByEmail("employee@banco.co")).thenReturn(employee);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountService.findAccountEntityByCode("ACC-FROM-001")).thenReturn(fromAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
@@ -229,8 +229,8 @@ class TransactionServiceNotificationTest {
         when(transactionRepository.save(any())).thenReturn(completedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto("TXN-BCR-REV-001"));
         // reverseTransaction loads accounts by ID
-        when(accountService.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
-        when(accountService.getAccountById(toAccount.getId())).thenReturn(toAccount);
+        when(accountService.getAccountEntityById(fromAccount.getId())).thenReturn(fromAccount);
+        when(accountService.getAccountEntityById(toAccount.getId())).thenReturn(toAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
 
         transactionService.reverseTransaction(txId, "Refund", "admin@banco.co");
@@ -269,8 +269,8 @@ class TransactionServiceNotificationTest {
 
     private void stubTransferMocks(Transaction savedTx) {
         when(userService.getEntityUserByEmail("sender@banco.co")).thenReturn(senderUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        when(accountService.findAccountEntityByCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountService.findAccountEntityByCode("ACC-TO-001")).thenReturn(toAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
         doNothing().when(accountService).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
@@ -280,8 +280,8 @@ class TransactionServiceNotificationTest {
 
     private void stubTransferMocksBlocked(Transaction savedTx) {
         when(userService.getEntityUserByEmail("sender@banco.co")).thenReturn(senderUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        when(accountService.findAccountEntityByCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountService.findAccountEntityByCode("ACC-TO-001")).thenReturn(toAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
         doNothing().when(accountService).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());

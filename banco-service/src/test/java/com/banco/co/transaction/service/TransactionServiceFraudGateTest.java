@@ -200,8 +200,8 @@ class TransactionServiceFraudGateTest {
         when(transactionRepository.save(any(Transaction.class))).thenReturn(flaggedTx);
         when(transactionMapper.toDto(any())).thenReturn(expectedResponse);
         // Service now loads accounts by ID for flagged approval
-        when(accountService.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
-        when(accountService.getAccountById(toAccount.getId())).thenReturn(toAccount);
+        when(accountService.getAccountEntityById(fromAccount.getId())).thenReturn(fromAccount);
+        when(accountService.getAccountEntityById(toAccount.getId())).thenReturn(toAccount);
 
         TransactionResponseDto result = transactionService.approveTransaction(txId, "admin@banco.co");
 
@@ -291,8 +291,8 @@ class TransactionServiceFraudGateTest {
 
     private void stubTransferCommonMocks(TransactionResponseDto response) {
         when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        when(accountService.findAccountEntityByCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountService.findAccountEntityByCode("ACC-TO-001")).thenReturn(toAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
         doNothing().when(accountService).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
@@ -303,8 +303,8 @@ class TransactionServiceFraudGateTest {
 
     private void stubTransferCommonMocksBlocked() {
         when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        when(accountService.findAccountEntityByCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountService.findAccountEntityByCode("ACC-TO-001")).thenReturn(toAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
         doNothing().when(accountService).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
@@ -314,8 +314,8 @@ class TransactionServiceFraudGateTest {
 
     private void stubTransferCommonMocksWithRealTx(Transaction realTx) {
         when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        when(accountService.findAccountEntityByCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountService.findAccountEntityByCode("ACC-TO-001")).thenReturn(toAccount);
         doNothing().when(accountService).validateCanWithdraw(any(), any());
         doNothing().when(accountService).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());

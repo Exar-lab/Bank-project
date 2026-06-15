@@ -54,7 +54,7 @@ public class EnvelopeService implements IEnvelopeService {
     public EnvelopeResponseDto create(EnvelopeRequestDto dto, String userEmail) {
 
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountWithUserByAccountCode(dto.accountCode());
+        Account account = accountService.findAccountEntityByCode(dto.accountCode());
 
         // Validar ownership
         if (!account.getUser().getId().equals(user.getId())) {
@@ -142,7 +142,7 @@ public class EnvelopeService implements IEnvelopeService {
     @Transactional(readOnly = true)
     public List<EnvelopeResponseDto> getActiveAllByAccountCode(String accountCode, String userEmail) {
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+        Account account = accountService.findAccountEntityByCode(accountCode);
 
         // Validar ownership
         if (!account.getUser().getId().equals(user.getId())) {
@@ -188,7 +188,7 @@ public class EnvelopeService implements IEnvelopeService {
             String userEmail
     ) {
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+        Account account = accountService.findAccountEntityByCode(accountCode);
 
         // Validar ownership
         if (!account.getUser().getId().equals(user.getId())) {
@@ -211,7 +211,7 @@ public class EnvelopeService implements IEnvelopeService {
             String userEmail
     ) {
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+        Account account = accountService.findAccountEntityByCode(accountCode);
 
         // Validar ownership
         if (!account.getUser().getId().equals(user.getId())) {

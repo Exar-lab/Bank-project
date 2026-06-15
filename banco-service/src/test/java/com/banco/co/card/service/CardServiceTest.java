@@ -98,7 +98,7 @@ class CardServiceTest {
         CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
 
         when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
-        when(accountService.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountService.findAccountEntityByCode(ACCOUNT_CODE)).thenReturn(account);
         when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
         when(cardMapper.toDto(savedCard)).thenReturn(expectedDto);
         when(outboxEventPort.save(any())).thenReturn(mock(OutboxEvent.class));
@@ -122,7 +122,7 @@ class CardServiceTest {
         CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
 
         when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
-        when(accountService.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountService.findAccountEntityByCode(ACCOUNT_CODE)).thenReturn(account);
 
         // Act & Assert
         assertThatThrownBy(() -> cardService.createCard(dto, USER_EMAIL))
@@ -660,7 +660,7 @@ class CardServiceTest {
         CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
 
         when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
-        when(accountService.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(accountService.findAccountEntityByCode(ACCOUNT_CODE)).thenReturn(account);
         when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
         when(cardMapper.toDto(savedCard)).thenReturn(expectedDto);
         when(outboxEventPort.save(any())).thenReturn(mock(OutboxEvent.class));

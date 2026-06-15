@@ -67,7 +67,7 @@ public class CardService implements ICardService {
     public CardResponseDto createCard(CreateCardRequestDto dto, String userEmail) {
 
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountWithUserByAccountCode(dto.accountCode());
+        Account account = accountService.findAccountEntityByCode(dto.accountCode());
 
         if (!account.getUser().getId().equals(user.getId())) {
             auditLogService.logFailure(
@@ -143,7 +143,7 @@ public class CardService implements ICardService {
     @Override
     @Transactional(readOnly = true)
     public List<CardSummaryDto> getMyCardsByAccount(String accountCode, String userEmail) {
-        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+        Account account = accountService.findAccountEntityByCode(accountCode);
         User user = userService.getEntityUserByEmail(userEmail);
 
         validateCardOwnership(account, user, accountCode);

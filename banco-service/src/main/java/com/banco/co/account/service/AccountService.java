@@ -52,6 +52,8 @@ import java.util.UUID;
 public class AccountService implements IAccountService, IAccountUseCase {
 
     private final IAccountRepository accountRepository;
+    /** Domain output port — injected for Phase 1 domain-typed IAccountUseCase methods. */
+    private final com.banco.co.account.domain.port.out.IAccountRepository domainAccountRepository;
     private final IUserRepository userDomainRepository;
     private final IUserService userService;
     private final IAuditLogService auditLogService;
@@ -61,6 +63,7 @@ public class AccountService implements IAccountService, IAccountUseCase {
 
     public AccountService(
             IAccountRepository accountRepository,
+            com.banco.co.account.domain.port.out.IAccountRepository domainAccountRepository,
             IUserRepository userDomainRepository,
             IUserService userService,
             IAuditLogService auditLogService,
@@ -68,6 +71,7 @@ public class AccountService implements IAccountService, IAccountUseCase {
             IOutboxEventPort outboxEventPort,
             ObjectMapper objectMapper) {
         this.accountRepository = accountRepository;
+        this.domainAccountRepository = domainAccountRepository;
         this.userDomainRepository = userDomainRepository;
         this.userService = userService;
         this.auditLogService = auditLogService;
@@ -442,16 +446,20 @@ public class AccountService implements IAccountService, IAccountUseCase {
         }
     }
 
+    // ── Legacy methods renamed to avoid return-type clash with IAccountUseCase ─────────
+
     @Override
     @Transactional(readOnly = true)
-    public Account getAccountById(UUID accountId) {
+    @SuppressWarnings("deprecation")
+    public Account getAccountEntityById(UUID accountId) {
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Account findAccountWithUserByAccountCode(String accountCode) {
+    @SuppressWarnings("deprecation")
+    public Account findAccountEntityByCode(String accountCode) {
         return accountRepository.findAccountWithUser(accountCode)
                 .orElseThrow(() -> new AccountNotFoundException(accountCode));
     }
@@ -460,6 +468,51 @@ public class AccountService implements IAccountService, IAccountUseCase {
     @Transactional
     public void updateBalance(Account account) {
         accountRepository.save(account);
+    }
+
+    // ── IAccountUseCase domain-typed overrides (Phase 1) ──────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.banco.co.account.domain.model.Account getAccountById(UUID accountId) {
+        return domainAccountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.banco.co.account.domain.model.Account findAccountWithUserByAccountCode(String accountCode) {
+        return domainAccountRepository.findByAccountCodeWithUser(accountCode)
+                .orElseThrow(() -> new AccountNotFoundException(accountCode));
+    }
+
+    @Override
+    @Transactional
+    public void updateBalance(com.banco.co.account.domain.model.Account account) {
+        domainAccountRepository.save(account);
+    }
+
+    @Override
+    public void validateCanReceiveDeposit(com.banco.co.account.domain.model.Account account) {
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new AccountNotActiveException(
+                    account.getAccountCode(), account.getStatus()
+            );
+        }
+    }
+
+    @Override
+    public void validateCanWithdraw(com.banco.co.account.domain.model.Account account, BigDecimal amount) {
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new AccountNotActiveException(
+                    account.getAccountCode(), account.getStatus()
+            );
+        }
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new AccountInsufficientFundsException(
+                    account.getAccountCode(), amount, account.getAvailableBalance()
+            );
+        }
     }
 
     @Override
