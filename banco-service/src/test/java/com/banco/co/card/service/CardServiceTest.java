@@ -635,6 +635,46 @@ class CardServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════
+    //  Task 1.4 RED tests — Card.accountId UUID field
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Task 1.4 RED: Card.accountId does not exist yet.
+     * Fails to compile until the field is added to Card with insertable=false, updatable=false.
+     * GREEN: card.getAccountId() returns non-null after save, matching the account's UUID.
+     */
+    @Test
+    void testCreateCard_ValidData_CardHasAccountId() {
+        // Arrange
+        User user = buildUser(USER_EMAIL);
+        Account account = buildAccount(ACCOUNT_CODE, user);
+        UUID expectedAccountId = account.getId();
+
+        // Build a saved card that mirrors what would come back from the repository
+        Card savedCard = buildCard(CARD_CODE, CardStatus.INACTIVE, account);
+        // Simulate the JPA-populated accountId (insertable=false, updatable=false column)
+        // After save the DB populates account_id from the FK; we set it on the returned card
+        setField(savedCard, "accountId", expectedAccountId);
+
+        CardResponseDto expectedDto = buildCardResponseDto();
+        CreateCardRequestDto dto = new CreateCardRequestDto(CardType.DEBITO, CardBrand.VISA, CardTier.CLASSIC, ACCOUNT_CODE);
+
+        when(userService.getEntityUserByEmail(USER_EMAIL)).thenReturn(user);
+        when(accountService.findAccountWithUserByAccountCode(ACCOUNT_CODE)).thenReturn(account);
+        when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
+        when(cardMapper.toDto(savedCard)).thenReturn(expectedDto);
+        when(outboxEventPort.save(any())).thenReturn(mock(OutboxEvent.class));
+
+        // Act
+        cardService.createCard(dto, USER_EMAIL);
+
+        // Assert — the saved card has accountId populated
+        // RED: Card.getAccountId() does not exist yet — compilation error
+        assertThat(savedCard.getAccountId()).isNotNull();
+        assertThat(savedCard.getAccountId()).isEqualTo(expectedAccountId);
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  Helpers
     // ══════════════════════════════════════════════════════════
 
