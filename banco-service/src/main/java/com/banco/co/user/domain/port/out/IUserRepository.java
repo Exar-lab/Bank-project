@@ -101,4 +101,11 @@ public interface IUserRepository {
      * (account, card, etc.) that only need identity data.
      */
     UserSnapshot findSnapshotByEmail(String email);
+
+    /**
+     * Returns a lightweight read-only projection of the user looked up by UUID.
+     * Used by cross-feature callers (TransactionService, CardService) that hold
+     * only the userId (no email) from a domain Account.
+     */
+    UserSnapshot findSnapshotByUserId(UUID userId);
 }
