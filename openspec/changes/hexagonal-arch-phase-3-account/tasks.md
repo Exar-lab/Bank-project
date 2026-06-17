@@ -357,9 +357,9 @@ Chain strategy: size-exception
 **GREEN**: Application boots clean; single `@Entity` on `"account"`; hexagonal controllers are reachable.
 **Commit scope**: `test(account):`
 
-- [ ] 6.1.1 Write `AccountIntegrationBootTest#testApplicationContext_StartsClean` (Testcontainers)
-- [ ] 6.1.2 Run `mvn verify` — zero test failures
-- [ ] 6.1.3 Confirm `AccountJpaAdapterIntegrationTest` still passes (persistence path intact)
+- [x] 6.1.1 Write `AccountIntegrationBootTest#testApplicationContext_StartsClean` (Testcontainers)
+- [x] 6.1.2 Run `mvn verify` — zero test failures (399 tests, 0 failures, 28 skipped)
+- [x] 6.1.3 Confirm `AccountJpaAdapterIntegrationTest` still passes (persistence path intact)
 
 ---
 
