@@ -1,7 +1,7 @@
 package com.banco.co.transaction.service;
 
-import com.banco.co.account.model.Account;
-import com.banco.co.account.service.IAccountService;
+import com.banco.co.account.domain.model.Account;
+import com.banco.co.account.domain.port.in.IAccountUseCase;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLogDetail;
@@ -40,6 +40,8 @@ import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.transaction.domain.port.in.ITransactionUseCase;
 import com.banco.co.transaction.domain.port.out.ITransactionRepository;
+import com.banco.co.user.domain.model.UserSnapshot;
+import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.core.JacksonException;
@@ -65,7 +67,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TransactionService implements ITransactionUseCase {
 
-    private final IAccountService accountService;
+    private final IAccountUseCase accountUseCase;
     private final ITransactionRepository transactionRepository;
     private final IUserService userService;
     private final IAuditLogService auditLogService;
@@ -75,6 +77,7 @@ public class TransactionService implements ITransactionUseCase {
     private final ICardService cardService;
     private final ObjectMapper objectMapper;
     private final IFraudDetectionService fraudDetectionService;
+    private final IUserRepository userDomainRepository;
 
     private static final BigDecimal SUSPICIOUS_FRAUD_SCORE = BigDecimal.valueOf(75);
 
@@ -87,10 +90,10 @@ public class TransactionService implements ITransactionUseCase {
     public TransactionResponseDto transfer(TransferRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
 
-        Account fromAccount = accountService.findAccountEntityByCode(dto.fromAccountCode());
-        Account toAccount = accountService.findAccountEntityByCode(dto.toAccountCode());
+        Account fromAccount = accountUseCase.findAccountWithUserByAccountCode(dto.fromAccountCode());
+        Account toAccount = accountUseCase.findAccountWithUserByAccountCode(dto.toAccountCode());
 
-        if (!fromAccount.getUser().getId().equals(user.getId())) {
+        if (!fromAccount.getUserId().equals(user.getId())) {
             auditLogService.logFailure(
                     user,
                     AuditAction.TRANSACTION_FAILED,
@@ -104,8 +107,8 @@ public class TransactionService implements ITransactionUseCase {
             throw new TransactionInvalidException(dto.fromAccountCode(), "Cannot transfer to the same account");
         }
 
-        accountService.validateCanWithdraw(fromAccount, dto.amount());
-        accountService.validateCanReceiveDeposit(toAccount);
+        accountUseCase.validateCanWithdraw(fromAccount, dto.amount());
+        accountUseCase.validateCanReceiveDeposit(toAccount);
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.TRANSFER);
@@ -137,7 +140,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
         if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
-            accountService.updateBalance(fromAccount);
+            accountUseCase.updateBalance(fromAccount);
             return transactionMapper.toDto(savedTransaction);
         }
 
@@ -150,8 +153,8 @@ public class TransactionService implements ITransactionUseCase {
         savedTransaction.setToAccountBalanceAfter(toAccount.getBalance());
 
         transactionRepository.save(savedTransaction);
-        accountService.updateBalance(fromAccount);
-        accountService.updateBalance(toAccount);
+        accountUseCase.updateBalance(fromAccount);
+        accountUseCase.updateBalance(toAccount);
 
         auditLogService.logSuccess(
                 user,
@@ -194,9 +197,9 @@ public class TransactionService implements ITransactionUseCase {
 
         Card card = cardService.findCardWithAccountByCardCode(dto.cardCode());
 
-        Account fromAccount = card.getAccount();
+        Account fromAccount = accountUseCase.getAccountById(card.getAccountId());
 
-        if (!fromAccount.getUser().getId().equals(user.getId())) {
+        if (!fromAccount.getUserId().equals(user.getId())) {
             auditLogService.logFailure(
                     user,
                     AuditAction.TRANSACTION_FAILED,
@@ -210,7 +213,7 @@ public class TransactionService implements ITransactionUseCase {
             throw new TransactionDeclinedException(dto.cardCode(), "Card cannot be used for this payment");
         }
 
-        accountService.validateCanWithdraw(fromAccount, dto.amount());
+        accountUseCase.validateCanWithdraw(fromAccount, dto.amount());
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.PAYMENT);
@@ -245,7 +248,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
         if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
-            accountService.updateBalance(fromAccount);
+            accountUseCase.updateBalance(fromAccount);
             return transactionMapper.toDto(savedTransaction);
         }
 
@@ -255,7 +258,7 @@ public class TransactionService implements ITransactionUseCase {
         fromAccount.confirmBlockedFunds(dto.amount());
 
         transactionRepository.save(savedTransaction);
-        accountService.updateBalance(fromAccount);
+        accountUseCase.updateBalance(fromAccount);
 
         auditLogService.logSuccess(
                 user,
@@ -296,9 +299,9 @@ public class TransactionService implements ITransactionUseCase {
     public TransactionResponseDto payService(ServicePaymentRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
 
-        Account fromAccount = accountService.findAccountEntityByCode(dto.accountCode());
+        Account fromAccount = accountUseCase.findAccountWithUserByAccountCode(dto.accountCode());
 
-        if (!fromAccount.getUser().getId().equals(user.getId())) {
+        if (!fromAccount.getUserId().equals(user.getId())) {
             auditLogService.logFailure(
                     user,
                     AuditAction.TRANSACTION_FAILED,
@@ -308,7 +311,7 @@ public class TransactionService implements ITransactionUseCase {
             throw new UnauthorizedException("You don't own the source account");
         }
 
-        accountService.validateCanWithdraw(fromAccount, dto.amount());
+        accountUseCase.validateCanWithdraw(fromAccount, dto.amount());
 
         String description = String.format("Pago de servicio: %s - Ref: %s",
                 dto.serviceProvider(), dto.referenceNumber());
@@ -341,7 +344,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
         if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
-            accountService.updateBalance(fromAccount);
+            accountUseCase.updateBalance(fromAccount);
             return transactionMapper.toDto(savedTransaction);
         }
 
@@ -351,7 +354,7 @@ public class TransactionService implements ITransactionUseCase {
         fromAccount.confirmBlockedFunds(dto.amount());
 
         transactionRepository.save(savedTransaction);
-        accountService.updateBalance(fromAccount);
+        accountUseCase.updateBalance(fromAccount);
 
         auditLogService.logSuccess(
                 user,
@@ -394,10 +397,10 @@ public class TransactionService implements ITransactionUseCase {
         User employee = userService.getEntityUserByEmail(employeeEmail);
 
         // 2. Obtener cuenta destino
-        Account toAccount = accountService.findAccountEntityByCode(dto.accountCode());
+        Account toAccount = accountUseCase.findAccountWithUserByAccountCode(dto.accountCode());
 
         // 3. Validar que la cuenta puede recibir depósitos
-        accountService.validateCanReceiveDeposit(toAccount);
+        accountUseCase.validateCanReceiveDeposit(toAccount);
 
         // 4. Crear transacción
         Transaction transaction = new Transaction();
@@ -431,7 +434,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // 11. Persistir
         Transaction savedTransaction = transactionRepository.save(transaction);
-        accountService.updateBalance(toAccount);
+        accountUseCase.updateBalance(toAccount);
 
         // 12. Auditar
         auditLogService.logSuccess(
@@ -479,10 +482,10 @@ public class TransactionService implements ITransactionUseCase {
         }
 
         // 3. Obtener cuenta origen
-        Account fromAccount = accountService.findAccountEntityByCode(dto.accountCode());
+        Account fromAccount = accountUseCase.findAccountWithUserByAccountCode(dto.accountCode());
 
         // 4. Validar que la cuenta puede hacer retiros
-        accountService.validateCanWithdraw(fromAccount, dto.amount());
+        accountUseCase.validateCanWithdraw(fromAccount, dto.amount());
 
         // 5. Crear transacción
         Transaction transaction = new Transaction();
@@ -516,7 +519,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // 12. Fraud gate — SUSPICIOUS returns false, BLOCKED throws, CLEAR returns true
         if (!executeFraudGate(savedTransaction, fromAccount, dto.amount())) {
-            accountService.updateBalance(fromAccount);
+            accountUseCase.updateBalance(fromAccount);
             return transactionMapper.toDto(savedTransaction);
         }
 
@@ -528,7 +531,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // 14. Persistir
         transactionRepository.save(savedTransaction);
-        accountService.updateBalance(fromAccount);
+        accountUseCase.updateBalance(fromAccount);
 
         // 15. Auditar
         auditLogService.logSuccess(
@@ -571,10 +574,10 @@ public class TransactionService implements ITransactionUseCase {
         User employee = userService.getEntityUserByEmail(employeeEmail);
 
         // 2. Obtener cuenta destino
-        Account toAccount = accountService.findAccountEntityByCode(dto.accountCode());
+        Account toAccount = accountUseCase.findAccountWithUserByAccountCode(dto.accountCode());
 
         // 3. Validar que la cuenta puede recibir depósitos
-        accountService.validateCanReceiveDeposit(toAccount);
+        accountUseCase.validateCanReceiveDeposit(toAccount);
 
         // 4. Crear transacción
         String checkDescription = "Check #" + dto.checkNumber() + " from " + dto.bankName();
@@ -610,7 +613,7 @@ public class TransactionService implements ITransactionUseCase {
 
         // 11. Persistir
         Transaction savedTransaction = transactionRepository.save(transaction);
-        accountService.updateBalance(toAccount);
+        accountUseCase.updateBalance(toAccount);
 
         // 12. Auditar
         auditLogService.logSuccess(
@@ -685,15 +688,16 @@ public class TransactionService implements ITransactionUseCase {
     @Transactional(readOnly = true)
     @Override
     public Page<TransactionResponseDto> getAccountTransactions(String accountCode, String userEmail, TransactionFiltersDto filters, Pageable pageable) {
-        Account account = accountService.findAccountEntityByCode(accountCode);
+        Account account = accountUseCase.findAccountWithUserByAccountCode(accountCode);
+        User user = userService.getEntityUserByEmail(userEmail);
 
-        if (!account.getUser().getEmail().equals(userEmail)) {
+        if (!account.getUserId().equals(user.getId())) {
             throw new UnauthorizedException("You don't own this account");
         }
 
         return transactionRepository.findAccountTransactionsByUser(
                 accountCode,
-                account.getUser().getId(),
+                account.getUserId(),
                 filters.type(),
                 filters.status(),
                 filters.category(),
@@ -760,10 +764,10 @@ public class TransactionService implements ITransactionUseCase {
     public TransactionResponseDto scheduleTransfer(ScheduledTransferRequestDto dto, String userEmail, TransactionRequestMetadataDto metadata) {
         User user = userService.getEntityUserByEmail(userEmail);
 
-        Account fromAccount = accountService.findAccountEntityByCode(dto.fromAccountCode());
-        Account toAccount = accountService.findAccountEntityByCode(dto.toAccountCode());
+        Account fromAccount = accountUseCase.findAccountWithUserByAccountCode(dto.fromAccountCode());
+        Account toAccount = accountUseCase.findAccountWithUserByAccountCode(dto.toAccountCode());
 
-        if (!fromAccount.getUser().getId().equals(user.getId())) {
+        if (!fromAccount.getUserId().equals(user.getId())) {
             throw new UnauthorizedException("You don't own the source account");
         }
 
@@ -771,8 +775,8 @@ public class TransactionService implements ITransactionUseCase {
             throw new TransactionInvalidException(dto.fromAccountCode(), "Cannot schedule transfer to the same account");
         }
 
-        accountService.validateCanWithdraw(fromAccount, dto.amount());
-        accountService.validateCanReceiveDeposit(toAccount);
+        accountUseCase.validateCanWithdraw(fromAccount, dto.amount());
+        accountUseCase.validateCanReceiveDeposit(toAccount);
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.TRANSFER);
@@ -931,10 +935,10 @@ public class TransactionService implements ITransactionUseCase {
         // the original call. Completing it here moves money and settles the transaction.
         if (transaction.isFlaggedForFraud()) {
             Account fromAccount = transaction.getFromAccountId() != null
-                    ? accountService.getAccountEntityById(transaction.getFromAccountId())
+                    ? accountUseCase.getAccountById(transaction.getFromAccountId())
                     : null;
             Account toAccount = transaction.getToAccountId() != null
-                    ? accountService.getAccountEntityById(transaction.getToAccountId())
+                    ? accountUseCase.getAccountById(transaction.getToAccountId())
                     : null;
             BigDecimal amount = transaction.getAmount();
 
@@ -951,12 +955,12 @@ public class TransactionService implements ITransactionUseCase {
             // Update balance-after fields after fund movements
             if (fromAccount != null) {
                 transaction.setFromAccountBalanceAfter(fromAccount.getBalance());
-                accountService.updateBalance(fromAccount);
+                accountUseCase.updateBalance(fromAccount);
             }
 
             if (toAccount != null) {
                 transaction.setToAccountBalanceAfter(toAccount.getBalance());
-                accountService.updateBalance(toAccount);
+                accountUseCase.updateBalance(toAccount);
             }
         }
 
@@ -972,10 +976,10 @@ public class TransactionService implements ITransactionUseCase {
         ));
         if (transaction.isFlaggedForFraud()) {
             Account fromAccount = transaction.getFromAccountId() != null
-                    ? accountService.getAccountEntityById(transaction.getFromAccountId())
+                    ? accountUseCase.getAccountById(transaction.getFromAccountId())
                     : null;
             Account toAccount = transaction.getToAccountId() != null
-                    ? accountService.getAccountEntityById(transaction.getToAccountId())
+                    ? accountUseCase.getAccountById(transaction.getToAccountId())
                     : null;
             outboxEventPort.save(new OutboxEvent(
                     "Transaction",
@@ -1020,16 +1024,16 @@ public class TransactionService implements ITransactionUseCase {
         transaction.reverse(reason);
 
         if (transaction.getFromAccountId() != null) {
-            Account fromAccount = accountService.getAccountEntityById(transaction.getFromAccountId());
+            Account fromAccount = accountUseCase.getAccountById(transaction.getFromAccountId());
             fromAccount.deposit(transaction.getAmount());
-            accountService.updateBalance(fromAccount);
+            accountUseCase.updateBalance(fromAccount);
         }
 
         if (transaction.getToAccountId() != null) {
-            Account toAccount = accountService.getAccountEntityById(transaction.getToAccountId());
-            accountService.validateCanWithdraw(toAccount, transaction.getAmount());
+            Account toAccount = accountUseCase.getAccountById(transaction.getToAccountId());
+            accountUseCase.validateCanWithdraw(toAccount, transaction.getAmount());
             toAccount.withdraw(transaction.getAmount());
-            accountService.updateBalance(toAccount);
+            accountUseCase.updateBalance(toAccount);
         }
 
         Transaction savedTransaction = transactionRepository.save(transaction);
@@ -1121,11 +1125,11 @@ public class TransactionService implements ITransactionUseCase {
 
     /**
      * Checks whether the given account (by UUID) belongs to the specified user.
-     * Used for ownership checks in read-then-act operations where only IDs are available.
+     * Uses domain Account.getUserId() — no legacy User navigation.
      */
     private boolean ownsAccount(UUID accountId, UUID userId) {
-        Account account = accountService.getAccountEntityById(accountId);
-        return account.getUser() != null && account.getUser().getId().equals(userId);
+        Account account = accountUseCase.getAccountById(accountId);
+        return account.getUserId() != null && account.getUserId().equals(userId);
     }
 
     private boolean isTransactionOwner(Transaction transaction, String userEmail) {
@@ -1137,8 +1141,9 @@ public class TransactionService implements ITransactionUseCase {
     }
 
     private boolean isAccountOwnedByEmail(String accountCode, String userEmail) {
-        Account account = accountService.findAccountEntityByCode(accountCode);
-        return account.getUser() != null && account.getUser().getEmail().equals(userEmail);
+        Account account = accountUseCase.findAccountWithUserByAccountCode(accountCode);
+        User user = userService.getEntityUserByEmail(userEmail);
+        return account.getUserId() != null && account.getUserId().equals(user.getId());
     }
 
     private String buildTransactionPayload(Transaction transaction, String eventType) {
@@ -1185,11 +1190,12 @@ public class TransactionService implements ITransactionUseCase {
 
     private Map<String, Object> buildAccountNode(Account account) {
         if (account == null) return null;
+        UserSnapshot snapshot = userDomainRepository.findSnapshotByUserId(account.getUserId());
         Map<String, Object> node = new HashMap<>();
         node.put("accountCode", account.getAccountCode());
-        node.put("userId", account.getUser().getId().toString());
-        node.put("userEmail", account.getUser().getEmail());
-        node.put("userFirstName", account.getUser().getFistName());
+        node.put("userId", account.getUserId().toString());
+        node.put("userEmail", snapshot.email());
+        node.put("userFirstName", snapshot.username());
         return node;
     }
 }
