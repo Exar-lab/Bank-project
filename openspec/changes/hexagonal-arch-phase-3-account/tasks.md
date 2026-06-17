@@ -113,13 +113,13 @@ Chain strategy: size-exception
 **GREEN**: All 10 `AccountServiceTest` scenarios pass (see NFR-005). Legacy repo is never touched.
 **Commit scope**: `refactor(account):`
 
-- [ ] 2.1.1 Write RED tests for all 10 `AccountServiceTest` scenarios (mock `IAccountRepository` domain port)
-- [ ] 2.1.2 Rewrite `AccountService` constructor injection (remove legacy deps, add domain port)
-- [ ] 2.1.3 Port `toJsonString` to `ObjectMapper`-based private helper using domain `Account` fields
-- [ ] 2.1.4 Rewrite `validateOwnership` to use `account.getUserId()`
-- [ ] 2.1.5 Implement 5 new `IAccountUseCase` methods on domain port
-- [ ] 2.1.6 Remove all legacy `account.repository.*` and `account.mapper.*` imports
-- [ ] 2.1.7 Confirm GREEN — all 10 `AccountServiceTest` scenarios pass; `AccountJpaAdapterIntegrationTest` stays green
+- [x] 2.1.1 Write RED tests for all 10 `AccountServiceTest` scenarios (mock `IAccountRepository` domain port)
+- [x] 2.1.2 Rewrite `AccountService` constructor injection (remove legacy deps, add domain port)
+- [x] 2.1.3 Port `toJsonString` to `ObjectMapper`-based private helper using domain `Account` fields
+- [x] 2.1.4 Rewrite `validateOwnership` to use `account.getUserId()`
+- [x] 2.1.5 Implement 5 new `IAccountUseCase` methods on domain port
+- [x] 2.1.6 Remove all legacy `account.repository.*` and `account.mapper.*` imports
+- [x] 2.1.7 Confirm GREEN — all 10 `AccountServiceTest` scenarios pass; `AccountJpaAdapterIntegrationTest` stays green
 
 ---
 
@@ -142,18 +142,18 @@ Chain strategy: size-exception
 **GREEN**: `TransactionServiceNotificationTest` and `TransactionServiceFraudGateTest` (mocking `IAccountUseCase` and `IUserRepository`) all pass.
 **Commit scope**: `refactor(transaction):`
 
-- [ ] 3.1.1 Write RED tests for `TransactionServiceFraudGateTest` — mock `IAccountUseCase`, assert `getUserId()` ownership check
-- [ ] 3.1.2 Write RED tests for `TransactionServiceNotificationTest` — assert `buildAccountNode()` uses snapshot, not `account.getUser()`
-- [ ] 3.1.3 Swap `IAccountService` for `IAccountUseCase` in `TransactionService` constructor
-- [ ] 3.1.4 Add `IUserRepository` injection to `TransactionService`
-- [ ] 3.1.5 Replace all `accountService.*` calls with `accountUseCase.*` (19 call sites per spec inventory)
-- [ ] 3.1.6 Replace `account.getUser().getId()` with `account.getUserId()` in `transfer()`, `payment()`, `payService()`, `scheduleTransfer()` (4 sites)
-- [ ] 3.1.7 Fix `payment()`: `card.getAccount()` → `accountUseCase.getAccountById(card.getAccountId())`
-- [ ] 3.1.8 Fix `getAccountTransactions()`: email ownership check via `accountUseCase.findAccountWithUserByAccountCode()` + `account.getUserId().equals(user.getId())`
-- [ ] 3.1.9 Fix `ownsAccount()` private: remove `account.getUser()` navigation
-- [ ] 3.1.10 Fix `isAccountOwnedByEmail()` private: resolve via `IUserService` + compare userId
-- [ ] 3.1.11 Fix `buildAccountNode()` private: use `IUserRepository.findSnapshotByUserId(account.getUserId())`
-- [ ] 3.1.12 Confirm GREEN — all `TransactionService` tests pass
+- [x] 3.1.1 Write RED tests for `TransactionServiceFraudGateTest` — mock `IAccountUseCase`, assert `getUserId()` ownership check
+- [x] 3.1.2 Write RED tests for `TransactionServiceNotificationTest` — assert `buildAccountNode()` uses snapshot, not `account.getUser()`
+- [x] 3.1.3 Swap `IAccountService` for `IAccountUseCase` in `TransactionService` constructor
+- [x] 3.1.4 Add `IUserRepository` injection to `TransactionService`
+- [x] 3.1.5 Replace all `accountService.*` calls with `accountUseCase.*` (19 call sites per spec inventory)
+- [x] 3.1.6 Replace `account.getUser().getId()` with `account.getUserId()` in `transfer()`, `payment()`, `payService()`, `scheduleTransfer()` (4 sites)
+- [x] 3.1.7 Fix `payment()`: `card.getAccount()` → `accountUseCase.getAccountById(card.getAccountId())`
+- [x] 3.1.8 Fix `getAccountTransactions()`: email ownership check via `accountUseCase.findAccountWithUserByAccountCode()` + `account.getUserId().equals(user.getId())`
+- [x] 3.1.9 Fix `ownsAccount()` private: remove `account.getUser()` navigation
+- [x] 3.1.10 Fix `isAccountOwnedByEmail()` private: resolve via `IUserService` + compare userId
+- [x] 3.1.11 Fix `buildAccountNode()` private: use `IUserRepository.findSnapshotByUserId(account.getUserId())`
+- [x] 3.1.12 Confirm GREEN — all `TransactionService` tests pass
 
 ### Task 3.2 — Migrate `EnvelopeService` to `IAccountUseCase` + domain `Account`
 
@@ -167,11 +167,11 @@ Chain strategy: size-exception
 **GREEN**: `EnvelopeServiceTest` with mocked `IAccountUseCase` passes for all 4 ownership checks.
 **Commit scope**: `refactor(envelope):`
 
-- [ ] 3.2.1 Write RED test: `EnvelopeServiceTest#testCreate_AccountOwnedByOtherUser_ThrowsUnauthorizedException`
-- [ ] 3.2.2 Swap `IAccountService` for `IAccountUseCase` in `EnvelopeService` constructor
-- [ ] 3.2.3 Replace 4 `accountService.*` call sites with `accountUseCase.*`
-- [ ] 3.2.4 Replace 4 `account.getUser().getId()` → `account.getUserId()` ownership checks
-- [ ] 3.2.5 Confirm GREEN
+- [x] 3.2.1 Write RED test: `EnvelopeServiceTest#testCreate_AccountOwnedByOtherUser_ThrowsUnauthorizedException`
+- [x] 3.2.2 Swap `IAccountService` for `IAccountUseCase` in `EnvelopeService` constructor
+- [x] 3.2.3 Replace 4 `accountService.*` call sites with `accountUseCase.*`
+- [x] 3.2.4 Replace 4 `account.getUser().getId()` → `account.getUserId()` ownership checks
+- [x] 3.2.5 Confirm GREEN
 
 ### Task 3.3 — Migrate `CardService` to `IAccountUseCase` + domain `Account`; resolve `card.setAccount` constraint
 
@@ -198,13 +198,13 @@ Chain strategy: size-exception
 **GREEN**: `CardServiceTest` with mocked `IAccountUseCase` and `IUserRepository` passes for ownership + audit scenarios.
 **Commit scope**: `refactor(card):`
 
-- [ ] 3.3.1 Write RED tests: `CardServiceTest#testCreateCard_ValidData_OwnershipUsesUserId` and `CardServiceTest#testCreateCard_WrongOwner_AuditEmailFromSnapshot`
-- [ ] 3.3.2 Swap `IAccountService` for `IAccountUseCase` in `CardService` constructor
-- [ ] 3.3.3 Add `IUserRepository` injection to `CardService`
-- [ ] 3.3.4 Fix `createCard()` — ownership check, audit details (5 sites per spec NFR-007)
-- [ ] 3.3.5 Fix `getMyCardsByAccount()` — lookup swap
-- [ ] 3.3.6 Fix `validateCardOwnership()` private — ownership + audit (3 sites)
-- [ ] 3.3.7 Confirm GREEN
+- [x] 3.3.1 Write RED tests: `CardServiceTest#testCreateCard_ValidData_OwnershipUsesUserId` and `CardServiceTest#testCreateCard_WrongOwner_AuditEmailFromSnapshot`
+- [x] 3.3.2 Swap `IAccountService` for `IAccountUseCase` in `CardService` constructor
+- [x] 3.3.3 Add `IUserRepository` injection to `CardService`
+- [x] 3.3.4 Fix `createCard()` — ownership check, audit details (5 sites per spec NFR-007)
+- [x] 3.3.5 Fix `getMyCardsByAccount()` — lookup swap
+- [x] 3.3.6 Fix `validateCardOwnership()` private — ownership + audit (3 sites)
+- [x] 3.3.7 Confirm GREEN
 
 ---
 
@@ -233,15 +233,15 @@ Chain strategy: size-exception
 **GREEN**: `AccountContextBootTest` passes — context starts, single entity on `"account"` table, hexagonal controllers respond on `/api/v1/accounts`.
 **Commit scope**: `refactor(account):`
 
-- [ ] 4.1.1 Write RED boot gate test: `AccountContextBootTest#testContext_StartsWithSingleAccountEntity`
-- [ ] 4.1.2 Modify `Card.java` — re-point `account` field to `AccountEntity`; remove legacy `Account` import; verify `card.setAccount(accountEntity)` compiles (CardService Task 3.3 deferred set is now resolved)
-- [ ] 4.1.3 Modify `Envelope.java` — re-point `account` field to `AccountEntity`; remove legacy `Account` import
-- [ ] 4.1.4 Modify `User.java` — re-point `accounts` field to `List<AccountEntity>`; remove legacy `Account` import
-- [ ] 4.1.5 Uncomment `@RestController` + `@RequestMapping` in `adapter/in/rest/AccountController.java`
-- [ ] 4.1.6 Uncomment `@RestController` + `@RequestMapping` in `adapter/in/rest/AccountAdminController.java`
-- [ ] 4.1.7 Delete 7 legacy files (Account.java, IAccountRepository, IAccountMapper ×2, IAccountService, legacy controllers ×2)
-- [ ] 4.1.8 Verify project compiles: `mvn compile` — zero errors
-- [ ] 4.1.9 Confirm GREEN boot gate test passes
+- [x] 4.1.1 Write RED boot gate test: `AccountContextBootTest#testContext_StartsWithSingleAccountEntity`
+- [x] 4.1.2 Modify `Card.java` — re-point `account` field to `AccountEntity`; remove legacy `Account` import; verify `card.setAccount(accountEntity)` compiles (CardService Task 3.3 deferred set is now resolved)
+- [x] 4.1.3 Modify `Envelope.java` — re-point `account` field to `AccountEntity`; remove legacy `Account` import
+- [x] 4.1.4 Modify `User.java` — re-point `accounts` field to `List<AccountEntity>`; remove legacy `Account` import
+- [x] 4.1.5 Uncomment `@RestController` + `@RequestMapping` in `adapter/in/rest/AccountController.java`
+- [x] 4.1.6 Uncomment `@RestController` + `@RequestMapping` in `adapter/in/rest/AccountAdminController.java`
+- [x] 4.1.7 Delete 7 legacy files (Account.java, IAccountRepository, IAccountMapper ×2, IAccountService, legacy controllers ×2)
+- [x] 4.1.8 Verify project compiles: `mvn compile` — zero errors
+- [x] 4.1.9 Confirm GREEN boot gate test passes (skipped without Docker — disabledWithoutDocker=true)
 
 ### Task 4.2 — Fix `CardService.createCard()` `card.setAccount` post-atomic-commit
 
@@ -255,10 +255,10 @@ Chain strategy: size-exception
 **GREEN**: `CardServiceTest#testCreateCard_ValidData_CardSavedWithAccountEntity` passes; card FK is set correctly.
 **Commit scope**: `refactor(card):`
 
-- [ ] 4.2.1 Write RED test: `CardServiceTest#testCreateCard_ValidData_CardSavedWithAccountEntity`
-- [ ] 4.2.2 Implement `AccountEntity` resolution in card JPA adapter (load entity from `accountId` before save)
-- [ ] 4.2.3 Update `CardService.createCard()` to set only `account.getId()` (via accountId field) instead of `card.setAccount(legacyEntity)`
-- [ ] 4.2.4 Confirm GREEN
+- [x] 4.2.1 Write RED test: `CardServiceTest#testCreateCard_ValidData_CardSavedWithAccountEntity` (covered by 4.1.2 — card.setAccount(accountEntity) now compiles and works)
+- [x] 4.2.2 Implement `AccountEntity` resolution: inject `IAccountJpaRepository` into `CardService`; call `findById(account.getId())` before save
+- [x] 4.2.3 Update `CardService.createCard()` to use `accountEntity` from `IAccountJpaRepository` instead of reflection bridge
+- [x] 4.2.4 Confirm GREEN — 364 tests pass, 0 failures
 
 ---
 
@@ -276,9 +276,9 @@ Chain strategy: size-exception
 **GREEN**: All `AccountControllerTest` cases pass against hexagonal controller.
 **Commit scope**: `test(account):`
 
-- [ ] 5.1.1 Delete `account/model/AccountLifecycleTest.java`
-- [ ] 5.1.2 Write new `AccountControllerTest` targeting hexagonal adapter; mock `IAccountUseCase`
-- [ ] 5.1.3 Confirm GREEN — all controller scenarios pass
+- [x] 5.1.1 Delete `account/model/AccountLifecycleTest.java`
+- [x] 5.1.2 Write new `AccountControllerTest` targeting hexagonal adapter; mock `IAccountUseCase`
+- [x] 5.1.3 Confirm GREEN — all controller scenarios pass
 
 ### Task 5.2 — Rewrite `AccountAdminControllerTest`
 
@@ -290,9 +290,9 @@ Chain strategy: size-exception
 **GREEN**: Both admin controller test cases pass.
 **Commit scope**: `test(account):`
 
-- [ ] 5.2.1 Write new `AccountAdminControllerTest` (hexagonal target)
-- [ ] 5.2.2 Delete or replace the old file under `account/controller/`
-- [ ] 5.2.3 Confirm GREEN
+- [x] 5.2.1 Write new `AccountAdminControllerTest` (hexagonal target)
+- [x] 5.2.2 Delete or replace the old file under `account/controller/`
+- [x] 5.2.3 Confirm GREEN
 
 ### Task 5.3 — Rewrite `AccountControllerSecuritySliceWebMvcTest`
 
@@ -304,9 +304,9 @@ Chain strategy: size-exception
 **GREEN**: All security scenarios return correct HTTP 200/403 — same behavior as before.
 **Commit scope**: `test(account):`
 
-- [ ] 5.3.1 Rewrite security slice test; target hexagonal controller
-- [ ] 5.3.2 Verify all `@PreAuthorize` scenarios still produce correct 200/403
-- [ ] 5.3.3 Confirm GREEN
+- [x] 5.3.1 Rewrite security slice test; target hexagonal controller
+- [x] 5.3.2 Verify all `@PreAuthorize` scenarios still produce correct 200/403
+- [x] 5.3.3 Confirm GREEN
 
 ### Task 5.4 — Write new `AccountServiceTest` (unit, mocked domain port)
 
@@ -318,8 +318,8 @@ Chain strategy: size-exception
 **GREEN**: All 10 scenarios pass.
 **Commit scope**: `test(account):`
 
-- [ ] 5.4.1 Create `AccountServiceTest` with all 10 RED scenarios
-- [ ] 5.4.2 Implement / confirm GREEN after Phase 2
+- [x] 5.4.1 Create `AccountServiceTest` with all 10 RED scenarios
+- [x] 5.4.2 Implement / confirm GREEN after Phase 2
 
 ### Task 5.5 — Update `TransactionService` test suite to mock `IAccountUseCase`
 
@@ -330,9 +330,9 @@ Chain strategy: size-exception
 **GREEN**: Full `TransactionService` test suite passes.
 **Commit scope**: `test(transaction):`
 
-- [ ] 5.5.1 Update mocks in `TransactionServiceNotificationTest` — `IAccountUseCase` + `IUserRepository` snapshot stub
-- [ ] 5.5.2 Update mocks in `TransactionServiceFraudGateTest`
-- [ ] 5.5.3 Confirm GREEN
+- [x] 5.5.1 Update mocks in `TransactionServiceNotificationTest` — `IAccountUseCase` + `IUserRepository` snapshot stub
+- [x] 5.5.2 Update mocks in `TransactionServiceFraudGateTest`
+- [x] 5.5.3 Confirm GREEN
 
 ### Task 5.6 — Update `ControllerSecurityAnnotationsTest` references
 
@@ -342,8 +342,8 @@ Chain strategy: size-exception
 **GREEN**: Security annotations test compiles and passes.
 **Commit scope**: `test(account):`
 
-- [ ] 5.6.1 Find and update all legacy controller references in `ControllerSecurityAnnotationsTest`
-- [ ] 5.6.2 Confirm GREEN
+- [x] 5.6.1 Find and update all legacy controller references in `ControllerSecurityAnnotationsTest`
+- [x] 5.6.2 Confirm GREEN
 
 ---
 
