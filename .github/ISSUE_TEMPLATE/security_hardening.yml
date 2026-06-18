@@ -1,0 +1,84 @@
+name: Security hardening task
+description: Reduce risk by tightening auth, secrets handling, validation, or runtime exposure.
+title: "security(scope): "
+labels:
+  - security
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the security task is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Security area
+      description: Choose the main security surface.
+      options:
+        - authentication
+        - authorization
+        - secrets
+        - validation
+        - transport
+        - persistence
+        - api
+        - ci
+        - runtime
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Point to the code, config, or workflow that needs hardening.
+      placeholder: src/main/java/... , src/main/resources/... , .github/workflows/...
+  - type: textarea
+    id: risk
+    attributes:
+      label: Security risk
+      description: Describe the threat, exposure, or misuse case.
+      placeholder: What could go wrong today?
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Proposed hardening
+      description: Explain the protective change and its scope.
+      placeholder: What should be locked down or validated?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / references
+      description: Include scans, logs, policy references, or reproduction details.
+      placeholder: Paste proof or links that justify the request.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Define the security bar clearly.
+      placeholder: |
+        - [ ] Risk is mitigated
+        - [ ] Tests or checks cover the change
+        - [ ] No secrets or unsafe defaults introduced
+    validations:
+      required: true

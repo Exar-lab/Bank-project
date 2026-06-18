@@ -1,0 +1,82 @@
+name: Documentation task
+description: Improve README, guides, API notes, or contributor-facing documentation.
+title: "docs(scope): "
+labels:
+  - documentation
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the doc task is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Documentation area
+      description: Where should the update land?
+      options:
+        - README
+        - architecture
+        - api
+        - testing
+        - ci
+        - security
+        - contributor-guide
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Reference the current doc files or code paths that the docs should explain.
+      placeholder: README.md , docs/... , src/main/java/...
+  - type: textarea
+    id: request
+    attributes:
+      label: Documentation change requested
+      description: Say what should be added, clarified, or removed.
+      placeholder: Be specific about the missing or outdated information.
+    validations:
+      required: true
+  - type: textarea
+    id: audience
+    attributes:
+      label: Target audience
+      description: Who is this for: contributors, reviewers, operators, users?
+      placeholder: Describe the reader and what they need to do.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Keep the checklist short and measurable.
+      placeholder: |
+        - [ ] Document is updated in the right location
+        - [ ] Examples match current behavior
+        - [ ] Links and code samples are valid
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References / evidence
+      description: Add source links, screenshots, or examples that justify the change.
+      placeholder: Paste anything that helps verify the wording.
