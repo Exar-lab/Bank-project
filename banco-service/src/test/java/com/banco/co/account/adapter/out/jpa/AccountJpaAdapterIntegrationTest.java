@@ -191,6 +191,25 @@ class AccountJpaAdapterIntegrationTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * Task 1.2 RED test — findByAccountCodeWithUser must return Account with non-null userId.
+     * Fails until the method is added to IAccountRepository (domain port) and implemented
+     * in AccountJpaAdapter.
+     */
+    @Test
+    void testFindByAccountCodeWithUser_ExistingAccount_PopulatesUserId() {
+        Account account = buildSampleAccount(savedUser);
+        Account saved = adapter.save(account);
+
+        // RED: findByAccountCodeWithUser does not yet exist on the domain port
+        Optional<Account> result = adapter.findByAccountCodeWithUser(saved.getAccountCode());
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getUserId()).isNotNull();
+        assertThat(result.get().getUserId()).isEqualTo(savedUser.getId());
+        assertThat(result.get().getAccountCode()).isEqualTo(saved.getAccountCode());
+    }
+
     // ══════════════════════════════════════════════════════════
     //  Helper methods
     // ══════════════════════════════════════════════════════════

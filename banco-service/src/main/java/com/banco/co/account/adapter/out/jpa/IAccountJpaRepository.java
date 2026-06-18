@@ -47,4 +47,12 @@ public interface IAccountJpaRepository extends JpaRepository<AccountEntity, UUID
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM AccountEntity a " +
             "LEFT JOIN a.user u WHERE u.email = :email AND a.accountType = :accountType")
     boolean existsByUserEmailAndAccountType(@Param("email") String email, @Param("accountType") AccountType accountType);
+
+    /**
+     * Find account by code with user context eagerly loaded.
+     * Used by AccountJpaAdapter.findByAccountCodeWithUser — equivalent to legacy findAccountWithUser.
+     */
+    @Query("SELECT a FROM AccountEntity a LEFT JOIN FETCH a.user WHERE a.accountCode = :accountCode")
+    @Transactional(readOnly = true)
+    Optional<AccountEntity> findAccountWithUser(@Param("accountCode") String accountCode);
 }

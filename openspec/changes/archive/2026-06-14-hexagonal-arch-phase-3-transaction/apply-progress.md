@@ -6,9 +6,8 @@ Strict TDD: RED → GREEN → TRIANGULATE → REFACTOR.
 
 ## Status
 
-- Phases 1–4 complete.
-- Phase 5 deferred by design.
-- Phase 6 deferred to follow-up service rewrite/contraction slice.
+- Phases 1–6 complete.
+- All tasks delivered. Change is ready for archive.
 
 ## TDD evidence
 
@@ -23,6 +22,8 @@ Strict TDD: RED → GREEN → TRIANGULATE → REFACTOR.
 | 2.4 JPA adapter | Adapter compile gate | Full suite passes | Uses `orElseThrow`/null guards, no `Optional.get()` |
 | 3.1 Service compatibility | Existing service tests/suite | Full suite passes | Additive `ITransactionUseCase` implementation only |
 | 4.1-4.4 REST adapter copies | Compile gate | Full suite passes | `@RestController` inactive to avoid duplicate mappings |
+| 5.1-5.3 Import swaps | Compiler gate | Full suite passes | `ITransactionMapper`, `ITransactionMetadataEnricher`, `TransactionMetadataEnricher` now use domain `Transaction` |
+| 6.1-6.4 Legacy deletion + service rewrite | RED on `TransactionService` boundary | 347 run, 0 failures | `TransactionService` rewired to domain port; legacy `model/`, `repository/`, `controller/`, `ITransactionService` deleted; adapter REST controllers activated |
 
 ## Test evidence
 
@@ -76,9 +77,7 @@ Modified:
 
 ## Deferred work
 
-- Full `TransactionService` rewrite to use `transaction.domain.model.Transaction` and `transaction.domain.port.out.ITransactionRepository`.
-- Import swaps for mapper/metadata classes.
-- Legacy package deletions.
+None. All phases complete.
 
 ## Review workload
 

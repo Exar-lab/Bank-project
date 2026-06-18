@@ -1,6 +1,6 @@
 package com.banco.co.user.model;
 
-import com.banco.co.account.model.Account;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
 import com.banco.co.auditLog.model.AuditLog;
 import com.banco.co.user.generator.UserCodeGenerator;
 import com.banco.co.user.enums.DocumentType;
@@ -83,7 +83,7 @@ public class User {
 
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     @Column(name = "accountId")
-    private List<Account> accounts;
+    private List<AccountEntity> accounts;
 
 
     @PrePersist

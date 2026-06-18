@@ -37,4 +37,11 @@ public interface IAccountRepository {
     Optional<Account> findActiveByIdWithEnvelopes(UUID id);
 
     boolean existsByUserEmailAndAccountType(String email, AccountType accountType);
+
+    /**
+     * Find account by code with the associated user context populated (userId set on the domain Account).
+     * Required by AccountService.findAccountWithUserByAccountCode and cross-feature callers
+     * (TransactionService, EnvelopeService, CardService) that need account.getUserId().
+     */
+    Optional<Account> findByAccountCodeWithUser(String accountCode);
 }

@@ -1,7 +1,10 @@
 package com.banco.co.card.service;
 
-import com.banco.co.account.model.Account;
-import com.banco.co.account.service.IAccountService;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
+import com.banco.co.account.adapter.out.jpa.IAccountJpaRepository;
+import com.banco.co.account.domain.model.Account;
+import com.banco.co.account.domain.port.in.IAccountUseCase;
+import com.banco.co.account.exception.account.AccountNotFoundException;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLogDetail;
@@ -17,6 +20,8 @@ import com.banco.co.outbox.enums.KafkaTopic;
 import com.banco.co.outbox.model.OutboxEvent;
 import com.banco.co.outbox.port.IOutboxEventPort;
 import com.banco.co.security.securityhasher.HashUtils;
+import com.banco.co.user.domain.model.UserSnapshot;
+import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.core.JacksonException;
@@ -40,12 +45,14 @@ import java.util.UUID;
 public class CardService implements ICardService {
 
     private final ICardRepository cardRepository;
-    private final IAccountService accountService;
+    private final IAccountUseCase accountUseCase;
+    private final IAccountJpaRepository accountJpaRepository;
     private final IUserService userService;
     private final IAuditLogService auditLogService;
     private final ICardMapper cardMapper;
     private final IOutboxEventPort outboxEventPort;
     private final ObjectMapper objectMapper;
+    private final IUserRepository userDomainRepository;
 
     // ══════════════════════════════════════════════════════════
     //  INTERNAL
@@ -67,9 +74,10 @@ public class CardService implements ICardService {
     public CardResponseDto createCard(CreateCardRequestDto dto, String userEmail) {
 
         User user = userService.getEntityUserByEmail(userEmail);
-        Account account = accountService.findAccountWithUserByAccountCode(dto.accountCode());
+        Account account = accountUseCase.findAccountWithUserByAccountCode(dto.accountCode());
 
-        if (!account.getUser().getId().equals(user.getId())) {
+        if (!account.getUserId().equals(user.getId())) {
+            UserSnapshot snapshot = userDomainRepository.findSnapshotByUserId(account.getUserId());
             auditLogService.logFailure(
                     user,
                     AuditAction.CARD_CREATED_FAILED,
@@ -78,19 +86,22 @@ public class CardService implements ICardService {
                             new AuditLogDetail("message", "Security Violation: User attempted to create Card on Account belonging to other User"),
                             new AuditLogDetail("userEmail", userEmail),
                             new AuditLogDetail("accountCode", dto.accountCode()),
-                            new AuditLogDetail("ownerId", account.getUser().getId()),
-                            new AuditLogDetail("ownerEmail", account.getUser().getEmail())
+                            new AuditLogDetail("ownerId", account.getUserId()),
+                            new AuditLogDetail("ownerEmail", snapshot.email())
                     )
             );
             log.warn("Unauthorized card creation attempt: user {} on account {}", userEmail, dto.accountCode());
             throw new UnauthorizedException("You don't own this account");
         }
 
+        AccountEntity accountEntity = accountJpaRepository.findById(account.getId())
+                .orElseThrow(() -> new AccountNotFoundException(account.getId().toString()));
+
         Card card = new Card();
         card.setCardType(dto.cardType());
         card.setBrand(dto.brand());
         card.setTier(dto.tier());
-        card.setAccount(account);
+        card.setAccount(accountEntity);
         card.setPinHash(HashUtils.hashBcrypt(UUID.randomUUID().toString()));
 
         Card savedCard = cardRepository.save(card);
@@ -143,7 +154,7 @@ public class CardService implements ICardService {
     @Override
     @Transactional(readOnly = true)
     public List<CardSummaryDto> getMyCardsByAccount(String accountCode, String userEmail) {
-        Account account = accountService.findAccountWithUserByAccountCode(accountCode);
+        Account account = accountUseCase.findAccountWithUserByAccountCode(accountCode);
         User user = userService.getEntityUserByEmail(userEmail);
 
         validateCardOwnership(account, user, accountCode);
@@ -575,10 +586,13 @@ public class CardService implements ICardService {
     // ══════════════════════════════════════════════════════════
 
     /**
-     * Validates that the authenticated user owns the account (used before a card is created).
+     * Validates that the authenticated user owns the domain account (used before a card is created
+     * or before listing cards by account).
+     * Phase 3: uses account.getUserId() instead of account.getUser().getId().
      */
     private void validateCardOwnership(Account account, User user, String accountCode) {
-        if (!account.getUser().getId().equals(user.getId())) {
+        if (!account.getUserId().equals(user.getId())) {
+            UserSnapshot snapshot = userDomainRepository.findSnapshotByUserId(account.getUserId());
             auditLogService.logFailure(
                     user,
                     AuditAction.CARD_READ,
@@ -588,8 +602,8 @@ public class CardService implements ICardService {
                             new AuditLogDetail("userId", user.getId()),
                             new AuditLogDetail("userEmail", user.getEmail()),
                             new AuditLogDetail("accountCode", accountCode),
-                            new AuditLogDetail("ownerId", account.getUser().getId()),
-                            new AuditLogDetail("ownerEmail", account.getUser().getEmail())
+                            new AuditLogDetail("ownerId", account.getUserId()),
+                            new AuditLogDetail("ownerEmail", snapshot.email())
                     )
             );
             throw new UnauthorizedException("You don't own this account");
@@ -597,7 +611,9 @@ public class CardService implements ICardService {
     }
 
     /**
-     * Validates that the authenticated user owns the card (by comparing UUIDs).
+     * Validates that the authenticated user owns the card (by comparing UUIDs through JPA entity graph).
+     * NOT migrated in Phase 3 — still uses card.getAccount().getUser().getId() through legacy JPA entity.
+     * Will be migrated in Phase 4 when Card.account is re-pointed to AccountEntity.
      */
     private void validateCardOwnershipByCard(Card card, User user) {
         if (!card.getAccount().getUser().getId().equals(user.getId())) {
@@ -681,4 +697,5 @@ public class CardService implements ICardService {
             throw new IllegalStateException("Failed to serialize card event payload", e);
         }
     }
+
 }

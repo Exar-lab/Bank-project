@@ -24,20 +24,20 @@
 - [x] 4.3 Create `transaction/adapter/in/rest/TransactionEmployeeController.java`; keep `@RestController` inactive.
 - [x] 4.4 Create `transaction/adapter/in/rest/TransactionMetadataExtractor.java` package copy.
 
-## Phase 5: Internal consumer import updates — deferred
+## Phase 5: Internal consumer import updates
 
-- [ ] 5.1 Update `transaction/mapper/ITransactionMapper.java` to domain `Transaction`.
-- [ ] 5.2 Update `transaction/utils/metadata/ITransactionMetadataEnricher.java` to domain `Transaction`.
-- [ ] 5.3 Update `transaction/utils/metadata/TransactionMetadataEnricher.java` to domain `Transaction`.
+- [x] 5.1 Update `transaction/mapper/ITransactionMapper.java` to domain `Transaction`.
+- [x] 5.2 Update `transaction/utils/metadata/ITransactionMetadataEnricher.java` to domain `Transaction`.
+- [x] 5.3 Update `transaction/utils/metadata/TransactionMetadataEnricher.java` to domain `Transaction`.
 
-Deferred because `TransactionService` still uses the legacy entity and repository internally. These must be completed together with the service rewrite.
+Completed in contract phase commit `fa4e64d` alongside the `TransactionService` rewrite.
 
-## Phase 6: Legacy cleanup — deferred
+## Phase 6: Legacy cleanup
 
-- [ ] 6.1 Delete legacy `transaction/model/Transaction.java`.
-- [ ] 6.2 Delete legacy `transaction/repository/ITransactionRepository.java`.
-- [ ] 6.3 Delete legacy `transaction/controller/` once adapter controllers are activated.
-- [ ] 6.4 Delete legacy `transaction/service/ITransactionService.java`.
+- [x] 6.1 Delete legacy `transaction/model/Transaction.java`.
+- [x] 6.2 Delete legacy `transaction/repository/ITransactionRepository.java`.
+- [x] 6.3 Delete legacy `transaction/controller/` — adapter controllers activated.
+- [x] 6.4 Delete legacy `transaction/service/ITransactionService.java`.
 
 Deferred to the follow-up service rewrite/contraction slice.
 

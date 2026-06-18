@@ -1,9 +1,9 @@
 package com.banco.co.transaction.service;
 
+import com.banco.co.account.domain.model.Account;
+import com.banco.co.account.domain.port.in.IAccountUseCase;
 import com.banco.co.account.enums.AccountStatus;
 import com.banco.co.account.enums.AccountType;
-import com.banco.co.account.model.Account;
-import com.banco.co.account.service.IAccountService;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.card.model.Card;
 import com.banco.co.card.service.ICardService;
@@ -25,6 +25,8 @@ import com.banco.co.transaction.enums.TransactionStatus;
 import com.banco.co.transaction.enums.TransactionType;
 import com.banco.co.transaction.mapper.ITransactionMapper;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
+import com.banco.co.user.domain.model.UserSnapshot;
+import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.databind.JsonNode;
@@ -58,11 +60,17 @@ import static org.mockito.Mockito.when;
  * Covers: transfer/cashDeposit/cashWithdrawal/payment emit 2nd NOTIFICATION event on COMPLETED;
  * reverseTransaction and BLOCKED fraud emit NO notification event.
  * TS-001 through TS-006.
+ *
+ * Phase 3 migration note:
+ *   TransactionService now injects IAccountUseCase (domain port) instead of IAccountService.
+ *   buildAccountNode() now resolves user info via IUserRepository.findSnapshotByUserId()
+ *   instead of account.getUser().getEmail() / getFistName().
+ *   payment() now calls accountUseCase.getAccountById(card.getAccountId()) instead of card.getAccount().
  */
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceNotificationTest {
 
-    @Mock private IAccountService accountService;
+    @Mock private IAccountUseCase accountUseCase;
     @Mock private ITransactionRepository transactionRepository;
     @Mock private IUserService userService;
     @Mock private IAuditLogService auditLogService;
@@ -71,6 +79,7 @@ class TransactionServiceNotificationTest {
     @Mock private IOutboxEventPort outboxEventPort;
     @Mock private ICardService cardService;
     @Mock private IFraudDetectionService fraudDetectionService;
+    @Mock private IUserRepository userDomainRepository;
     @Spy  private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
@@ -85,8 +94,8 @@ class TransactionServiceNotificationTest {
     void setUp() {
         senderUser   = buildUser("sender@banco.co",   "Ana");
         receiverUser = buildUser("receiver@banco.co", "Pedro");
-        fromAccount  = buildAccount("ACC-FROM-001", new BigDecimal("1000000"), senderUser);
-        toAccount    = buildAccount("ACC-TO-001",   new BigDecimal("500000"),  receiverUser);
+        fromAccount  = buildDomainAccount("ACC-FROM-001", new BigDecimal("1000000"), senderUser.getId());
+        toAccount    = buildDomainAccount("ACC-TO-001",   new BigDecimal("500000"),  receiverUser.getId());
     }
 
     // ══════════════════════════════════════════════════════════
@@ -101,6 +110,10 @@ class TransactionServiceNotificationTest {
 
         stubTransferMocks(savedTx);
         when(fraudDetectionService.analyze(any())).thenReturn(FraudAnalysisResult.CLEAR);
+
+        // buildAccountNode() calls userDomainRepository.findSnapshotByUserId() for each account
+        stubSnapshotForAccount(fromAccount, "sender@banco.co", "Ana");
+        stubSnapshotForAccount(toAccount, "receiver@banco.co", "Pedro");
 
         transactionService.transfer(dto, "sender@banco.co", buildMetadata());
 
@@ -129,11 +142,14 @@ class TransactionServiceNotificationTest {
         Transaction savedTx = buildSavedTx("TXN-BCR-DEP-001", TransactionStatus.COMPLETED, null, toAccount, TransactionType.DEPOSIT);
 
         when(userService.getEntityUserByEmail("employee@banco.co")).thenReturn(employee);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanReceiveDeposit(any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto("TXN-BCR-DEP-001"));
+
+        // buildAccountNode() is called only for non-null accounts
+        stubSnapshotForAccount(toAccount, "receiver@banco.co", "Pedro");
 
         transactionService.cashDeposit(dto, "employee@banco.co", buildMetadata());
 
@@ -160,12 +176,15 @@ class TransactionServiceNotificationTest {
         Transaction savedTx = buildSavedTx("TXN-BCR-WD-001", TransactionStatus.PROCESSING, fromAccount, null, TransactionType.WITHDRAWAL);
 
         when(userService.getEntityUserByEmail("employee@banco.co")).thenReturn(employee);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto("TXN-BCR-WD-001"));
         when(fraudDetectionService.analyze(any())).thenReturn(FraudAnalysisResult.CLEAR);
+
+        // buildAccountNode() is called only for non-null accounts
+        stubSnapshotForAccount(fromAccount, "sender@banco.co", "Ana");
 
         transactionService.cashWithdrawal(dto, "employee@banco.co", buildMetadata());
 
@@ -182,6 +201,9 @@ class TransactionServiceNotificationTest {
 
     // ══════════════════════════════════════════════════════════
     //  TS-004 — payment CLEAR → 2 outbox saves, toAccount=null in notification
+    //
+    //  Phase 3 change: payment() now calls accountUseCase.getAccountById(card.getAccountId())
+    //  instead of card.getAccount(). Test stubs card.getAccountId() and mocks accountUseCase.getAccountById().
     // ══════════════════════════════════════════════════════════
 
     @Test
@@ -191,17 +213,22 @@ class TransactionServiceNotificationTest {
         Transaction savedTx = buildSavedTx("TXN-BCR-PAY-001", TransactionStatus.PROCESSING, fromAccount, null, TransactionType.PAYMENT);
 
         Card card = mock(Card.class);
-        when(card.getAccount()).thenReturn(fromAccount);
+        // Phase 3: payment() uses card.getAccountId() + accountUseCase.getAccountById()
+        when(card.getAccountId()).thenReturn(fromAccount.getId());
         when(card.canTransact(any())).thenReturn(true);
         when(card.getCardNumber()).thenReturn("1234567890123456");
 
         when(userService.getEntityUserByEmail("sender@banco.co")).thenReturn(senderUser);
         when(cardService.findCardWithAccountByCardCode("CARD-001")).thenReturn(card);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
+        when(accountUseCase.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto("TXN-BCR-PAY-001"));
         when(fraudDetectionService.analyze(any())).thenReturn(FraudAnalysisResult.CLEAR);
+
+        // buildAccountNode() is called for fromAccount (toAccount is null for payment)
+        stubSnapshotForAccount(fromAccount, "sender@banco.co", "Ana");
 
         transactionService.payment(dto, "sender@banco.co", buildMetadata());
 
@@ -228,10 +255,10 @@ class TransactionServiceNotificationTest {
         when(transactionRepository.findByIdWithAccounts(txId)).thenReturn(Optional.of(completedTx));
         when(transactionRepository.save(any())).thenReturn(completedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto("TXN-BCR-REV-001"));
-        // reverseTransaction loads accounts by ID
-        when(accountService.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
-        when(accountService.getAccountById(toAccount.getId())).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
+        // reverseTransaction loads accounts by ID via IAccountUseCase
+        when(accountUseCase.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
+        when(accountUseCase.getAccountById(toAccount.getId())).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
 
         transactionService.reverseTransaction(txId, "Refund", "admin@banco.co");
 
@@ -264,15 +291,48 @@ class TransactionServiceNotificationTest {
     }
 
     // ══════════════════════════════════════════════════════════
+    //  Phase 3 RED test — buildAccountNode() uses snapshot, not account.getUser()
+    // ══════════════════════════════════════════════════════════
+
+    @Test
+    void testTransfer_BuildAccountNode_UsesUserSnapshotNotEntityGraph() throws Exception {
+        // Verifies that buildAccountNode() resolves email via IUserRepository.findSnapshotByUserId()
+        // and does NOT call account.getUser() (which does not exist on domain Account).
+        TransferRequestDto dto = new TransferRequestDto(
+                "ACC-FROM-001", "ACC-TO-001", new BigDecimal("100000"), "Test", true);
+        Transaction savedTx = buildSavedTx("TXN-BCR-SNAP-001", TransactionStatus.PROCESSING, fromAccount, toAccount, TransactionType.TRANSFER);
+
+        stubTransferMocks(savedTx);
+        when(fraudDetectionService.analyze(any())).thenReturn(FraudAnalysisResult.CLEAR);
+
+        // Stub specific snapshots with distinct email values
+        stubSnapshotForAccount(fromAccount, "snapshot-sender@banco.co", "SnapshotSender");
+        stubSnapshotForAccount(toAccount, "snapshot-receiver@banco.co", "SnapshotReceiver");
+
+        transactionService.transfer(dto, "sender@banco.co", buildMetadata());
+
+        ArgumentCaptor<OutboxEvent> captor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxEventPort, times(2)).save(captor.capture());
+        OutboxEvent notificationEvent = captor.getAllValues().get(1);
+
+        JsonNode payload = objectMapper.readTree(notificationEvent.getPayload());
+        // Snapshot email must appear, not the original senderUser.getEmail()
+        assertThat(payload.path("fromAccount").path("userEmail").asText())
+                .isEqualTo("snapshot-sender@banco.co");
+        assertThat(payload.path("toAccount").path("userEmail").asText())
+                .isEqualTo("snapshot-receiver@banco.co");
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  Stub helpers
     // ══════════════════════════════════════════════════════════
 
     private void stubTransferMocks(Transaction savedTx) {
         when(userService.getEntityUserByEmail("sender@banco.co")).thenReturn(senderUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
-        doNothing().when(accountService).validateCanReceiveDeposit(any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
+        doNothing().when(accountUseCase).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
         when(transactionMapper.toDto(any())).thenReturn(buildResponseDto(savedTx.getTransactionCode()));
@@ -280,12 +340,22 @@ class TransactionServiceNotificationTest {
 
     private void stubTransferMocksBlocked(Transaction savedTx) {
         when(userService.getEntityUserByEmail("sender@banco.co")).thenReturn(senderUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
-        doNothing().when(accountService).validateCanReceiveDeposit(any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
+        doNothing().when(accountUseCase).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(savedTx);
+    }
+
+    private void stubSnapshotForAccount(Account account, String email, String username) {
+        UserSnapshot snapshot = new UserSnapshot(
+                account.getUserId().toString(),
+                email,
+                username,
+                "USER"
+        );
+        when(userDomainRepository.findSnapshotByUserId(account.getUserId())).thenReturn(snapshot);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -300,22 +370,17 @@ class TransactionServiceNotificationTest {
         return user;
     }
 
-    private Account buildAccount(String accountCode, BigDecimal balance, User user) {
+    /**
+     * Builds a domain Account (com.banco.co.account.domain.model.Account) with userId set.
+     * Phase 3: no legacy Account.setUser() — uses domain Account.setUserId().
+     */
+    private Account buildDomainAccount(String accountCode, BigDecimal balance, UUID userId) {
         Account account = new Account();
-        account.setUser(user);
+        account.setId(UUID.randomUUID());
+        account.setAccountCode(accountCode);
+        account.setUserId(userId);
         account.setStatus(AccountStatus.ACTIVE);
         account.setAccountType(AccountType.SAVINGS);
-        try {
-            var codeField = Account.class.getDeclaredField("accountCode");
-            codeField.setAccessible(true);
-            codeField.set(account, accountCode);
-            // id is @GeneratedValue (JPA) — force a UUID for unit tests
-            var idField = Account.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(account, UUID.randomUUID());
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not set Account field", e);
-        }
         if (balance.compareTo(BigDecimal.ZERO) > 0) {
             account.deposit(balance);
         }

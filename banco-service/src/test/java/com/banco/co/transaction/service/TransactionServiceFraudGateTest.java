@@ -1,9 +1,9 @@
 package com.banco.co.transaction.service;
 
+import com.banco.co.account.domain.model.Account;
+import com.banco.co.account.domain.port.in.IAccountUseCase;
 import com.banco.co.account.enums.AccountStatus;
 import com.banco.co.account.enums.AccountType;
-import com.banco.co.account.model.Account;
-import com.banco.co.account.service.IAccountService;
 import com.banco.co.auditLog.service.IAuditLogService;
 import com.banco.co.card.service.ICardService;
 import com.banco.co.exception.fraud.FraudBlockedException;
@@ -21,6 +21,8 @@ import com.banco.co.transaction.exception.transaction.TransactionNotFoundExcepti
 import com.banco.co.transaction.exception.transaction.TransactionStatusException;
 import com.banco.co.transaction.mapper.ITransactionMapper;
 import com.banco.co.transaction.utils.metadata.ITransactionMetadataEnricher;
+import com.banco.co.user.domain.model.UserSnapshot;
+import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.model.User;
 import com.banco.co.user.service.user.IUserService;
 import tools.jackson.databind.ObjectMapper;
@@ -54,11 +56,15 @@ import static org.mockito.Mockito.when;
  *   transfer/payment/payService/cashWithdrawal now use @Transactional(noRollbackFor = FraudBlockedException.class)
  *   so FAILED status and TransactionFraudBlocked outbox event are expected to persist.
  *   In this unit test we verify the exception and state transitions at service level.
+ *
+ * Phase 3 migration note:
+ *   TransactionService now injects IAccountUseCase (domain port) instead of IAccountService.
+ *   Ownership check uses account.getUserId() instead of account.getUser().getId().
  */
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceFraudGateTest {
 
-    @Mock private IAccountService accountService;
+    @Mock private IAccountUseCase accountUseCase;
     @Mock private ITransactionRepository transactionRepository;
     @Mock private IUserService userService;
     @Mock private IAuditLogService auditLogService;
@@ -67,6 +73,7 @@ class TransactionServiceFraudGateTest {
     @Mock private IOutboxEventPort outboxEventPort;
     @Mock private ICardService cardService;
     @Mock private IFraudDetectionService fraudDetectionService;
+    @Mock private IUserRepository userDomainRepository;
     @Spy private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
@@ -80,8 +87,8 @@ class TransactionServiceFraudGateTest {
     void setUp() {
         testUser = buildUser("user@banco.co");
 
-        fromAccount = buildAccount("ACC-FROM-001", new BigDecimal("1000000"), testUser);
-        toAccount   = buildAccount("ACC-TO-001",   new BigDecimal("500000"),  buildUser("other@banco.co"));
+        fromAccount = buildDomainAccount("ACC-FROM-001", new BigDecimal("1000000"), testUser.getId());
+        toAccount   = buildDomainAccount("ACC-TO-001",   new BigDecimal("500000"),  UUID.randomUUID());
     }
 
     // ══════════════════════════════════════════════════════════
@@ -95,6 +102,8 @@ class TransactionServiceFraudGateTest {
 
         stubTransferCommonMocks(expectedResponse);
         when(fraudDetectionService.analyze(any())).thenReturn(FraudAnalysisResult.CLEAR);
+        stubSnapshotForAccount(fromAccount);
+        stubSnapshotForAccount(toAccount);
 
         TransactionResponseDto result = transactionService.transfer(dto, "user@banco.co", buildMetadata());
 
@@ -130,7 +139,7 @@ class TransactionServiceFraudGateTest {
         verify(transactionRepository, times(2)).save(any(Transaction.class));
 
         // SUSPICIOUS returns early — toAccount balance must NOT be updated
-        verify(accountService, never()).updateBalance(toAccount);
+        verify(accountUseCase, never()).updateBalance(toAccount);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -199,17 +208,19 @@ class TransactionServiceFraudGateTest {
         when(transactionRepository.findByIdWithAccounts(txId)).thenReturn(Optional.of(flaggedTx));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(flaggedTx);
         when(transactionMapper.toDto(any())).thenReturn(expectedResponse);
-        // Service now loads accounts by ID for flagged approval
-        when(accountService.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
-        when(accountService.getAccountById(toAccount.getId())).thenReturn(toAccount);
+        // Service now loads accounts by ID for flagged approval via IAccountUseCase
+        when(accountUseCase.getAccountById(fromAccount.getId())).thenReturn(fromAccount);
+        when(accountUseCase.getAccountById(toAccount.getId())).thenReturn(toAccount);
+        stubSnapshotForAccount(fromAccount);
+        stubSnapshotForAccount(toAccount);
 
         TransactionResponseDto result = transactionService.approveTransaction(txId, "admin@banco.co");
 
         assertThat(result).isEqualTo(expectedResponse);
 
         // Fund movement must have happened for both accounts
-        verify(accountService).updateBalance(fromAccount);
-        verify(accountService).updateBalance(toAccount);
+        verify(accountUseCase).updateBalance(fromAccount);
+        verify(accountUseCase).updateBalance(toAccount);
 
         // Transaction is COMPLETED after flagged approval
         assertThat(flaggedTx.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
@@ -237,7 +248,7 @@ class TransactionServiceFraudGateTest {
         transactionService.approveTransaction(txId, "admin@banco.co");
 
         // No fund movement for non-flagged approval
-        verify(accountService, never()).updateBalance(any());
+        verify(accountUseCase, never()).updateBalance(any());
 
         // Outbox event must be TransactionApproved for regular review path
         ArgumentCaptor<OutboxEvent> eventCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
@@ -286,15 +297,37 @@ class TransactionServiceFraudGateTest {
     }
 
     // ══════════════════════════════════════════════════════════
+    //  Phase 3 — ownership check uses getUserId() not getUser().getId()
+    // ══════════════════════════════════════════════════════════
+
+    @Test
+    void testTransfer_AccountOwnedByOtherUser_ThrowsUnauthorizedException() {
+        // Domain Account with foreign userId — ownership check must fail
+        Account foreignAccount = buildDomainAccount("ACC-FROM-001", new BigDecimal("1000000"), UUID.randomUUID());
+
+        when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(foreignAccount);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+
+        TransferRequestDto dto = buildTransferDto();
+
+        assertThatThrownBy(() -> transactionService.transfer(dto, "user@banco.co", buildMetadata()))
+                .isInstanceOf(com.banco.co.exception.authentication.UnauthorizedException.class);
+
+        // Card save must never be reached
+        verify(transactionRepository, never()).save(any());
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  Stub helpers
     // ══════════════════════════════════════════════════════════
 
     private void stubTransferCommonMocks(TransactionResponseDto response) {
         when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
-        doNothing().when(accountService).validateCanReceiveDeposit(any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
+        doNothing().when(accountUseCase).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(
                 buildSavedTransaction("TXN-BCR-001", TransactionStatus.PROCESSING));
@@ -303,10 +336,10 @@ class TransactionServiceFraudGateTest {
 
     private void stubTransferCommonMocksBlocked() {
         when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
-        doNothing().when(accountService).validateCanReceiveDeposit(any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
+        doNothing().when(accountUseCase).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(
                 buildSavedTransaction("TXN-BCR-003", TransactionStatus.PROCESSING));
@@ -314,12 +347,22 @@ class TransactionServiceFraudGateTest {
 
     private void stubTransferCommonMocksWithRealTx(Transaction realTx) {
         when(userService.getEntityUserByEmail("user@banco.co")).thenReturn(testUser);
-        when(accountService.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
-        when(accountService.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
-        doNothing().when(accountService).validateCanWithdraw(any(), any());
-        doNothing().when(accountService).validateCanReceiveDeposit(any());
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-FROM-001")).thenReturn(fromAccount);
+        when(accountUseCase.findAccountWithUserByAccountCode("ACC-TO-001")).thenReturn(toAccount);
+        doNothing().when(accountUseCase).validateCanWithdraw(any(), any());
+        doNothing().when(accountUseCase).validateCanReceiveDeposit(any());
         doNothing().when(transactionMetadataEnricher).enrich(any(), any(), any());
         when(transactionRepository.save(any())).thenReturn(realTx);
+    }
+
+    private void stubSnapshotForAccount(Account account) {
+        UserSnapshot snapshot = new UserSnapshot(
+                account.getUserId().toString(),
+                "user@banco.co",
+                "TestUser",
+                "USER"
+        );
+        when(userDomainRepository.findSnapshotByUserId(account.getUserId())).thenReturn(snapshot);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -357,23 +400,17 @@ class TransactionServiceFraudGateTest {
         );
     }
 
-    private Account buildAccount(String accountCode, BigDecimal balance, User user) {
+    /**
+     * Builds a domain Account (com.banco.co.account.domain.model.Account) with userId set.
+     * Phase 3: no legacy Account.setUser() — uses domain Account.setUserId().
+     */
+    private Account buildDomainAccount(String accountCode, BigDecimal balance, UUID userId) {
         Account account = new Account();
-        account.setUser(user);
+        account.setId(UUID.randomUUID());
+        account.setAccountCode(accountCode);
+        account.setUserId(userId);
         account.setStatus(AccountStatus.ACTIVE);
         account.setAccountType(AccountType.SAVINGS);
-        try {
-            // accountCode has no @Setter — set via reflection
-            var codeField = Account.class.getDeclaredField("accountCode");
-            codeField.setAccessible(true);
-            codeField.set(account, accountCode);
-            // id is @GeneratedValue (JPA), not set in-memory — force a UUID for unit tests
-            var idField = Account.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(account, UUID.randomUUID());
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not set Account field", e);
-        }
         if (balance.compareTo(BigDecimal.ZERO) > 0) {
             account.deposit(balance);
         }

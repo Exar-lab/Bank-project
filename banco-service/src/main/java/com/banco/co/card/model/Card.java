@@ -1,7 +1,7 @@
 package com.banco.co.card.model;
 
 import com.banco.co.transaction.enums.TransactionType;
-import com.banco.co.account.model.Account;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
 import com.banco.co.card.enums.CardBrand;
 import com.banco.co.card.enums.CardStatus;
 import com.banco.co.card.enums.CardTier;
@@ -71,7 +71,17 @@ public class Card {
     // Relación con cuenta - SIN CASCADE
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
+    private AccountEntity account;
+
+    /**
+     * Read-only UUID projection of the account FK column.
+     * NOT a second foreign key — shares the same "account_id" column as the @ManyToOne above.
+     * insertable=false, updatable=false prevents JPA from treating this as a separate writable column.
+     * Used by TransactionService.payment() and CardService (Phase 3+) to navigate to the
+     * domain Account without triggering a lazy-load on the full Account entity.
+     */
+    @Column(name = "account_id", insertable = false, updatable = false)
+    private UUID accountId;
 
     // Estado
     @Enumerated(EnumType.STRING)

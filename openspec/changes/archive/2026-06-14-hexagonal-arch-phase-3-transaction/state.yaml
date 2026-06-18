@@ -1,5 +1,5 @@
 change: hexagonal-arch-phase-3-transaction
-status: verified-additive-slice
+status: complete
 execution_mode: auto
 artifact_store: both
 review_budget_lines: 400
@@ -12,13 +12,14 @@ policy_decisions:
 strict_tdd: true
 tests:
   command: "cd banco-service && ./mvnw test -DskipTests=false"
-  result: "346 tests, 0 failures, 0 errors, 23 skipped"
+  result: "347 tests, 0 failures, 0 errors, 0 relevant skips"
   focused_command: "cd banco-service && ./mvnw test -DskipTests=false -Dtest=TransactionDomainModelTest"
-  focused_result: "34 tests, 0 failures, 0 errors, 0 skipped"
-deferred:
-  - "TransactionService domain/output-port rewrite"
-  - "ITransactionMapper import swap"
-  - "ITransactionMetadataEnricher import swap"
-  - "TransactionMetadataEnricher import swap"
-  - "legacy transaction model/repository/controller/ITransactionService deletion"
-next_recommended: hexagonal-arch-phase-3-transaction-service-rewrite
+  focused_result: "35 tests, 0 failures, 0 errors, 0 skipped"
+completed_phases:
+  - "Phase 1: Domain foundation (additive)"
+  - "Phase 2: JPA adapter scaffolding (additive)"
+  - "Phase 3: Service compatibility stub (additive)"
+  - "Phase 4: REST adapter copies — inactive (additive)"
+  - "Phase 5: Internal consumer import updates (contract — fa4e64d)"
+  - "Phase 6: Legacy deletion + service rewrite + controller activation (contract — fa4e64d)"
+next_recommended: archive

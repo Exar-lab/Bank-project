@@ -214,4 +214,28 @@ public class UserJpaAdapter implements IUserRepository {
                 roleName
         );
     }
+
+    @Override
+    public UserSnapshot findSnapshotByUserId(UUID userId) {
+        UserEntity entity = jpaRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
+
+        User domain = mapper.toDomain(entity);
+
+        // Resolve primary role name from credential (cross-feature via credential table)
+        String roleName = credentialRepository.findByEmailWithRolesAndPermissions(domain.getEmail())
+                .map(credential -> credential.getRoles().stream()
+                        .map(Role::getName)
+                        .max(Comparator.comparingInt(role -> role.getPrivilegeLevel()))
+                        .map(Enum::name)
+                        .orElse("CUSTOMER_BASIC"))
+                .orElse("CUSTOMER_BASIC");
+
+        return new UserSnapshot(
+                domain.getId().toString(),
+                domain.getEmail(),
+                domain.getUsername(),
+                roleName
+        );
+    }
 }

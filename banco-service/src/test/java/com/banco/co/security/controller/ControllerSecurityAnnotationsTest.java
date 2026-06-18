@@ -1,7 +1,7 @@
 package com.banco.co.security.controller;
 
-import com.banco.co.account.controller.AccountAdminController;
-import com.banco.co.account.controller.AccountController;
+import com.banco.co.account.adapter.in.rest.AccountAdminController;
+import com.banco.co.account.adapter.in.rest.AccountController;
 import com.banco.co.card.controller.CardAdminController;
 import com.banco.co.card.controller.CardController;
 import com.banco.co.envelope.controller.EnvelopeController;

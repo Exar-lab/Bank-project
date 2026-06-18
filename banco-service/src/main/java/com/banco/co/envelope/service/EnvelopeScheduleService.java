@@ -1,6 +1,6 @@
 package com.banco.co.envelope.service;
 
-import com.banco.co.account.model.Account;
+import com.banco.co.account.adapter.out.jpa.AccountEntity;
 import com.banco.co.auditLog.enums.AuditAction;
 import com.banco.co.auditLog.enums.AuditEntityType;
 import com.banco.co.auditLog.model.AuditLogDetail;
@@ -115,7 +115,7 @@ public class EnvelopeScheduleService implements IEnvelopeScheduleService {
         }
 
         // 2. Validar que la cuenta tenga fondos suficientes
-        Account account = envelope.getAccount();
+        AccountEntity account = envelope.getAccount();
         BigDecimal contributionAmount = envelope.getAutoContributeAmount();
 
         if (account.getAvailableBalance().compareTo(contributionAmount) < 0) {
