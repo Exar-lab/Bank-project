@@ -1,0 +1,84 @@
+name: Test / quality task
+description: Improve coverage, reliability, assertions, or test readability.
+title: "test(scope): "
+labels:
+  - testing
+  - code-quality
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the test task is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      description: Choose the test surface that needs attention.
+      options:
+        - domain
+        - application
+        - infrastructure
+        - presentation
+        - api
+        - persistence
+        - security
+        - ci
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Point to the tests, classes, or modules involved.
+      placeholder: src/test/java/... , src/main/java/...
+  - type: textarea
+    id: gap
+    attributes:
+      label: Current quality gap
+      description: What is missing or flaky today?
+      placeholder: Missing coverage, brittle assertions, slow test, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed test improvement
+      description: Describe the desired test behavior or coverage target.
+      placeholder: What should be added or rewritten?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / failing output
+      description: Include flaky failures, coverage gaps, or reproduction steps.
+      placeholder: Paste command output or a short reproduction.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Keep this measurable.
+      placeholder: |
+        - [ ] Relevant tests cover the scenario
+        - [ ] Assertions are stable and meaningful
+        - [ ] Build remains green
+    validations:
+      required: true

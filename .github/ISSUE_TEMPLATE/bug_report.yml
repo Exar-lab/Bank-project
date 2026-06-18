@@ -1,0 +1,103 @@
+name: Bug report
+description: Report a reproducible defect in the service, tests, build, or tooling.
+title: "fix(scope): "
+labels:
+  - bug
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the issue is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is the fix?
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Choose the primary area impacted by the bug.
+      options:
+        - api
+        - persistence
+        - security
+        - testing
+        - ci
+        - code-quality
+        - messaging
+        - architecture
+        - documentation
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Point to the code or config involved.
+      placeholder: src/main/java/... , src/test/java/... , .github/workflows/...
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug summary
+      description: Describe the defect clearly and briefly.
+      placeholder: What is broken and where?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps are easiest to review.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / evidence
+      description: Include errors, stack traces, screenshots, or logs.
+      placeholder: Paste the exact failure output here.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Define what must be true for this issue to be closed.
+      placeholder: |
+        - [ ] Fix reproduces no longer
+        - [ ] Tests cover the regression
+        - [ ] No unrelated behavior changed
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Add logs, workarounds, environment details, or links.
+      placeholder: Any extra details that help narrow the root cause.

@@ -1,0 +1,91 @@
+name: Refactor / architecture task
+description: Improve structure, boundaries, or maintainability without changing external behavior.
+title: "refactor(scope): "
+labels:
+  - architecture
+  - code-quality
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the refactor is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      description: Pick the main slice impacted by the refactor.
+      options:
+        - architecture
+        - persistence
+        - api
+        - messaging
+        - security
+        - testing
+        - ci
+        - code-quality
+        - documentation
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Point to the packages, modules, or adapters that need to change.
+      placeholder: src/main/java/... , src/test/java/... , .github/workflows/...
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current problem
+      description: What in the current structure is hard to maintain or reason about?
+      placeholder: Explain the boundary, coupling, or duplication issue.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_change
+    attributes:
+      label: Proposed refactor
+      description: Describe the target shape of the codebase.
+      placeholder: What should the structure look like after the change?
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risks / migration notes
+      description: Mention compatibility concerns, rollout steps, or follow-up work.
+      placeholder: Call out any behavior that could be impacted.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Make the expected outcome explicit.
+      placeholder: |
+        - [ ] External behavior remains unchanged
+        - [ ] Boundaries are cleaner or easier to test
+        - [ ] Relevant tests updated or added
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / references
+      description: Add metrics, examples, or code paths that justify the refactor.
+      placeholder: Link the files or pain points that motivated this task.

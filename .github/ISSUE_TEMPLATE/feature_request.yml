@@ -1,0 +1,91 @@
+name: Feature request
+description: Propose a new capability or improvement to the banking service.
+title: "feat(scope): "
+labels:
+  - enhancement
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the request is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this request?
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Choose the main area this change belongs to.
+      options:
+        - api
+        - persistence
+        - security
+        - testing
+        - ci
+        - code-quality
+        - messaging
+        - architecture
+        - documentation
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Point to the files, modules, or workflows affected.
+      placeholder: src/main/java/... , .github/workflows/...
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What pain point does this solve?
+      placeholder: Explain the user or maintainer problem first.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the desired behavior from the user's perspective.
+      placeholder: What should the system do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: List workarounds or other approaches you evaluated.
+      placeholder: Mention tradeoffs if you have them.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Keep this testable and specific.
+      placeholder: |
+        - [ ] Behavior is available behind the expected interface
+        - [ ] Tests cover the new path
+        - [ ] Docs or examples updated if needed
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include references, mockups, logs, or examples.
+      placeholder: Any supporting detail that helps scope the work.

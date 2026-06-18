@@ -1,0 +1,82 @@
+name: CI/CD task
+description: Update workflows, pipelines, build checks, or delivery automation.
+title: "ci(scope): "
+labels:
+  - ci
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      description: Confirm the pipeline task is ready for triage.
+      options:
+        - label: I searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I understand this issue starts as `status:needs-review` and requires maintainer approval before a PR can be opened.
+          required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Pipeline area
+      description: Choose the main automation surface.
+      options:
+        - build
+        - test
+        - release
+        - deployment
+        - docker
+        - security
+        - notifications
+        - other
+    validations:
+      required: true
+  - type: input
+    id: paths
+    attributes:
+      label: Relevant file paths
+      description: Point to workflow or build files.
+      placeholder: .github/workflows/... , build.gradle , Dockerfile
+  - type: textarea
+    id: current
+    attributes:
+      label: Current pipeline problem
+      description: What is failing, slow, missing, or hard to maintain?
+      placeholder: Describe the current workflow behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed pipeline change
+      description: Explain the target behavior for the workflow or automation.
+      placeholder: What should the pipeline do after the change?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / logs
+      description: Include failing job links, console output, or screenshots.
+      placeholder: Paste the relevant job output or a short summary.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Make the success condition explicit.
+      placeholder: |
+        - [ ] Workflow runs successfully under the target scenario
+        - [ ] Relevant checks still gate merges
+        - [ ] Changes are documented if needed
+    validations:
+      required: true
