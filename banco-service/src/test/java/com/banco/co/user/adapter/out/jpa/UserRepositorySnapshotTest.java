@@ -5,7 +5,6 @@ import com.banco.co.user.domain.port.out.IUserRepository;
 import com.banco.co.user.enums.DocumentType;
 import com.banco.co.user.enums.KycStatus;
 import com.banco.co.user.enums.UserStatus;
-import com.banco.co.user.model.User;
 import org.jasypt.encryption.StringEncryptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,16 +79,15 @@ class UserRepositorySnapshotTest {
     @Autowired
     private IUserRepository userRepository;
 
-    // Legacy repo to set up test data
     @Autowired
-    private com.banco.co.user.repository.IUserRepository legacyUserRepository;
+    private IUserJpaRepository userJpaRepository;
 
-    private User savedUser;
+    private UserEntity savedUser;
 
     @BeforeEach
     void setUp() {
         savedUser = buildSampleUser("snapshot-test@banco.co", "1122334455");
-        savedUser = legacyUserRepository.save(savedUser);
+        savedUser = userJpaRepository.saveAndFlush(savedUser);
     }
 
     @Test
@@ -105,10 +103,12 @@ class UserRepositorySnapshotTest {
         assertThat(snapshot.username()).isNotNull();
     }
 
-    private User buildSampleUser(String email, String documentNumber) {
-        User user = new User();
+    private UserEntity buildSampleUser(String email, String documentNumber) {
+        UserEntity user = new UserEntity();
+        user.setUserCode("USR-SNAPSHOT");
         user.setFistName("Snapshot");
         user.setLastName("Test");
+        user.setUsername("snapshot-test");
         user.setEmail(email);
         user.setDocumentType(DocumentType.CEDULA);
         user.setDocumentNumber(documentNumber);
@@ -117,7 +117,6 @@ class UserRepositorySnapshotTest {
         user.setBirthDate(LocalDate.of(1985, 6, 15));
         user.setStatus(UserStatus.ACTIVE);
         user.setKycStatus(KycStatus.PENDING);
-        user.generateData();
         return user;
     }
 }

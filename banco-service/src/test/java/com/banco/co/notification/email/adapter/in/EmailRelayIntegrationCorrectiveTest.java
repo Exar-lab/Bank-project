@@ -53,7 +53,6 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
@@ -113,7 +112,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         }
 )
 @Testcontainers(disabledWithoutDocker = true)
-@ActiveProfiles("test")
 class EmailRelayIntegrationCorrectiveTest {
 
     @TestConfiguration
