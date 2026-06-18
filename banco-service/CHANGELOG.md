@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.8](https://github.com/Exar-lab/Bank-project/compare/v0.9.7...v0.9.8) (2026-06-18)
+
+
+### Refactoring
+
+* **account:** hexagonal contraction — activate hexagonal stack, delete legacy account ([#142](https://github.com/Exar-lab/Bank-project/issues/142)) ([c1a7bde](https://github.com/Exar-lab/Bank-project/commit/c1a7bde7cba5fd7436daed4b297f8eb6bd682223))
+
 ## [0.9.7](https://github.com/Exar-lab/Bank-project/compare/v0.9.6...v0.9.7) (2026-06-14)
 
 
