@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.9](https://github.com/Exar-lab/Bank-project/compare/v0.9.8...v0.9.9) (2026-06-18)
+
+
+### Bug Fixes
+
+* **ci:** repair master test suite failures ([#162](https://github.com/Exar-lab/Bank-project/issues/162)) ([cf0d8d2](https://github.com/Exar-lab/Bank-project/commit/cf0d8d25f4c7ab73970a5acb445015f3234ac500))
+
 ## [0.9.8](https://github.com/Exar-lab/Bank-project/compare/v0.9.7...v0.9.8) (2026-06-18)
 
 
