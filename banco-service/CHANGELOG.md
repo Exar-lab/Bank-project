@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.10](https://github.com/Exar-lab/Bank-project/compare/v0.9.9...v0.9.10) (2026-07-16)
+
+
+### Bug Fixes
+
+* **test:** scan account.adapter.out.jpa instead of stale account.model package ([#165](https://github.com/Exar-lab/Bank-project/issues/165)) ([a74aa39](https://github.com/Exar-lab/Bank-project/commit/a74aa3930e424a0e69ad655afc191ea5c363ec86))
+
 ## [0.9.9](https://github.com/Exar-lab/Bank-project/compare/v0.9.8...v0.9.9) (2026-06-18)
 
 
