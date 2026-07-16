@@ -177,7 +177,7 @@ class EmailRelayIntegrationCorrectiveTest {
             LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
             emf.setDataSource(dataSource);
             emf.setPackagesToScan(
-                    "com.banco.co.account.model",
+                    "com.banco.co.account.adapter.out.jpa",
                     "com.banco.co.auditLog.model",
                     "com.banco.co.card.model",
                     "com.banco.co.envelope.model",
