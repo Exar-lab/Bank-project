@@ -1,5 +1,6 @@
 package com.banco.co.account.adapter.in.rest;
 
+import com.banco.co.BancoServiceApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * After Phase 4.1 atomic commit (deleting legacy Account), this test turns GREEN.
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest
+@SpringBootTest(classes = BancoServiceApplication.class)
 class AccountContextBootTest {
 
     @Container
