@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.11](https://github.com/Exar-lab/Bank-project/compare/v0.9.10...v0.9.11) (2026-07-17)
+
+
+### Bug Fixes
+
+* **build:** add missing spring-boot-restclient test dependency ([#168](https://github.com/Exar-lab/Bank-project/issues/168)) ([0eff2d5](https://github.com/Exar-lab/Bank-project/commit/0eff2d57654af0cacd49b4ada437de67f49a033c))
+* **test:** disable Flyway in AccountContextBootTest to match sibling boot tests ([#169](https://github.com/Exar-lab/Bank-project/issues/169)) ([bc2dbf5](https://github.com/Exar-lab/Bank-project/commit/bc2dbf5eb3c28561186bac9adc13cdf459d9b9fd))
+
 ## [0.9.10](https://github.com/Exar-lab/Bank-project/compare/v0.9.9...v0.9.10) (2026-07-16)
 
 
