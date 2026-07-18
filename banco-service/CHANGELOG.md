@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.12](https://github.com/Exar-lab/Bank-project/compare/v0.9.11...v0.9.12) (2026-07-17)
+
+
+### Bug Fixes
+
+* **test:** pin AccountIntegrationBootTest/AccountContextBootTest to BancoServiceApplication ([#172](https://github.com/Exar-lab/Bank-project/issues/172)) ([b8d3ad9](https://github.com/Exar-lab/Bank-project/commit/b8d3ad942f8a21a45524af6199655aa6d8aacc23))
+
 ## [0.9.11](https://github.com/Exar-lab/Bank-project/compare/v0.9.10...v0.9.11) (2026-07-17)
 
 
