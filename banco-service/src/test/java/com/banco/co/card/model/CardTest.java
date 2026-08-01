@@ -1,8 +1,10 @@
 package com.banco.co.card.model;
 
+import com.banco.co.card.enums.CardBrand;
 import com.banco.co.card.enums.CardStatus;
 import com.banco.co.card.exception.card.CardClosedException;
 import com.banco.co.card.exception.card.CardException;
+import com.banco.co.security.cryptoLib.BlindIndexHasher;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,6 +119,35 @@ class CardTest {
 
         assertThatThrownBy(card::reportLost)
                 .isInstanceOf(CardException.class);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  generateCardData() — cardNumberHash blind index
+    // ══════════════════════════════════════════════════════════
+
+    @Test
+    void testGenerateCardData_WhenCardNumberHashUnset_ComputesHashFromCardNumber() {
+        Card card = buildCard(CardStatus.INACTIVE);
+        card.setBrand(CardBrand.VISA);
+        card.setTier(com.banco.co.card.enums.CardTier.CLASSIC);
+
+        card.generateCardData();
+
+        assertThat(card.getCardNumberHash())
+                .isEqualTo(BlindIndexHasher.sha256Hex(card.getCardNumber()));
+    }
+
+    @Test
+    void testGenerateCardData_WhenCardNumberHashAlreadySet_DoesNotOverwriteIt() {
+        Card card = buildCard(CardStatus.INACTIVE);
+        card.setBrand(CardBrand.VISA);
+        card.setTier(com.banco.co.card.enums.CardTier.CLASSIC);
+        card.setCardNumber("4111111111111111");
+        card.setCardNumberHash("preexisting-hash");
+
+        card.generateCardData();
+
+        assertThat(card.getCardNumberHash()).isEqualTo("preexisting-hash");
     }
 
     // ══════════════════════════════════════════════════════════

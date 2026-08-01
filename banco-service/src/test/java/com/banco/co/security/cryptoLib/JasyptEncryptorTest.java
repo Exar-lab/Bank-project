@@ -14,8 +14,9 @@ class JasyptEncryptorTest {
 
     @BeforeEach
     void setUp() {
-        // Mirrors application.yml's jasypt.encryptor.* configuration exactly,
-        // so this test exercises the real algorithm/IV pairing used in production.
+        // Matches application.yml's jasypt.encryptor.algorithm/iv-generator-classname,
+        // so this test exercises the real algorithm/IV pairing used in production
+        // (the password source and Spring-managed bean wiring differ intentionally).
         SimpleStringPBEConfig config = new SimpleStringPBEConfig();
         config.setPassword("test-jasypt-password");
         config.setAlgorithm("PBEWITHHMACSHA512ANDAES_256");
