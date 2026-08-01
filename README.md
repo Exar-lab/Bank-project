@@ -163,6 +163,11 @@ Compose-only variable:
 
 - `MYSQL_ROOT_PASSWORD` is required by `docker-compose.yml` for the MySQL container.
 
+Column-level encryption (card numbers, security codes, account numbers) uses Jasypt with
+`PBEWITHHMACSHA512ANDAES_256` and a random IV per value, keyed by `JASYPT_ENCRYPTOR_PASSWORD`.
+Generate that password with a real secret manager or `openssl rand -base64 32` locally — never
+commit it, and use a different value per environment.
+
 ## Run Locally
 
 Start MySQL and Kafka:
