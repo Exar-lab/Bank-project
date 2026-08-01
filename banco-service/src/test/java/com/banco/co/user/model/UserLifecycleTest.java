@@ -34,4 +34,11 @@ class UserLifecycleTest {
         assertThat(user.getUserCode()).isEqualTo("USR-EXISTING-001");
         assertThat(user.getUsername()).isEqualTo("ana.existing");
     }
+
+    @Test
+    void testConstructor_NewUser_InitializesAccountsAsEmptyMutableList() {
+        User user = new User();
+
+        assertThat(user.getAccounts()).isNotNull().isEmpty();
+    }
 }
