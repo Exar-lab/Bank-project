@@ -29,6 +29,8 @@ interface AccountEntityMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "cards", ignore = true)
     @Mapping(target = "envelopes", ignore = true)
+    @Mapping(target = "accountNumberHash",
+            expression = "java(com.banco.co.security.cryptoLib.BlindIndexHasher.sha256Hex(domain.getAccountNumber()))")
     AccountEntity toEntity(Account domain);
 
     default List<UUID> mapCardIds(List<Card> cards) {

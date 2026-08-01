@@ -53,8 +53,14 @@ public class AccountEntity {
     private String accountCode;
 
     @Convert(converter = JasyptEncryptor.class)
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, length = 255)
     private String accountNumber;
+
+    // Blind index: SHA-256 of the plaintext accountNumber. Random-IV encryption means
+    // accountNumber's own ciphertext can't carry a unique constraint anymore — this column does.
+    // Populated by AccountEntityMapper#toEntity, not here — this class stays anemic.
+    @Column(name = "account_number_hash", nullable = false, unique = true, length = 64)
+    private String accountNumberHash;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -131,6 +137,14 @@ public class AccountEntity {
 
     public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
+    }
+
+    public String getAccountNumberHash() {
+        return accountNumberHash;
+    }
+
+    public void setAccountNumberHash(String accountNumberHash) {
+        this.accountNumberHash = accountNumberHash;
     }
 
     public User getUser() {

@@ -13,6 +13,7 @@ import com.banco.co.card.exception.card.CardNotActiveException;
 import com.banco.co.card.generator.CardCodeGenerator;
 import com.banco.co.card.generator.CardNumberGenerator;
 import com.banco.co.card.generator.CardSecurityCodeGenerator;
+import com.banco.co.security.cryptoLib.BlindIndexHasher;
 import com.banco.co.security.cryptoLib.JasyptEncryptor;
 import com.banco.co.security.securityhasher.HashUtils;
 import jakarta.persistence.*;
@@ -45,8 +46,13 @@ public class Card {
 
     // Número de tarjeta ENCRIPTADO (16 dígitos)
     @Convert(converter = JasyptEncryptor.class)
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, length = 255)
     private String cardNumber;
+
+    // Blind index: SHA-256 del número de tarjeta en claro. Random-IV encryption means
+    // cardNumber's own ciphertext can't carry a unique constraint anymore — this column does.
+    @Column(name = "card_number_hash", nullable = false, unique = true, length = 64)
+    private String cardNumberHash;
 
     // CVV/CVC ENCRIPTADO  SÍ debe estar encriptado
     @Convert(converter = JasyptEncryptor.class)
@@ -157,6 +163,9 @@ public class Card {
         // Generar número de tarjeta válido (con Luhn)
         if (this.cardNumber == null) {
             this.cardNumber = CardNumberGenerator.generateValid(this.brand);
+        }
+        if (this.cardNumberHash == null) {
+            this.cardNumberHash = BlindIndexHasher.sha256Hex(this.cardNumber);
         }
 
         // Generar CVV según tipo de tarjeta
