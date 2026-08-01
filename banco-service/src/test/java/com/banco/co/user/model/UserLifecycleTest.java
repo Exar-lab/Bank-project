@@ -36,7 +36,7 @@ class UserLifecycleTest {
     }
 
     @Test
-    void testConstructor_NewUser_InitializesAccountsAsEmptyMutableList() {
+    void testConstructor_NewUser_InitializesAccountsAsEmptyList() {
         User user = new User();
 
         assertThat(user.getAccounts()).isNotNull().isEmpty();
