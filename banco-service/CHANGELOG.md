@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.13](https://github.com/Exar-lab/Bank-project/compare/v0.9.12...v0.9.13) (2026-08-01)
+
+
+### Bug Fixes
+
+* **security:** replace weak Jasypt encryption algorithm ([#176](https://github.com/Exar-lab/Bank-project/issues/176)) ([7223ac7](https://github.com/Exar-lab/Bank-project/commit/7223ac789d18a2080ee4ad4fbee9792de7879533))
+
 ## [0.9.12](https://github.com/Exar-lab/Bank-project/compare/v0.9.11...v0.9.12) (2026-07-17)
 
 
