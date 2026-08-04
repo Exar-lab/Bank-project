@@ -81,9 +81,8 @@ public class User {
     @Column(nullable = false,length = 200)
     private String address;
 
-    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
-    @Column(name = "accountId")
-    private List<AccountEntity> accounts;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AccountEntity> accounts = new ArrayList<>();
 
 
     @PrePersist
