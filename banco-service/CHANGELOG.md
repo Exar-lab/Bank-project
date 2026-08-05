@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.14](https://github.com/Exar-lab/Bank-project/compare/v0.9.13...v0.9.14) (2026-08-05)
+
+
+### Bug Fixes
+
+* **persistence:** repair the User-to-Account mapping ([#179](https://github.com/Exar-lab/Bank-project/issues/179)) ([34e9783](https://github.com/Exar-lab/Bank-project/commit/34e9783dc1adbf9342002446547b4bd1ef48b8f7))
+
 ## [0.9.13](https://github.com/Exar-lab/Bank-project/compare/v0.9.12...v0.9.13) (2026-08-01)
 
 
