@@ -5,9 +5,9 @@ import com.banco.co.account.adapter.in.rest.AccountController;
 import com.banco.co.card.controller.CardAdminController;
 import com.banco.co.card.controller.CardController;
 import com.banco.co.envelope.controller.EnvelopeController;
-import com.banco.co.user.controller.PublicUserController;
-import com.banco.co.user.controller.UserAdminController;
-import com.banco.co.user.controller.UserController;
+import com.banco.co.user.adapter.in.rest.PublicUserController;
+import com.banco.co.user.adapter.in.rest.UserAdminController;
+import com.banco.co.user.adapter.in.rest.UserController;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.prepost.PreAuthorize;
 

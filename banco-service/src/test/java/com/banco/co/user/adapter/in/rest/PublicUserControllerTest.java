@@ -1,17 +1,15 @@
-package com.banco.co.user.controller;
+package com.banco.co.user.adapter.in.rest;
 
 import com.banco.co.exception.GlobalExceptionHandler;
 import com.banco.co.exception.support.ErrorResponseFactory;
+import com.banco.co.user.domain.port.in.IUserUseCase;
 import com.banco.co.user.dto.customer.CustomerResponseDto;
 import com.banco.co.user.enums.DocumentType;
 import com.banco.co.user.enums.KycStatus;
 import com.banco.co.user.enums.UserStatus;
-import com.banco.co.user.service.user.IUserService;
-import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -21,87 +19,70 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class UserControllerTest {
+/**
+ * Ported 1:1 from the legacy com.banco.co.user.controller.PublicUserControllerTest
+ * as part of the hexagonal cutover (PR1 of 3). Mocks IUserUseCase instead of IUserService.
+ */
+class PublicUserControllerTest {
 
     private MockMvc mockMvc;
-    private IUserService userService;
-    private ObjectMapper objectMapper;
-
-    private static final UsernamePasswordAuthenticationToken USER =
-            new UsernamePasswordAuthenticationToken("john@banco.co", "");
+    private IUserUseCase userUseCase;
 
     @BeforeEach
     void setUp() {
-        userService = mock(IUserService.class);
+        userUseCase = mock(IUserUseCase.class);
 
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new UserController(userService))
+                .standaloneSetup(new PublicUserController(userUseCase))
                 .setControllerAdvice(new GlobalExceptionHandler(new ErrorResponseFactory()))
                 .setValidator(validator)
                 .build();
-
-        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void testMe_WhenAuthenticated_Returns200() throws Exception {
-        when(userService.findUserByEmail(anyString())).thenReturn(sampleResponse());
+    void testRegister_WhenRequestIsValid_Returns201() throws Exception {
+        when(userUseCase.createUser(any())).thenReturn(sampleResponse());
 
-        mockMvc.perform(get("/api/v1/users/me").principal(USER))
-                .andExpect(status().isOk())
+        String payload = """
+                {
+                  "fistName": "Juan",
+                  "lastName": "Perez",
+                  "email": "juan@banco.co",
+                  "password": "Passw0rd!",
+                  "documentNumber": "12345678",
+                  "documentType": "CEDULA",
+                  "birthDate": "1990-01-01",
+                  "phoneNumber": "+573001112233",
+                  "address": "Street 123",
+                  "username": "juan.perez"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/public/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("john@banco.co"));
     }
 
     @Test
-    void testUpdatePassword_WhenRequestIsValid_Returns204() throws Exception {
-        String payload = """
-                {
-                  "currentPassword": "Passw0rd!",
-                  "password": "Passw0rd!",
-                  "confirmPassword": "Passw0rd!"
-                }
-                """;
-
-        doNothing().when(userService).updatePassword(any(), anyString());
-
-        mockMvc.perform(put("/api/v1/users/me/password")
-                        .principal(USER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testDeleteMe_WhenAuthenticated_Returns204() throws Exception {
-        doNothing().when(userService).deleteUserByEmail(anyString());
-
-        mockMvc.perform(delete("/api/v1/users/me").principal(USER))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testUpdateMe_WhenRequestIsInvalid_Returns400() throws Exception {
+    void testRegister_WhenRequestIsInvalid_Returns400() throws Exception {
         String invalidPayload = """
                 {
-                  "username": "a"
+                  "email": "bad-email"
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/users/me")
-                        .principal(USER)
+        mockMvc.perform(post("/api/v1/public/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest())
