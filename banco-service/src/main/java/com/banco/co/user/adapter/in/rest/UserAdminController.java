@@ -4,8 +4,8 @@ import com.banco.co.user.dto.customer.CustomerResponseDto;
 import com.banco.co.user.dto.customer.CustomerUpdateDto;
 import com.banco.co.user.dto.employee.EmployeeRequestDto;
 import com.banco.co.user.dto.employee.EmployeeResponseDto;
+import com.banco.co.user.domain.port.in.IUserUseCase;
 import com.banco.co.user.enums.UserStatus;
-import com.banco.co.user.service.user.IUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
@@ -28,18 +28,15 @@ import java.util.UUID;
  * REST adapter for admin user operations.
  * Migrated from com.banco.co.user.controller.UserAdminController.
  * @RequestMapping paths are identical — no API contract change.
- *
- * NOTE: See UserController note about Phase 1 / Phase 2 activation.
- * The @RestController annotation is intentionally commented out during Phase 1.
  */
-// @RestController — intentionally commented out during additive Phase 1.
+@RestController
 @Validated
 @RequestMapping("/api/v1/admin/users")
 public class UserAdminController {
 
-    private final IUserService userService;
+    private final IUserUseCase userService;
 
-    public UserAdminController(IUserService userService) {
+    public UserAdminController(IUserUseCase userService) {
         this.userService = userService;
     }
 
