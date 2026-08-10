@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.15](https://github.com/Exar-lab/Bank-project/compare/v0.9.14...v0.9.15) (2026-08-10)
+
+
+### Refactoring
+
+* **architecture:** complete legacy controller migration to hexagonal adapters ([#182](https://github.com/Exar-lab/Bank-project/issues/182)) ([d461058](https://github.com/Exar-lab/Bank-project/commit/d461058cb2e72d39d6f98820fc2ec4f8069d83f6)), closes [#143](https://github.com/Exar-lab/Bank-project/issues/143)
+
 ## [0.9.14](https://github.com/Exar-lab/Bank-project/compare/v0.9.13...v0.9.14) (2026-08-05)
 
 
